@@ -1,7 +1,7 @@
 #ifndef EOS_UNITS_HPP
 #define EOS_UNITS_HPP
 
-/**
+/*!
  * \file eos_units.hpp
  * \brief contains unit definitions and conversion for the EOS solver.
  */
@@ -45,10 +45,11 @@ namespace EOSUnits{
   const double energy_in_nuc  = 1.0; // Nuclear units
 
   // Baryon mass (amu)
-  const double baryon_in_cgs = 1.66053906660e-24; // cgs units -- g
+  /*const double baryon_in_cgs = 1.66053906660e-24; // cgs units -- g
   const double baryon_in_si  = 1.66053906660e-27; // SI units -- kg
   const double baryon_in_mev = 931.49410242; // MeV/c^2
-  const double baryon_in_nuc = 1.0;          // nuclear units
+  const double baryon_in_nuc = 1.0;          // nuclear units*/
+  // Baryon mass, if it has to be defined, should be defined by the EOS.
 
   // Temperature (MeV)
 
