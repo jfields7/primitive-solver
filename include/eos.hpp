@@ -8,11 +8,13 @@
 //  equation of state. It must be instantiated with an object implementing
 //  the following protected functions:
 //    Real Temperature(Real n, Real e, Real *Y)
+//    Real TemperatureFromP(Real n, Real p, Real *Y)
 //    Real Energy(Real n, Real T, Real *Y)
 //    Real Pressure(Real n, Real T, Real *Y)
 //    Real Entropy(Real n, Real T, Real *Y)
 //    Real Enthalpy(Real n, Real T, Real *Y)
 //    Real SoundSpeed(Real n, Real T, Real *Y)
+//    Real SpecificEnergy(Real n, Real T, Real *Y)
 //  And it must also have the following protected member variables:
 //    const int NSpecies
 
@@ -23,6 +25,7 @@ class EOS : public EOSPolicy {
   private:
     // Member functions
     using EOSPolicy::Temperature;
+    using EOSPolicy::TemperatureFromP;
     using EOSPolicy::Energy;
     using EOSPolicy::Pressure;
     using EOSPolicy::Entropy;
@@ -45,6 +48,17 @@ class EOS : public EOSPolicy {
     //  \return The temperature according to the EOS.
     inline Real GetTemperature(Real n, Real e, Real *Y) {
       return Temperature(n, e, Y);
+    }
+
+    //! \fn Real GetTemperatureFromP(Real n, Real p, Real *Y)
+    //  \brief Calculate the temperature from number density, pressure, and
+    //         particle fractions.
+    //  \param[in] n  The number density
+    //  \param[in] p  The pressure
+    //  \param[in] Y  An array of particle fractions, expected to be of size NSpecies.
+    //  \return The temperature according to the EOS.
+    inline Real GetTemperatureFromP(Real n, Real p, Real *Y) {
+      return TemperatureFromP(n, p, Y);
     }
 
     //! \fn Real GetEnergy(Real n, Real T, Real *Y)
@@ -115,6 +129,9 @@ class EOS : public EOSPolicy {
     //  \param[in] T  The temperature
     //  \param[in] Y  An array of size NSpecies of the particle fractions.
     //  \return The energy per baryon for the EOS.
+    inline Real GetSpecificEnergy(Real n, Real T, Real *Y) {
+      return SpecificEnergy(n, T, Y);
+    }
 
     //! \fn int GetNSpecies() const
     //  \brief Get the number of particle species in this EOS.

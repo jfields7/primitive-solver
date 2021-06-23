@@ -50,12 +50,12 @@ void UnitTests::PrintSummary() {
   std::stringstream str;
   str << "Test suite summary: " << suite_name << "\n";
   PrintBold(str.str());
-  std::cout << test_count << "/" << tests_passed << " tests passed.\n";
+  std::cout << tests_passed << "/" << test_count << " tests passed.\n";
   if (tests_passed == test_count) {
     PrintGreen("All tests passed!\n");
   }
   else {
-    PrintRed("Tests failed:\n");
+    PrintBold("Tests failed:\n");
     for (std::string test : tests_failed) {
       std::stringstream ss;
       ss << test << "\n";
