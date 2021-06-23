@@ -12,14 +12,16 @@ LIBS    = -L/usr/local/lib
 INCLUDE += -I$(CURDIR)/include
 
 SRC_FILES = $(wildcard src/*.cpp)
+HEADER_FILES = $(wildcard include/*.hpp)
 OBJ_DIR := obj/
 LIB_DIR := $(CURDIR)/lib/
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))
 SRC_DIRS := $(dir $(SRC_FILES))
 VPATH := $(SRC_DIRS)
 TEST_DIR := tests/
+INSTALL_DIR := /usr/local
 
-LIBRARY := $(LIB_DIR)PrimitiveSolver.a
+LIBRARY := $(LIB_DIR)libPrimitiveSolver.a
 
 .PHONY: all dirs clean
 
@@ -46,6 +48,12 @@ clean :
 	rm -rf $(OBJ_DIR)*
 	rm -rf $(LIBRARY)
 	cd $(TEST_DIR) && $(MAKE) clean
+
+.PHONY: install
+install:
+	mkdir -p $(INSTALL_DIR)/include/PrimitiveSolver
+	cp $(HEADER_FILES) $(INSTALL_DIR)/include/PrimitiveSolver
+	cp $(LIBRARY) $(INSTALL_DIR)/lib
 
 # Variables to export for making tests.
 export CXX
