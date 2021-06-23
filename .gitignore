@@ -1,5 +1,7 @@
 obj
 lib
+tests/obj
+tests/bin
 
 *.obj
 *.swp

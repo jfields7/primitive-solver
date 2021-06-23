@@ -1,23 +1,25 @@
 CXX    := g++
-LIB    := ar
+LIB    := ar cr
 RFLAGS := -std=c++11 -g
 FLAGS  := 
 LDFLAGS :=
-LDLIBS := -lNumTools
+#LDLIBS := -lNumTools
+LDLIBS := 
 
 INCLUDE = -I/usr/local/include
 LIBS    = -L/usr/local/lib
 
-INCLUDE += -I./include
+INCLUDE += -I$(CURDIR)/include
 
 SRC_FILES = $(wildcard src/*.cpp)
 OBJ_DIR := obj/
-LIB_DIR := lib/
+LIB_DIR := $(CURDIR)/lib/
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))
 SRC_DIRS := $(dir $(SRC_FILES))
 VPATH := $(SRC_DIRS)
+TEST_DIR := tests/
 
-LIBRARY := $(LIB_DIR)PrimitiveSolver
+LIBRARY := $(LIB_DIR)PrimitiveSolver.a
 
 .PHONY: all dirs clean
 
@@ -34,11 +36,31 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(LIBRARY) : $(OBJ_FILES)
-	$(LIB) $(RFLAGS) $(FLAGS) -o $@ $(OBJ_FILES) $(LDFLAGS) $(LDLIBS)
+	$(LIB) $(LIBRARY) $(OBJ_FILES) $(LDFLAGS) $(LDLIBS)
 
 $(OBJ_DIR)%.o : %.cpp
 	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
 
+.PHONY: clean
 clean :
 	rm -rf $(OBJ_DIR)*
 	rm -rf $(LIBRARY)
+	cd $(TEST_DIR) && $(MAKE) clean
+
+# Variables to export for making tests.
+export CXX
+export RFLAGS
+export FLAGS
+export LDFLAGS
+export INCLUDE
+export LIBS
+export LIB_DIR
+export LIBRARY
+
+.PHONY: build_tests
+build_tests : $(LIBRARY)
+	$(MAKE) -C $(TEST_DIR)
+
+.PHONY: test
+test : $(LIBRARY)
+	cd $(TEST_DIR) && $(MAKE) run
