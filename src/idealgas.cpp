@@ -16,7 +16,6 @@ IdealGas::IdealGas() {
 }
 
 Real IdealGas::Temperature(Real n, Real e, Real *Y) {
-  //return gammam1*e/n;
   return gammam1*(e - mb*n)/n;
 }
 
@@ -25,7 +24,7 @@ Real IdealGas::TemperatureFromP(Real n, Real p, Real *Y) {
 }
 
 Real IdealGas::Energy(Real n, Real T, Real *Y) {
-  return mb*n + n*T/gammam1;
+  return n*(mb + T/gammam1);
 }
 
 Real IdealGas::Pressure(Real n, Real T, Real *Y) {
