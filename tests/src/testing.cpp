@@ -41,23 +41,6 @@ UnitTests::UnitTests(std::string name){
   PrintBold(str.str());
 }
 
-/*void UnitTests::RunTest(bool (*test)(), std::string name){
-  test_count++;
-  std::cout << "Running test: " << name << "\n";
-  std::stringstream str;
-  if (test()) {
-    tests_passed++;
-    str << name << " passed!\n";
-    PrintGreen(str.str());
-  }
-  else {
-    tests_failed.push_back(name);
-    str << name << " failed!\n";
-    PrintRed(str.str());
-  }
-  std::cout << "\n";
-}*/
-
 void UnitTests::PrintSummary() {
   std::stringstream str;
   str << "Test suite summary: " << suite_name << "\n";
