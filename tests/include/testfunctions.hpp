@@ -45,9 +45,30 @@ bool TestEnthalpy(EOS<EOSPolicy>* eos, Real n, Real T, Real *Y, const Real tol) 
 
   Real expected = (e + p)/n;
   Real err = GetError(expected, h);
-  PrintError(expected, h);
+  if (err > tol) {
+    PrintError(expected, h);
+    return false;
+  }
 
-  return err <= tol;
+  return true;
+}
+
+/// Check that the specific energy is consistent with the energy density.
+template<typename EOSPolicy>
+bool TestSpecificEnergy(EOS<EOSPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+  Real eps = eos->GetSpecificEnergy(n, T, Y);
+  Real e = eos->GetEnergy(n, T, Y);
+  Real mb = eos->GetBaryonMass();
+
+  Real expected = (e/(n*mb) - 1.0);
+
+  Real err = GetError(expected, eps);
+  if (err > tol) {
+    PrintError(expected, eps);
+    return false;
+  }
+
+  return true;
 }
 
 #endif

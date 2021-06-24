@@ -17,6 +17,7 @@
 //    Real SpecificEnergy(Real n, Real T, Real *Y)
 //  And it must also have the following protected member variables:
 //    const int NSpecies
+//    Real mb
 
 #include <ps_types.hpp>
 
@@ -36,6 +37,8 @@ class EOS : public EOSPolicy {
     // Member variables
     // The number of particle species used by the EOS.
     using EOSPolicy::NSpecies;
+    // The baryon mass
+    using EOSPolicy::mb;
     
   public:
     //! \fn Real GetTemperature(Real n, Real e, Real *Y)
@@ -138,6 +141,14 @@ class EOS : public EOSPolicy {
     inline int GetNSpecies() const {
       return NSpecies;
     }
+
+    //! \fn Real GetBaryonMass() const
+    //  \brief Get the baryon mass used by this EOS.
+    inline Real GetBaryonMass() const {
+      return mb;
+    }
+
+    //! \fn 
 };
 
 #endif

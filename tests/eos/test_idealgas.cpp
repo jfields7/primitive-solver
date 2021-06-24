@@ -72,6 +72,11 @@ int main(int argc, char *argv[]) {
   tester.RunTest(&TestSoundSpeed, "Sound Speed Test",
                  &eos, n, Y, tol);
 
+  // Check that the specific energy is consistent with a direct calculation
+  // based on the energy density.
+  tester.RunTest(&TestSpecificEnergy<IdealGas>, "Specific Energy Test",
+                 &eos, n, T, Y, tol);
+
   tester.PrintSummary();
 
   return 0;

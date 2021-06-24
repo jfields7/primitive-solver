@@ -65,11 +65,6 @@ class IdealGas{
     inline void SetBaryonMass(Real m) {
       mb = m;
     }
-
-    /// Get the baryon mass
-    inline Real GetBaryonMass() const {
-      return mb;
-    }
 };
 
 #endif
