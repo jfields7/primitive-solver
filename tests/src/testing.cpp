@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 void PrintGreen(const std::string& text) {
   std::cout << "\033[1;32m" << text << "\033[0m";
@@ -18,6 +19,17 @@ void PrintBold(const std::string& text) {
   std::cout << "\033[1m" << text << "\033[0m";
 }
 
+void PrintError(double expected, double actual) {
+  double error = GetError(expected, actual);
+  std::cout << "  Expected: " << expected << "\n";
+  std::cout << "  Actual: " << actual << "\n";
+  std::cout << "  Error: " << error << "\n";
+}
+
+double GetError(double expected, double actual) {
+  return fabs((actual - expected)/actual);
+}
+
 UnitTests::UnitTests(std::string name){
   test_count = 0;
   tests_passed = 0;
@@ -29,7 +41,7 @@ UnitTests::UnitTests(std::string name){
   PrintBold(str.str());
 }
 
-void UnitTests::RunTest(bool (*test)(), std::string name){
+/*void UnitTests::RunTest(bool (*test)(), std::string name){
   test_count++;
   std::cout << "Running test: " << name << "\n";
   std::stringstream str;
@@ -44,7 +56,7 @@ void UnitTests::RunTest(bool (*test)(), std::string name){
     PrintRed(str.str());
   }
   std::cout << "\n";
-}
+}*/
 
 void UnitTests::PrintSummary() {
   std::stringstream str;
