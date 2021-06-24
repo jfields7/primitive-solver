@@ -36,7 +36,7 @@ Real IdealGas::Entropy(Real n, Real T, Real *Y) {
 }
 
 Real IdealGas::Enthalpy(Real n, Real T, Real *Y) {
-  return gamma/gammam1*T;
+  return mb + gamma/gammam1*T;
 }
 
 Real IdealGas::SoundSpeed(Real n, Real T, Real *Y) {

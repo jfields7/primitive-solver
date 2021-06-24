@@ -7,9 +7,9 @@
 
 /// Check that the temperature and energy density equations are consistent.
 template<typename EOSPolicy>
-bool TestTemperatureFromEnergy(EOS<EOSPolicy>& eos, Real n, Real T, Real *Y, const Real tol) {
-  Real e = eos.GetEnergy(n, T, Y);
-  Real T2 = eos.GetTemperature(n, e, Y);
+bool TestTemperatureFromEnergy(EOS<EOSPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+  Real e = eos->GetEnergy(n, T, Y);
+  Real T2 = eos->GetTemperature(n, e, Y);
 
   Real err = GetError(T, T2);
   if (err > tol) {
@@ -22,9 +22,9 @@ bool TestTemperatureFromEnergy(EOS<EOSPolicy>& eos, Real n, Real T, Real *Y, con
 
 /// Check that the temperature and pressure equations are consistent.
 template<typename EOSPolicy>
-bool TestTemperatureFromPressure(EOS<EOSPolicy>& eos, Real n, Real T, Real *Y, const Real tol) {
-  Real p = eos.GetPressure(n, T, Y);
-  Real T2 = eos.GetTemperatureFromP(n, p, Y);
+bool TestTemperatureFromPressure(EOS<EOSPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+  Real p = eos->GetPressure(n, T, Y);
+  Real T2 = eos->GetTemperatureFromP(n, p, Y);
 
   Real err = GetError(T, T2);
   if (err > tol) {
@@ -38,10 +38,10 @@ bool TestTemperatureFromPressure(EOS<EOSPolicy>& eos, Real n, Real T, Real *Y, c
 /// Check that the enthalpy is consistent with the enthalpy calculated
 /// directly from pressure and energy density.
 template<typename EOSPolicy>
-bool TestEnthalpy(EOS<EOSPolicy>& eos, Real n, Real T, Real *Y, const Real tol) {
-  Real h = eos.GetEnthalpy(n, T, Y);
-  Real p = eos.GetPressure(n, T, Y);
-  Real e = eos.GetEnergy(n, T, Y);
+bool TestEnthalpy(EOS<EOSPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+  Real h = eos->GetEnthalpy(n, T, Y);
+  Real p = eos->GetPressure(n, T, Y);
+  Real e = eos->GetEnergy(n, T, Y);
 
   Real expected = (e + p)/n;
   Real err = GetError(expected, h);

@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <cmath>
-#include <functional>
 
 #include <eos.hpp>
 #include <ps_types.hpp>
@@ -11,10 +10,6 @@
 
 #include <testing.hpp>
 #include <testfunctions.hpp>
-
-typedef std::function<bool()> NoArgTest;
-typedef std::function<bool(EOS<IdealGas>&, Real, Real*, Real)> FourArgTest;
-typedef std::function<bool(EOS<IdealGas>&, Real, Real, Real*, Real)> FiveArgTest;
 
 // Functions specific to IdealGas
 bool TestConstruction() {
@@ -24,15 +19,15 @@ bool TestConstruction() {
   return (gamma == eos.GetGamma() && mb == eos.GetBaryonMass());
 }
 
-bool TestSoundSpeed(EOS<IdealGas>& eos, Real n, Real *Y, Real tol) {
+bool TestSoundSpeed(EOS<IdealGas>* eos, Real n, Real *Y, Real tol) {
   bool success = true;
-  Real gamma = eos.GetGamma();
+  Real gamma = eos->GetGamma();
   Real gammam1 = gamma - 1.0;
   
   for (Real T = 0; T < 1000.0; T += 50.0) {
-    Real eps = eos.GetSpecificEnergy(n, T, Y);
+    Real eps = eos->GetSpecificEnergy(n, T, Y);
     Real expected = sqrt(gammam1*eps/(eps + 1.0/gamma));
-    Real cs = eos.GetSoundSpeed(n, T, Y);
+    Real cs = eos->GetSoundSpeed(n, T, Y);
     Real err = GetError(expected, cs);
 
     if (err > tol) {
@@ -48,9 +43,7 @@ bool TestSoundSpeed(EOS<IdealGas>& eos, Real n, Real *Y, Real tol) {
 int main(int argc, char *argv[]) {
   UnitTests tester{"Ideal Gas EOS"};
   // Validate that the gas was constructed as expected.
-  NoArgTest construction = TestConstruction;
-  tester.RunTest(construction, "Construction Test");
-  //tester.RunTest(&TestConstruction, "Construction Test");
+  tester.RunTest(&TestConstruction, "Construction Test");
 
   EOS<IdealGas> eos;
   const Real tol = 1e-12; // error tolerance for floating-point arithmetic.
@@ -60,32 +53,24 @@ int main(int argc, char *argv[]) {
 
   // Check that we can get the temperature back from the energy density
   // in a consistent way.
-  FiveArgTest temp_from_e = TestTemperatureFromEnergy<IdealGas>;
-  tester.RunTest(temp_from_e,
-  //tester.RunTest(&TestTemperatureFromEnergy<IdealGas>,
+  tester.RunTest(&TestTemperatureFromEnergy<IdealGas>,
                  "Temperature from Energy Test", 
-                 eos, n, T, Y, tol);
+                 &eos, n, T, Y, tol);
 
   // Now check the same thing, but using pressure instead.
-  FiveArgTest temp_from_p = TestTemperatureFromPressure;
-  tester.RunTest(temp_from_p, 
-  //tester.RunTest(&TestTemperatureFromPressure<IdealGas>,
+  tester.RunTest(&TestTemperatureFromPressure<IdealGas>,
                  "Temperature from Pressure Test",
-                 eos, n, T, Y, tol);
+                 &eos, n, T, Y, tol);
 
   // Check that the enthalpy is correct and consistent with its calculation
   // via pressure and density.
-  FiveArgTest enthalpy = TestEnthalpy;
-  tester.RunTest(enthalpy, "Enthalpy Test",
-  //tester.RunTest(&TestEnthalpy<IdealGas>, "Enthalpy Test",
-                 eos, n, T, Y, tol);
+  tester.RunTest(&TestEnthalpy<IdealGas>, "Enthalpy Test",
+                 &eos, n, T, Y, tol);
 
   // Check that the sound speed is consistent at a variety of temperatures with
   // the speed calculated via the energy per baryon.
-  FourArgTest sound_speed = TestSoundSpeed;
-  tester.RunTest(sound_speed, "Sound Speed Test",
-  //tester.RunTest(&TestSoundSpeed, "Sound Speed Test",
-                 eos, n, Y, tol);
+  tester.RunTest(&TestSoundSpeed, "Sound Speed Test",
+                 &eos, n, Y, tol);
 
   tester.PrintSummary();
 
