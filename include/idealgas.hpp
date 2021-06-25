@@ -9,7 +9,7 @@
 class IdealGas{
   protected:
     /// An ideal gas doesn't care about particle species, so...
-    const int NSpecies = 0;
+    const int n_species = 0;
 
     /// Adiabatic index
     Real gamma;

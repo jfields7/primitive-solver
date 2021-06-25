@@ -7,19 +7,20 @@
 #include <eos.hpp>
 #include <ps_types.hpp>
 #include <idealgas.hpp>
+#include <do_nothing.hpp>
 
 #include <testing.hpp>
 #include <testfunctions.hpp>
 
 // Functions specific to IdealGas
 bool TestConstruction() {
-  EOS<IdealGas> eos;
+  EOS<IdealGas, DoNothing> eos;
   Real gamma = 5.0/3.0;
   Real mb = 1.0;
   return (gamma == eos.GetGamma() && mb == eos.GetBaryonMass());
 }
 
-bool TestSoundSpeed(EOS<IdealGas>* eos, Real n, Real *Y, Real tol) {
+bool TestSoundSpeed(EOS<IdealGas, DoNothing>* eos, Real n, Real *Y, Real tol) {
   bool success = true;
   Real gamma = eos->GetGamma();
   Real gammam1 = gamma - 1.0;
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
   // Validate that the gas was constructed as expected.
   tester.RunTest(&TestConstruction, "Construction Test");
 
-  EOS<IdealGas> eos;
+  EOS<IdealGas, DoNothing> eos;
   const Real tol = 1e-12; // error tolerance for floating-point arithmetic.
   Real n = 1.345e2; // number density
   Real T = 4.985e3; // temperature
@@ -53,18 +54,18 @@ int main(int argc, char *argv[]) {
 
   // Check that we can get the temperature back from the energy density
   // in a consistent way.
-  tester.RunTest(&TestTemperatureFromEnergy<IdealGas>,
+  tester.RunTest(&TestTemperatureFromEnergy<IdealGas, DoNothing>,
                  "Temperature from Energy Test", 
                  &eos, n, T, Y, tol);
 
   // Now check the same thing, but using pressure instead.
-  tester.RunTest(&TestTemperatureFromPressure<IdealGas>,
+  tester.RunTest(&TestTemperatureFromPressure<IdealGas, DoNothing>,
                  "Temperature from Pressure Test",
                  &eos, n, T, Y, tol);
 
   // Check that the enthalpy is correct and consistent with its calculation
   // via pressure and density.
-  tester.RunTest(&TestEnthalpy<IdealGas>, "Enthalpy Test",
+  tester.RunTest(&TestEnthalpy<IdealGas, DoNothing>, "Enthalpy Test",
                  &eos, n, T, Y, tol);
 
   // Check that the sound speed is consistent at a variety of temperatures with
@@ -74,7 +75,7 @@ int main(int argc, char *argv[]) {
 
   // Check that the specific energy is consistent with a direct calculation
   // based on the energy density.
-  tester.RunTest(&TestSpecificEnergy<IdealGas>, "Specific Energy Test",
+  tester.RunTest(&TestSpecificEnergy<IdealGas, DoNothing>, "Specific Energy Test",
                  &eos, n, T, Y, tol);
 
   tester.PrintSummary();
