@@ -28,7 +28,11 @@ eos_idealgas : $(OBJ_FILES)
 	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) eos/test_idealgas.cpp -c -o $(OBJ_DIR)/test_idealgas.o
 	$(CXX) $(RFLAGS) $(FLAGS) $(OBJ_FILES) $(OBJ_DIR)/test_idealgas.o $(LIBRARY) -o $(BIN_DIR)/test_idealgas
 
-tests: dirs eos_idealgas
+error_resetfloor : $(OBJ_FILE)
+	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) error/test_resetfloor.cpp -c -o $(OBJ_DIR)/test_resetfloor.o
+	$(CXX) $(RFLAGS) $(FLAGS) $(OBJ_FILES) $(OBJ_DIR)/test_resetfloor.o $(LIBRARY) -o $(BIN_DIR)/test_resetfloor
+
+tests: dirs eos_idealgas error_resetfloor
 
 clean:
 	rm -rf $(OBJ_DIR)*
@@ -36,4 +40,5 @@ clean:
 
 run: dirs tests
 	cd bin; \
-	./test_idealgas
+	./test_idealgas; \
+	./test_resetfloor

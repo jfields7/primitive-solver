@@ -58,8 +58,15 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     // ErrorPolicy member variables
     using ErrorPolicy::n_atm;
     using ErrorPolicy::p_atm;
-    
+
   public:
+    //! \fn EOS()
+    //  \brief Constructor for the EOS. It sets a default value for the floor.
+    EOS() {
+      n_atm = 1e-10;
+      p_atm = 1e-10;
+    }
+
     //! \fn Real GetTemperature(Real n, Real e, Real *Y)
     //  \brief Calculate the temperature from number density, energy density, and
     //         particle fractions.
@@ -198,25 +205,27 @@ class EOS : public EOSPolicy, public ErrorPolicy {
 
     //! \fn Real GetDensityFloor() const
     //  \brief Get the density floor used by the EOS ErrorPolicy.
-    inline GetDensityFloor() const {
+    inline Real GetDensityFloor() const {
       return n_atm;
     }
 
     //! \fn Real GetPressureFloor() const
     //  \brief Get the pressure floor used by the EOS ErrorPolicy.
-    inline GetPressureFloor() const {
+    inline Real GetPressureFloor() const {
       return p_atm;
     }
 
     //! \fn Real SetDensityFloor(Real floor)
     //  \brief Set the density floor used by the EOS ErrorPolicy.
-    inline SetDensityFloor(Real floor) {
+    //         Also adjusts the tau floor to be consistent.
+    inline void SetDensityFloor(Real floor) {
       n_atm = (floor >= 0.0) ? floor : 0.0;
     }
 
     //! \fn Real SetPressureFloor(Real floor)
     //  \brief Set the pressure floor used by the EOS ErrorPolicy.
-    inline SetPressureFloor(Real floor) {
+    //         Also adjusts the tau floor to be consistent.
+    inline void SetPressureFloor(Real floor) {
       p_atm = (floor >= 0.0) ? floor : 0.0;
     }
 };
