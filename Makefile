@@ -3,8 +3,8 @@ LIB    := ar cr
 RFLAGS := -std=c++11 -g
 FLAGS  := 
 LDFLAGS :=
-#LDLIBS := -lNumTools
-LDLIBS := 
+LDLIBS := -lNumTools
+#LDLIBS := 
 
 INCLUDE = -I/usr/local/include
 LIBS    = -L/usr/local/lib
@@ -21,7 +21,9 @@ VPATH := $(SRC_DIRS)
 TEST_DIR := tests/
 INSTALL_DIR := /usr/local
 
-LIBRARY := $(LIB_DIR)libPrimitiveSolver.a
+LIBRARY_NAME := libPrimitiveSolver.a
+
+LIBRARY := $(LIB_DIR)$(LIBRARY_NAME)
 
 .PHONY: all dirs clean
 
@@ -38,7 +40,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 $(LIBRARY) : $(OBJ_FILES)
-	$(LIB) $(LIBRARY) $(OBJ_FILES) $(LDFLAGS) $(LDLIBS)
+	$(LIB) $(LIBRARY) $(OBJ_FILES)
 
 $(OBJ_DIR)%.o : %.cpp
 	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
@@ -52,8 +54,14 @@ clean :
 .PHONY: install
 install:
 	mkdir -p $(INSTALL_DIR)/include/PrimitiveSolver
+	mkdir -p $(INSTALL_DIR)/lib
 	cp $(HEADER_FILES) $(INSTALL_DIR)/include/PrimitiveSolver
 	cp $(LIBRARY) $(INSTALL_DIR)/lib
+
+.PHONY: uninstall
+uninstall:
+	rm -rf $(INSTALL_DIR)/include/PrimitiveSolver
+	rm -rf $(INSTALL_DIR)/lib/$(LIBRARY_NAME)
 
 # Variables to export for making tests.
 export CXX

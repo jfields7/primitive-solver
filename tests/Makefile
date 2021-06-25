@@ -7,6 +7,12 @@ OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))
 SRC_DIRS := $(dir $(SRC_FILES))
 VPATH := $(SRC_DIRS)
 
+# A function for making tests
+define make_test
+	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) $(1)/$(2).cpp -c -o $(OBJ_DIR)/$(2).o
+	$(CXX) $(RFLAGS) $(FLAGS) $(OBJ_FILES) $(OBJ_DIR)/$(2).o $(LIBRARY) $(LDFLAGS) $(LDLIBS) -o $(BIN_DIR)/$(2)
+endef
+
 .PHONY: all dirs clean tests run
 
 all : dirs tests
@@ -25,12 +31,10 @@ $(OBJ_DIR)%.o : %.cpp
 	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
 
 eos_idealgas : $(OBJ_FILES)
-	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) eos/test_idealgas.cpp -c -o $(OBJ_DIR)/test_idealgas.o
-	$(CXX) $(RFLAGS) $(FLAGS) $(OBJ_FILES) $(OBJ_DIR)/test_idealgas.o $(LIBRARY) -o $(BIN_DIR)/test_idealgas
+	$(call make_test,eos,test_idealgas)
 
 error_resetfloor : $(OBJ_FILE)
-	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) error/test_resetfloor.cpp -c -o $(OBJ_DIR)/test_resetfloor.o
-	$(CXX) $(RFLAGS) $(FLAGS) $(OBJ_FILES) $(OBJ_DIR)/test_resetfloor.o $(LIBRARY) -o $(BIN_DIR)/test_resetfloor
+	$(call make_test,error,test_resetfloor)
 
 tests: dirs eos_idealgas error_resetfloor
 

@@ -23,12 +23,9 @@
 //  following functions:
 //    bool PrimitiveFloor(Real& n, Real& v[3], Real& p)
 //    bool ConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
-//    bool DensityOutOfRange(Real& n, Real n_min, Real n_max)
-//    bool TemperatureOutOfRange(Real& T, Real T_min, Real T_max)
-//    bool FractionOutOfRange(Real& Y, Real Y_min, Real Y_max)
 //  And the following protected variables:
-//    Real n_atm;
-//    Real p_atm;
+//    Real n_atm
+//    Real T_atm
 
 #include <ps_types.hpp>
 
@@ -57,14 +54,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
 
     // ErrorPolicy member variables
     using ErrorPolicy::n_atm;
-    using ErrorPolicy::p_atm;
+    using ErrorPolicy::T_atm;
 
   public:
     //! \fn EOS()
     //  \brief Constructor for the EOS. It sets a default value for the floor.
+    //
+    //  n_atm gets fixed to 1e-10, and T_atm is set to 1.0.
     EOS() {
       n_atm = 1e-10;
-      p_atm = 1e-10;
+      T_atm = 1.0;
     }
 
     //! \fn Real GetTemperature(Real n, Real e, Real *Y)
@@ -182,11 +181,12 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in,out] p  The pressure
     //  \param[out]    T  The temperature
     //  \param[in]     Y  An array of size n_species of the particle fractions.
+    //
     //  \return true if the primitives were adjusted, false otherwise.
     bool ApplyPrimitiveFloor(Real& n, Real v[3], Real& p, Real& T, Real *Y) {
-      bool result = PrimitiveFloor(n, v, p);
+      bool result = PrimitiveFloor(n, v, T);
       if (result) {
-        T = TemperatureFromP(n, p, Y);
+        p = Pressure(n, T, Y);
       }
       return result;
     }
@@ -198,9 +198,11 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in,out] Sd  The momentum density vector (covariant)
     //  \param[in,out] tau The tau variable (relativistic energy - D)
     //  \param[in,out] Bu  The magnetic field vector (contravariant)
+    //  \param[in]     Y   An array of size_species of the particle fractions.
+    //
     //  \return true if the conserved variables were adjusted, false otherwise.
-    bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real Bu[3]) {
-      return ConservedFloor(D, Sd, tau, Bu);
+    bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
+      return ConservedFloor(D, Sd, tau, GetTauFloor(Y));
     }
 
     //! \fn Real GetDensityFloor() const
@@ -209,15 +211,33 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return n_atm;
     }
 
-    //! \fn Real GetPressureFloor() const
-    //  \brief Get the pressure floor used by the EOS ErrorPolicy.
-    inline Real GetPressureFloor() const {
-      return p_atm;
+    //! \fn Real GetPressureFloor(Real *Y) const
+    //  \brief Get the pressure floor based on the current particle
+    //         composition.
+    //
+    //  \param[in] Y A n_species-sized array of particle fractions.
+    inline Real GetPressureFloor(Real *Y) {
+      return GetPressure(n_atm, T_atm, Y);
+    }
+
+    //! \fn Real GetTemperatureFloor() const
+    //  \brief Get the temperature floor used by the EOS ErrorPolicy.
+    inline Real GetTemperatureFloor() const {
+      return T_atm;
+    }
+
+    //! \fn Real GetTauFloor() const
+    //  \brief Get the tau floor used by the EOS ErrorPolicy based
+    //         on the current particle composition.
+    //
+    //  \param[in] Y A n_species-sized array of particle fractions.
+    inline Real GetTauFloor(Real *Y) {
+      return GetEnergy(n_atm, T_atm, Y) - mb*n_atm;
     }
 
     //! \fn Real SetDensityFloor(Real floor)
     //  \brief Set the density floor used by the EOS ErrorPolicy.
-    //         Also adjusts the tau floor to be consistent.
+    //         Also adjusts the pressure and tau floor to be consistent.
     inline void SetDensityFloor(Real floor) {
       n_atm = (floor >= 0.0) ? floor : 0.0;
     }
@@ -225,8 +245,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //! \fn Real SetPressureFloor(Real floor)
     //  \brief Set the pressure floor used by the EOS ErrorPolicy.
     //         Also adjusts the tau floor to be consistent.
-    inline void SetPressureFloor(Real floor) {
-      p_atm = (floor >= 0.0) ? floor : 0.0;
+    inline void SetTemperatureFloor(Real floor) {
+      T_atm = (floor >= 0.0) ? floor : 0.0;
     }
 };
 

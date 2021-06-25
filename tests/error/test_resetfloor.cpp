@@ -15,8 +15,8 @@
 bool TestConstruction() {
   EOS<IdealGas, ResetFloor> eos;
   Real n_atm = 1e-10;
-  Real p_atm = 1e-10;
-  return (n_atm == eos.GetDensityFloor() && p_atm == eos.GetPressureFloor());
+  Real T_atm = 1.0;
+  return (n_atm == eos.GetDensityFloor() && T_atm == eos.GetTemperatureFloor());
 }
 
 bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real p) {
@@ -29,7 +29,7 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
   bool result = eos->ApplyPrimitiveFloor(n_new, v_new, p_new, T, Y);
 
   Real n_atm = eos->GetDensityFloor();
-  Real p_atm = eos->GetPressureFloor();
+  Real p_atm = eos->GetPressureFloor(Y);
 
   // Make sure that the test worked when it was supposed to.
   if (!result) {

@@ -11,10 +11,10 @@
 class DoNothing {
   protected:
     Real n_atm;
-    Real p_atm;
+    Real T_atm;
 
-    bool PrimitiveFloor(Real& n, Real v[3], Real& p) {return false;}
-    bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real Bu[3]) {return false;}
+    bool PrimitiveFloor(Real& n, Real v[3], Real& t) {return false;}
+    bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {return false;}
 };
 
 #endif

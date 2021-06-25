@@ -13,17 +13,16 @@
 class ResetFloor {
   protected:
     Real n_atm;
-    Real p_atm;
-    Real tau_atm;
+    Real T_atm;
 
     /// Constructor
     ResetFloor();
 
     /// Floor for primitive variables
-    bool PrimitiveFloor(Real& n, Real v[3], Real& p);
+    bool PrimitiveFloor(Real& n, Real v[3], Real& t);
 
     /// Floor for conserved variables
-    bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real Bu[3]);
+    bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor);
 };
 
 #endif
