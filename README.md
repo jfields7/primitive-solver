@@ -1,5 +1,5 @@
 # PrimitiveSolver
-A library describing a general EOS solver for GRMHD. It requires the (NumTools)[https://github.com/jfields7/num-tools] library to work.
+A library describing a general EOS solver for GRMHD. It requires the [NumTools](https://github.com/jfields7/num-tools) library to work.
 
 To compile PrimitiveSolver, run `make`.
 
