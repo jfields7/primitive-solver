@@ -19,17 +19,17 @@ bool TestConstruction() {
   return (n_atm == eos.GetDensityFloor() && T_atm == eos.GetTemperatureFloor());
 }
 
-bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real p) {
+bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real T) {
   Real n_new = n;
   Real v_new[3] = {v[0], v[1], v[2]};
-  Real p_new = p;
   Real *Y = nullptr;
-  Real T = eos->GetTemperatureFromP(n, p, Y);
+  Real T_new = T;
+  Real p_new = eos->GetPressure(n, T, Y);
 
-  bool result = eos->ApplyPrimitiveFloor(n_new, v_new, p_new, T, Y);
+  bool result = eos->ApplyPrimitiveFloor(n_new, v_new, p_new, T_new, Y);
 
   Real n_atm = eos->GetDensityFloor();
-  Real p_atm = eos->GetPressureFloor(Y);
+  Real t_atm = eos->GetTemperatureFloor();
 
   // Make sure that the test worked when it was supposed to.
   if (!result) {
@@ -37,22 +37,22 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
       std::cout << "  Density was not floored as expected.\n";
       return false;
     }
-    if (p < p_atm) {
-      std::cout << "  Pressure was not floored as expected.\n";
+    if (T< t_atm) {
+      std::cout << "  Temperature was not floored as expected.\n";
       return false;
     }
   }
   else {
-    if (n >= n_atm && p >= p_atm) {
+    if (n >= n_atm && T >= t_atm) {
       std::cout << "  Floor was applied to valid variables.\n";
       std::cout << "  n = " << n << "\n";
       std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-      std::cout << "  p = " << p << "\n";
+      std::cout << "  T = " << T << "\n";
       std::cout << "  n_new = " << n_new << "\n";
       std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-      std::cout << "  p_new = " << p_new << "\n";
+      std::cout << "  T_new = " << T_new << "\n";
       std::cout << "  n_atm = " << n_atm << "\n";
-      std::cout << "  p_atm = " << p_atm << "\n";
+      std::cout << "  t_atm = " << t_atm << "\n";
       return false;
     }
     // If the floor was applied to the density, make sure the variables
@@ -60,38 +60,38 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
     else if (n < n_atm) {
       if (n_new == n_atm && 
           v_new[0] == 0.0 && v_new[1] == 0.0 && v_new[2] == 0.0 && 
-          p_new == p_atm) {
+          T_new == t_atm) {
         return true;
       }
       else {
         std::cout << "  Density floor was not applied correctly.\n";
         std::cout << "  n = " << n << "\n";
         std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-        std::cout << "  p = " << p << "\n";
+        std::cout << "  T = " << T << "\n";
         std::cout << "  n_new = " << n_new << "\n";
         std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-        std::cout << "  p_new = " << p_new << "\n";
+        std::cout << "  T_new = " << T_new << "\n";
         std::cout << "  n_atm = " << n_atm << "\n";
-        std::cout << "  p_atm = " << p_atm << "\n";
+        std::cout << "  t_atm = " << t_atm << "\n";
         return false;
       }
     }
-    else if (p < p_atm) {
+    else if (T < t_atm) {
       if (n_new == n &&
           v_new[0] == v[0] && v_new[1] == v[1] && v_new[2] == v[2] &&
-          p_new == p_atm) {
+          T_new == t_atm) {
         return true;
       }
       else {
-        std::cout << "  Pressure floor was not applied correctly.\n";
+        std::cout << "  Temperature floor was not applied correctly.\n";
         std::cout << "  n = " << n << "\n";
         std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-        std::cout << "  p = " << p << "\n";
+        std::cout << "  T = " << T << "\n";
         std::cout << "  n_new = " << n_new << "\n";
         std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-        std::cout << "  p_new = " << p_new << "\n";
+        std::cout << "  T_new = " << T_new << "\n";
         std::cout << "  n_atm = " << n_atm << "\n";
-        std::cout << "  p_atm = " << p_atm << "\n";
+        std::cout << "  t_atm = " << t_atm << "\n";
         return false;
       }
     }
@@ -109,13 +109,13 @@ int main(int argc, char *argv[]) {
   // Validate that the primitive variables get floored as expected.
   Real n = 1.0;
   Real v[3] = {0.1, 0.1, 0.1};
-  Real p = 1.0;
-  tester.RunTest(&TestPrimitiveFloor, "Valid Primitive Floor Test", &eos, n, v, p);
+  Real T = 1.0;
+  tester.RunTest(&TestPrimitiveFloor, "Valid Primitive Floor Test", &eos, n, v, T);
   n = 0.0;
-  tester.RunTest(&TestPrimitiveFloor, "Invalid Density Primitive Floor Test", &eos, n, v, p);
+  tester.RunTest(&TestPrimitiveFloor, "Invalid Density Primitive Floor Test", &eos, n, v, T);
   n = 1.0;
-  p = 0.0;
-  tester.RunTest(&TestPrimitiveFloor, "Invalid Pressure Primitive Floor Test", &eos, n, v, p);
+  T = 0.0;
+  tester.RunTest(&TestPrimitiveFloor, "Invalid Pressure Primitive Floor Test", &eos, n, v, T);
 
   tester.PrintSummary();
 }
