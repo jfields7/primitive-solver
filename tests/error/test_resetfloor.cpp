@@ -116,6 +116,9 @@ int main(int argc, char *argv[]) {
   n = 1.0;
   T = 0.0;
   tester.RunTest(&TestPrimitiveFloor, "Invalid Pressure Primitive Floor Test", &eos, n, v, T);
+  n = 0.0;
+  T = 0.0;
+  tester.RunTest(&TestPrimitiveFloor, "All Invalid Primitive Floor Test", &eos, n, v, T);
 
   tester.PrintSummary();
 }
