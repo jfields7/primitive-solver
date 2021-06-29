@@ -83,19 +83,62 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
        AthenaArray<Real>& cons, AthenaArray<Real>& b, AthenaArray<Real>& gd,
        AthenaArray<Real>& gu, int i, int j, int k) {
 
+  // Extract the 3-metric and inverse 3-metric.
+  const Real g3d[NSPMETRIC] = {gd(I11, i), gd(I12, i), gd(I13, i),
+                               gd(I22, i), gd(I23, i), gd(I33, i)};
+  const Real ialphasq = -gu(I00, i);
+  const Real alphasq = -1.0/ialphasq; // Lapse squared
+  const Real beta_u[3] = {gu(I01, i)*alphasq, gu(I02, i)*alphasq, gu(I03, i)*alphasq}; // Shift squared
+  const Real g3u[NSPMETRIC] = {gu(I11, i) + beta_u[0]*beta_u[0]*ialphasq,
+                               gu(I12, i) + beta_u[0]*beta_u[1]*ialphasq,
+                               gu(I13, i) + beta_u[0]*beta_u[2]*ialphasq,
+                               gu(I22, i) + beta_u[2]*beta_u[2]*ialphasq,
+                               gu(I23, i) + beta_u[2]*beta_u[3]*ialphasq,
+                               gu(I33, i) + beta_u[3]*beta_u[3]*ialphasq};
+
+  // Get the inverse volume element of the 3-metric.
+  Real isdetg = 1.0/std::sqrt(GetDeterminant(g3d));
+
   // Extract the undensitized conserved variables.
-  /*Real D = cons(IDN, k, j, i)*isdetg;
-  Real Sd[3] = {cons(IM1, k, j, i)*isdetg, cons(IM2, k, j, i)*isdetg, cons(IM3, k, j, i)*isdetg};
+  Real D = cons(IDN, k, j, i)*isdetg;
+  Real S_d[3] = {cons(IM1, k, j, i)*isdetg, cons(IM2, k, j, i)*isdetg, cons(IM3, k, j, i)*isdetg};
   Real tau = cons(IEN, k, j, i)*isdetg;
   // FIXME: Confirm that the magnetic field is densitized as well.
-  Real Bu[3] = {b(IB1, k, j, i)*isdetg, b(IB2, k, j, i)*isdetg, b(IB3, k, j, i)*isdetg};
+  Real B_u[3] = {b(IB1, k, j, i)*isdetg, b(IB2, k, j, i)*isdetg, b(IB3, k, j, i)*isdetg};
+  // Extract the particle fractions.
+  Real Y[n_species] = {0.0};
+  for (int s = 0; s < n_species; s++) {
+    Y[s] = cons(IYD + s, k, j, i)/cons(IDN, k, j, i);
+  }
 
-  // Make sure nothing is a NaN at this point.
-  if(!isfinite(D) || !isfinite(Sd[0]) || !isfinite(Sd[1]) || 
-     !isfinite(Sd[2]) || !isfinite(Bu[0]) || !isfinite(Bu[1]) ||
-     !isfinite(Bu[2]) || !isfinite(Bu[2])) {
-    return false;
-  }*/
+  // If D is below the atmosphere, we need to do whatever
+  // the EOSPolicy wants us to do.
+
+  // Calculate some utility quantities.
+  const Real b_u[3] = {B_u[0]/D, B_u[1]/D, B_u[2]/D};
+  const Real r_d[3] = {S_d[0]/D, S_d[1]/D, S_d[2]/D};
+  const Real r_u[3];
+  RaiseForm(r_u, r_d, g3u);
+  const Real rsqr   = Contract(r_u, r_d);
+  const Real rb     = Contract(b_u, r_d);
+  const Real rbsqr  = rb*rb;
+  const Real bsqr   = SquareVector(b_u, g3d);
+  const Real q      = tau/D;
+
+  // Make sure there are no NaNs at this point.
+  if (!std::isfinite(D) || !std::isfinite(rsqr) || !std::isfinite(q) ||
+      !std::isfinite(rbsqr) || !std::isfinite(bsqr)) {
+    return false;    
+  }
+  // We have to check the particle fractions separately.
+  for (int s = 0; s < n_species; s++) {
+    if (!std::isfinite(Y[s])) {
+      return false;
+    }
+  }
+
+  // Make sure that the magnetic field is physical.
+
   return true;
 }
 // }}}
@@ -108,11 +151,8 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
   // Extract the three metric.
   const Real g3d[NSPMETRIC] = {gd(I11, i), gd(I12, i), gd(I13, i),
                                gd(I22, i), gd(I23, i), gd(I33, i)};
-  Real alpha = std::sqrt(-1.0/gu(I00, i));
   
   // Get the volume element of the 3-metric.
-  //Real sdetg = std::sqrt(g3d[S11]*g3d[S22]*g3d[S33] + 2.0*g3d[S12]*g3d[S13]*g3d[S23] - 
-  //            (g3d[S11]*g3d[S23]*g3d[S23] + g3d[S12]*g3d[S12]*g3d[S33] + g3d[S13]*g3d[S13]*g3d[S22]));
   Real sdetg = std::sqrt(GetDeterminant(g3d));
 
   // Extract the primitive variables

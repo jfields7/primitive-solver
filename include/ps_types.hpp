@@ -11,6 +11,7 @@
 #define NHYDRO 6
 
 using Real = double;
+// FIXME: The location of IYF seems bad. Think about it some more and fix it later.
 enum ConsIndex {IDN=0, IM1=1, IM2=2, IM3=3, IEN=4, IYD=5};
 enum PrimIndex {IVX=1, IVY=2, IVZ=3, IPR=4, ITM=5, IBY=(NHYDRO), IBZ=((NHYDRO)+1), IYF=((NHYDRO)+2)};
 enum MagneticIndex {IB1=0, IB2=1, IB3=2};

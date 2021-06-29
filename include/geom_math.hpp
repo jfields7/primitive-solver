@@ -50,6 +50,16 @@ namespace Primitive {
   inline Real Contract(const Real au[3], const Real bd[3]) {
     return au[0]*bd[0] + au[1]*bd[1] + au[2]*bd[2];
   }
+
+  //! \brief Square a vector
+  //
+  //  \param[in] vu  The input vector
+  //  \param[in] g3d The input metric
+  //  \return The square of v
+  inline Real SquareVector(const Real vu[3], const Real g3d[NSPMETRIC]) {
+    return g3d[S11]*vu[0]*vu[0] + g3d[S22]*vu[1]*vu[1] + g3d[S33]*vu[2]*vu[2] +
+          2.0*((g3d[S12]*vu[1] + g3d[S13]*vu[2])*vu[0] + g3d[S23]*vu[1]*vu[2]);
+  }
 }
 
 #endif
