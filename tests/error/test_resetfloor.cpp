@@ -11,6 +11,8 @@
 #include <testing.hpp>
 #include <testfunctions.hpp>
 
+using namespace Primitive;
+
 // Functions specific to ResetFloor
 bool TestConstruction() {
   EOS<IdealGas, ResetFloor> eos;

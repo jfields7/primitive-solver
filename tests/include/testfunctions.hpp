@@ -7,7 +7,8 @@
 
 /// Check that the temperature and energy density equations are consistent.
 template<typename EOSPolicy, typename ErrorPolicy>
-bool TestTemperatureFromEnergy(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+bool TestTemperatureFromEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, 
+			Real n, Real T, Real *Y, const Real tol) {
   Real e = eos->GetEnergy(n, T, Y);
   Real T2 = eos->GetTemperature(n, e, Y);
 
@@ -22,7 +23,8 @@ bool TestTemperatureFromEnergy(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T,
 
 /// Check that the temperature and pressure equations are consistent.
 template<typename EOSPolicy, typename ErrorPolicy>
-bool TestTemperatureFromPressure(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+bool TestTemperatureFromPressure(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, 
+			Real n, Real T, Real *Y, const Real tol) {
   Real p = eos->GetPressure(n, T, Y);
   Real T2 = eos->GetTemperatureFromP(n, p, Y);
 
@@ -38,7 +40,7 @@ bool TestTemperatureFromPressure(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real 
 /// Check that the enthalpy is consistent with the enthalpy calculated
 /// directly from pressure and energy density.
 template<typename EOSPolicy, typename ErrorPolicy>
-bool TestEnthalpy(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+bool TestEnthalpy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
   Real h = eos->GetEnthalpy(n, T, Y);
   Real p = eos->GetPressure(n, T, Y);
   Real e = eos->GetEnergy(n, T, Y);
@@ -55,7 +57,7 @@ bool TestEnthalpy(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, con
 
 /// Check that the specific energy is consistent with the energy density.
 template<typename EOSPolicy, typename ErrorPolicy>
-bool TestSpecificEnergy(EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
+bool TestSpecificEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
   Real eps = eos->GetSpecificEnergy(n, T, Y);
   Real e = eos->GetEnergy(n, T, Y);
   Real mb = eos->GetBaryonMass();

@@ -7,6 +7,7 @@
 //  \brief Implementation of IdealGas.
 
 using namespace EOSUnits;
+using namespace Primitive;
 
 /// Constructor
 IdealGas::IdealGas() {

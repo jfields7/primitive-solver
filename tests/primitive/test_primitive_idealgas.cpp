@@ -13,6 +13,8 @@
 #include <testing.hpp>
 #include <testfunctions.hpp>
 
+using namespace Primitive;
+
 // Test functions specific to this particular test suite.
 bool TestConstruction() {
   EOS<IdealGas, DoNothing> eos;

@@ -10,6 +10,8 @@
 
 #include <ps_types.hpp>
 
+namespace Primitive {
+
 class ResetFloor {
   protected:
     Real n_atm;
@@ -24,5 +26,7 @@ class ResetFloor {
     /// Floor for conserved variables
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor);
 };
+
+}; // namespace
 
 #endif

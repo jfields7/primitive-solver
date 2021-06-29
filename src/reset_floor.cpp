@@ -3,6 +3,8 @@
 
 #include <reset_floor.hpp>
 
+using namespace Primitive;
+
 /// Constructor
 ResetFloor::ResetFloor() {
 }

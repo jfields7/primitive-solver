@@ -6,6 +6,8 @@
 
 #include <ps_types.hpp>
 
+namespace Primitive{
+
 class IdealGas{
   protected:
     /// An ideal gas doesn't care about particle species, so...
@@ -66,5 +68,7 @@ class IdealGas{
       mb = m;
     }
 };
+
+}; // namespace
 
 #endif

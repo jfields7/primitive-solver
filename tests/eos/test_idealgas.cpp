@@ -12,6 +12,8 @@
 #include <testing.hpp>
 #include <testfunctions.hpp>
 
+using namespace Primitive;
+
 // Functions specific to IdealGas
 bool TestConstruction() {
   EOS<IdealGas, DoNothing> eos;

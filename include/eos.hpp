@@ -29,6 +29,8 @@
 
 #include <ps_types.hpp>
 
+namespace Primitive {
+
 template <typename EOSPolicy, typename ErrorPolicy>
 class EOS : public EOSPolicy, public ErrorPolicy {
   private:
@@ -249,5 +251,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       T_atm = (floor >= 0.0) ? floor : 0.0;
     }
 };
+
+}; // namespace
 
 #endif
