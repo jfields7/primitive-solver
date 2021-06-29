@@ -14,6 +14,7 @@
 #include <numtoolsroot.h>
 
 #include <eos.hpp>
+#include <athena_arrays.hpp>
 
 template<typename EOSPolicy, typename ErrorPolicy>
 class PrimitiveSolver {
@@ -61,6 +62,16 @@ class PrimitiveSolver {
     bool PrimToCon(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
                    AthenaArray<Real>& bu, AthenaArray<Real>& gd,
                    AthenaArray<Real>& gu, int i, int j, int k);
+
+    /// Get the EOS used by this PrimitiveSolver.
+    inline EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const {
+      return peos;
+    }
+
+    /// Get the number of species this PrimitiveSolver expects.
+    inline const int GetNSpecies() const {
+      return n_species;
+    }
 };
 
 template<typename EOSPolicy, typename ErrorPolicy>
@@ -70,7 +81,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   
 
   // Extract the undensitized conserved variables.
-  Real D = cons(IDN, k, j, i)*isdetg;
+  /*Real D = cons(IDN, k, j, i)*isdetg;
   Real Sd[3] = {cons(IM1, k, j, i)*isdetg, cons(IM2, k, j, i)*isdetg, cons(IM3, k, j, i)*isdetg};
   Real tau = cons(IEN, k, j, i)*isdetg;
   // FIXME: Confirm that the magnetic field is densitized as well.
@@ -81,15 +92,15 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
      !isfinite(Sd[2]) || !isfinite(Bu[0]) || !isfinite(Bu[1]) ||
      !isfinite(Bu[2]) || !isfinite(Bu[2])) {
     return false;
-  }
-
+  }*/
+  return true;
 }
 
+// PrimToCon {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
        AthenaArray<Real>& cons, AthenaArray<Real>& bu, AthenaArray<Real>& gd,
-       AthenaArray<Real>& gu, AthenaArray<Real>& alpha, AthenaArray<Real>& beta,
-       int i, int j, int k) {
+       AthenaArray<Real>& gu,int i, int j, int k) {
   // Extract the three metric.
   Real g3d[NSPMETRIC] = {gd(I11, i), gd(I12, i), gd(I13, i),
                         gd(I22, i), gd(I23, i), gd(I33, i)};
@@ -114,40 +125,29 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
     Y[s] = prim(IYF + s, k, j, i);
   }
 
-  // Calculate the Lorentz factor. Note: Athena passes in Wv, not v.
-  Real usq = g3d[S11]*u1*u1 + g3d[S22]*u2*u2 + g3d[S33]*u3*u3 + 2.0*((g3d[S12]*u2 + g3d[S13]*u3)*u1 + g3d[S23]*u2*u3);
-  Real W = std::sqrt(1.0 + usq);
+  // Note that Athena passes in Wv, not v.
+  // Lower u.
+  Real uu_1 = g3d[S11]*uu1 + g3d[S12]*uu2 + g3d[S13]*uu3;
+  Real uu_2 = g3d[S12]*uu1 + g3d[S22]*uu2 + g3d[S23]*uu3;
+  Real uu_3 = g3d[S13]*uu1 + g3d[S23]*uu2 + g3d[S33]*uu3;
+  Real usq = uu_1*uu1 + uu_2*uu2 + uu_3*uu3;
+  Real Wsq = 1.0 + usq;
+  Real W = sqrt(Wsq);
+  // Get the 3-velocity.
+  Real v_1 = uu_1/W;
+  Real v_2 = uu_2/W;
+  Real v_3 = uu_3/W;
 
-  // Get the four-velocity.
-  Real u0 = W/alpha;
-  Real u1 = uu1 - W * alpha * gu(I01, i);
-  Real u2 = uu2 - W * alpha * gu(I02, i);
-  Real u3 = uu3 - W * alpha * gu(I03, i);
-  // Lower the four-velocity.
-  Real u_0 = gd(I00,i)*u0 + gd(I01,i)*u1 + gd(I02,i)*u2 + gd(I03, i)*u3;
-  Real u_1 = gd(I01,i)*u0 + gd(I11,i)*u1 + gd(I12,i)*u2 + gd(I13, i)*u3;
-  Real u_2 = gd(I02,i)*u0 + gd(I12,i)*u1 + gd(I22,i)*u2 + gd(I23, i)*u3;
-  Real u_3 = gd(I03,i)*u0 + gd(I13,i)*u1 + gd(I23,i)*u2 + gd(I33, i)*u3;
-
-  // Get the four-magnetic field.
-  Real b0 = gd(I01,i)*u0*bb1 + gd(I02,i)*u0*bb2 + gd(I03,i)*u0*bb3
-          + gd(I11,i)*u1*bb1 + gd(I12,i)*u1*bb2 + gd(I13,i)*u1*bb3
-          + gd(I12,i)*u2*bb1 + gd(I22,i)*u2*bb2 + gd(I23,i)*u2*bb3
-          + gd(I13,i)*u3*bb1 + gd(I23,i)*u3*bb2 + gd(I33,i)*u3*bb3;
-  Real b1 = (bb1 + b0*u1)/u0;
-  Real b2 = (bb2 + b0*u2)/u0;
-  Real b3 = (bb3 + b0*u3)/u0;
-  // Lower the magnetic field.
-  Real b_0 = gd(I00,i)*b0 + gd(I01,i)*b1 + gd(I02,i)*b2 + gd(I03,I)*b3;
-  Real b_1 = gd(I01,i)*b0 + gd(I11,i)*b1 + gd(I12,i)*b2 + gd(I13,I)*b3;
-  Real b_2 = gd(I02,i)*b0 + gd(I12,i)*b1 + gd(I22,i)*b2 + gd(I23,I)*b3;
-  Real b_3 = gd(I03,i)*b0 + gd(I13,i)*b1 + gd(I23,i)*b2 + gd(I33,I)*b3;
-  // Get the square of the field.
-  Real b_sq = b0*b_0 + b1*b_1 + b2*b_2 + b3*b_3;
+  // For the magnetic field contribution, we need to find
+  // B_i, B^2, and B^i*v_i.
+  Real bb_1 = g3d[S11]*bb1 + g3d[S12]*bb2 + g3d[S13]*bb3;
+  Real bb_2 = g3d[S12]*bb1 + g3d[S22]*bb2 + g3d[S23]*bb3;
+  Real bb_3 = g3d[S13]*bb1 + g3d[S23]*bb2 + g3d[S33]*bb3;
+  Real Bsq = bb1*bb_1 + bb2*bb_2 + bb3*bb_3;
+  Real Bv = bb1*v_1 + bb2*v_2 + bb3*v_3;
 
   // Some utility quantities that will be helpful.
-  const Real mb = eos->GetBaryonMass();
-  Real Wsq = W*W;
+  const Real mb = peos->GetBaryonMass();
 
   // Extract the conserved variables
   Real &D = cons(IDN, k, j ,i); // Relativistic density
@@ -158,17 +158,18 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
 
   // Set the conserved quantities.
   // Total enthalpy density
-  Real H = rho*eos->GetEnthalpy(rho/mb, t, Y)/mb;
-  Real HW = H*W;
+  Real H = rho*peos->GetEnthalpy(rho/mb, t, Y)/mb;
+  Real HWsq = H*Wsq;
   D = sdetg*rho*W;
   for (int s = 0; s < n_species; s++) {
     cons(IYD + s, k, j, i) = D*Y[s];
   }
-  Sx = sdetg*HW*u_1;
-  Sy = sdetg*HW*u_2;
-  Sz = sdetg*HW*u_3;
-  tau = sdetg*(HW*W - p - D);
+  Real HWsqpb = HWsq + Bsq;
+  Sx = sdetg*(HWsqpb*v_1 - Bv*bb_1);
+  Sy = sdetg*(HWsqpb*v_2 - Bv*bb_2);
+  Sy = sdetg*(HWsqpb*v_3 - Bv*bb_3);
+  tau = sdetg*(HWsqpb - p - 0.5*(Bv*Bv + Bsq/Wsq));
 }
-
+// }}}
 
 #endif

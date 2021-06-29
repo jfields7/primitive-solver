@@ -36,7 +36,10 @@ eos_idealgas : $(OBJ_FILES)
 error_resetfloor : $(OBJ_FILE)
 	$(call make_test,error,test_resetfloor)
 
-tests: dirs eos_idealgas error_resetfloor
+primitive_idealgas : $(OBJ_FILE)
+	$(call make_test,primitive,test_primitive_idealgas)
+
+tests: dirs eos_idealgas error_resetfloor primitive_idealgas
 
 clean:
 	rm -rf $(OBJ_DIR)*
@@ -45,4 +48,5 @@ clean:
 run: dirs tests
 	cd bin; \
 	./test_idealgas; \
-	./test_resetfloor
+	./test_resetfloor; \
+  ./test_primitive_idealgas
