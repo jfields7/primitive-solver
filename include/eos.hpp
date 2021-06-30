@@ -35,7 +35,7 @@ template <typename EOSPolicy, typename ErrorPolicy>
 class EOS : public EOSPolicy, public ErrorPolicy {
   private:
     // EOSPolicy member functions
-    using EOSPolicy::Temperature;
+    using EOSPolicy::TemperatureFromE;
     using EOSPolicy::TemperatureFromP;
     using EOSPolicy::Energy;
     using EOSPolicy::Pressure;
@@ -68,7 +68,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       T_atm = 1.0;
     }
 
-    //! \fn Real GetTemperature(Real n, Real e, Real *Y)
+    //! \fn Real GetTemperatureFromE(Real n, Real e, Real *Y)
     //  \brief Calculate the temperature from number density, energy density, and
     //         particle fractions.
     //
@@ -76,8 +76,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] e  The energy density
     //  \param[in] Y  An array of particle fractions, expected to be of size n_species.
     //  \return The temperature according to the EOS.
-    inline Real GetTemperature(Real n, Real e, Real *Y) {
-      return Temperature(n, e, Y);
+    inline Real GetTemperatureFromE(Real n, Real e, Real *Y) {
+      return TemperatureFromE(n, e, Y);
     }
 
     //! \fn Real GetTemperatureFromP(Real n, Real p, Real *Y)
@@ -152,13 +152,13 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn Real GetSpecificEnergy(Real n, Real T, Real *Y)
-    //  \brief Get the energy per baryon from the number density, temperature,
+    //  \brief Get the energy per mass from the number density, temperature,
     //         and particle fractions.
     //
     //  \param[in] n  The number density
     //  \param[in] T  The temperature
     //  \param[in] Y  An array of size n_species of the particle fractions.
-    //  \return The energy per baryon for the EOS.
+    //  \return The specific energy for the EOS.
     inline Real GetSpecificEnergy(Real n, Real T, Real *Y) {
       return SpecificEnergy(n, T, Y);
     }

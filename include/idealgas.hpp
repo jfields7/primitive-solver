@@ -24,7 +24,7 @@ class IdealGas{
     IdealGas();
 
     /// Calculate the temperature using the ideal gas law.
-    Real Temperature(Real n, Real e, Real *Y);
+    Real TemperatureFromE(Real n, Real e, Real *Y);
 
     /// Calculate the temperature using the ideal gas law.
     Real TemperatureFromP(Real n, Real p, Real *Y);

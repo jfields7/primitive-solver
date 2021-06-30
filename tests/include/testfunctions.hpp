@@ -10,7 +10,7 @@ template<typename EOSPolicy, typename ErrorPolicy>
 bool TestTemperatureFromEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, 
 			Real n, Real T, Real *Y, const Real tol) {
   Real e = eos->GetEnergy(n, T, Y);
-  Real T2 = eos->GetTemperature(n, e, Y);
+  Real T2 = eos->GetTemperatureFromE(n, e, Y);
 
   Real err = GetError(T, T2);
   if (err > tol) {

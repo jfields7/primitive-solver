@@ -16,7 +16,7 @@ IdealGas::IdealGas() {
   mb = 1.0;
 }
 
-Real IdealGas::Temperature(Real n, Real e, Real *Y) {
+Real IdealGas::TemperatureFromE(Real n, Real e, Real *Y) {
   return gammam1*(e - mb*n)/n;
 }
 
