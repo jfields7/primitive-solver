@@ -40,6 +40,10 @@ Real IdealGas::Enthalpy(Real n, Real T, Real *Y) {
   return mb + gamma/gammam1*T;
 }
 
+Real IdealGas::MinimumEnthalpy() {
+  return mb;
+}
+
 Real IdealGas::SoundSpeed(Real n, Real T, Real *Y) {
   return sqrt(gamma*gammam1*T/(gammam1*mb + gamma*T));
 }

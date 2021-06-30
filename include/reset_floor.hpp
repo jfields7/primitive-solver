@@ -16,6 +16,7 @@ class ResetFloor {
   protected:
     Real n_atm;
     Real T_atm;
+    Real v_max;
 
     /// Constructor
     ResetFloor();

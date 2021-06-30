@@ -28,11 +28,51 @@ class PrimitiveSolver {
     /// during implementation seems both
     /// unlikely and dangerous.
     EOS<EOSPolicy, ErrorPolicy> *const peos;
+    
+    /// The number of separate particle species in the EOS.
     const int n_species;
+
+    /// The minimum enthalpy for the EOS.
+    Real min_h;
+
+    //! \brief function for the upper bound of the root
+    //
+    //  The upper bound is the solution to the function
+    //  \f$\mu\sqrt{h_0^2 + \bar{r}^2(\mu)} - 1 = 0\f$
+    //
+    //  \param[out] f    The value of the root function at mu
+    //  \param[out] df   The derivative of the root function
+    //  \param[in   mu   The guess for the root
+    //  \param[in]  bsq  The square magnitude of the magnetic field
+    //  \param[in]  rsq  The square magnitude of the specific momentum S/D
+    //  \param[in]  rbsq The square of the product \f$r\cdot b\f$
+    //  \param[in]  h_min The minimum enthalpy
+    static void UpperRoot(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real h_min);
+
+    //! \brief master function for the root solve
+    //
+    //  The root solve is based on the master function
+    //  \f$ f(\mu) = \mu - \hat{mu}(\mu).
+    //
+    //  \param[in]  mu   The guess for the root
+    //  \param[in]  D    The relativistic density
+    //  \param[in]  q    The specific tau variable tau/D
+    //  \param[in]  bsq  The square magnitude of the magnetic field
+    //  \param[in]  rsq  The square magnitude of the specific momentum S/D
+    //  \param[in]  rbsq The square of the product \f$r\cdot b\f$
+    //  \param[in]  Y    The vector of particle fractions
+    //  \param[in]  peos The pointer to the EOS
+    //  \param[out] n    The resulting estimate for n
+    //  \param[out] T    The resulting estimate for T
+    //  \param[out] P    The resulting estimate for P
+    //  
+    //  \return f evaluated at mu for the given constants.
+    static Real RootFunction(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
+        EOS<EOSPolicy, ErrorPolicy> *const peos, Real* n, Real* T, Real* P);
   public:
     /// Constructor
     PrimitiveSolver(EOS<EOSPolicy, ErrorPolicy> *eos) : peos(eos), n_species(eos->GetNSpecies()) {
-      
+      min_h = (peos->GetMinimumEnthalpy())/(peos->GetBaryonMass());
     }
 
     /// Destructor
@@ -77,6 +117,72 @@ class PrimitiveSolver {
     }
 };
 
+// UpperRoot {{{
+template<typename EOSPolicy, typename ErrorPolicy>
+void PrimitiveSolver<EOSPolicy, ErrorPolicy>::UpperRoot(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real min_h) {
+  const Real x = 1.0/(1.0 + mu*bsq);
+  const Real xsq = x*x;
+  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+  const Real dis = std::sqrt(min_h*min_h + rbarsq);
+  const Real dx = -bsq*xsq;
+  const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
+  f = mu*dis - 1.0;
+  df = dis + mu*drbarsq/(2.0*dis);
+}
+// }}}
+
+// RootFunction {{{
+template<typename EOSPolicy, typename ErrorPolicy>
+Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
+      EOS<EOSPolicy, ErrorPolicy> *const peos, Real* n, Real* T, Real* P) {
+  // We need to get some utility quantities first.
+  const Real x = 1.0/(1.0 + mu*bsq);
+  const Real xsq = x*x;
+  const Real musq = mu*mu;
+  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+  const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq*rbsq);
+  const Real mb = peos->GetBaryonMass();
+
+  // Now we can estimate the velocity.
+  const Real v_max = peos->GetMaxVelocity();
+  const Real vhatsq = std::fmin(musq*rbarsq, v_max*v_max);
+
+  // Using the velocity estimate, predict the Lorentz factor.
+  const Real What = 1.0/std::sqrt(1.0 - vhatsq);
+
+  // Now estimate the number density.
+  Real rhohat = D/What;
+  Real nhat = rhohat/mb;
+  // TODO: Limit nhat to a physical regime.
+
+  // Estimate the energy density.
+  Real eoverD = qbar - mu*rbarsq + 1.0;
+  Real ehat = D*(qbar - mu*rbarsq + 1.0);
+  // TODO: Limit ehat to a physical regime.
+
+  // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
+  Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
+  Real Phat = peos->GetPressure(nhat, That, Y);
+  Real hhat = peos->GetEnthalpy(nhat, That, Y)/mb;
+  // An alternative estimate for enthalpy which may be useful.
+  // Real hhat = q + Phat/D + 1.0 - bsq + 0.5*(bsq/(What*What) + rbsq)
+
+  // Now we can get two different estimates for nu = h/W.
+  Real nu_a = hhat/What;
+  Real nu_b = eoverD + Phat/D;
+  Real nuhat = std::fmax(nu_a, nu_b);
+
+  // Finally, we can get an estimate for muhat.
+  Real muhat = 1.0/(nuhat + mu*rbarsq);
+
+  *n = nhat;
+  *T = That;
+  *P = Phat;
+
+  return mu - muhat;
+}
+// }}}
+
 // ConToPrim {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
@@ -88,7 +194,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
                                gd(I22, i), gd(I23, i), gd(I33, i)};
   const Real ialphasq = -gu(I00, i);
   const Real alphasq = -1.0/ialphasq; // Lapse squared
-  const Real beta_u[3] = {gu(I01, i)*alphasq, gu(I02, i)*alphasq, gu(I03, i)*alphasq}; // Shift squared
+  const Real beta_u[3] = {gu(I01, i)*alphasq, gu(I02, i)*alphasq, gu(I03, i)*alphasq}; // Shift vector
   const Real g3u[NSPMETRIC] = {gu(I11, i) + beta_u[0]*beta_u[0]*ialphasq,
                                gu(I12, i) + beta_u[0]*beta_u[1]*ialphasq,
                                gu(I13, i) + beta_u[0]*beta_u[2]*ialphasq,
@@ -111,19 +217,20 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
     Y[s] = cons(IYD + s, k, j, i)/cons(IDN, k, j, i);
   }
 
+  // TODO
   // If D is below the atmosphere, we need to do whatever
   // the EOSPolicy wants us to do.
 
   // Calculate some utility quantities.
-  const Real b_u[3] = {B_u[0]/D, B_u[1]/D, B_u[2]/D};
-  const Real r_d[3] = {S_d[0]/D, S_d[1]/D, S_d[2]/D};
-  const Real r_u[3];
+  Real b_u[3] = {B_u[0]/D, B_u[1]/D, B_u[2]/D};
+  Real r_d[3] = {S_d[0]/D, S_d[1]/D, S_d[2]/D};
+  Real r_u[3];
   RaiseForm(r_u, r_d, g3u);
-  const Real rsqr   = Contract(r_u, r_d);
-  const Real rb     = Contract(b_u, r_d);
-  const Real rbsqr  = rb*rb;
-  const Real bsqr   = SquareVector(b_u, g3d);
-  const Real q      = tau/D;
+  Real rsqr   = Contract(r_u, r_d);
+  Real rb     = Contract(b_u, r_d);
+  Real rbsqr  = rb*rb;
+  Real bsqr   = SquareVector(b_u, g3d);
+  Real q      = tau/D;
 
   // Make sure there are no NaNs at this point.
   if (!std::isfinite(D) || !std::isfinite(rsqr) || !std::isfinite(q) ||
@@ -137,7 +244,49 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
     }
   }
 
+  // TODO
   // Make sure that the magnetic field is physical.
+  
+  // Bracket the root.
+  Real mul = 0.0;
+  Real muh = 1.0/min_h;
+  // Check if a tighter upper bound exists.
+  if(rsqr > min_h*min_h) {
+    // We don't need the bound to be that tight, so we reduce
+    // the accuracy of the root solve for speed reasons.
+    NumTools::Root::tol = 1e-3;
+    NumTools::Root::iterations = 10;
+    bool result = NumTools::Root::newton_raphson(&UpperRoot, muh, bsqr, rsqr, rbsqr, min_h);
+    // Scream if the bracketing failed.
+    if (!result) {
+      return false;
+    }
+  }
+
+  // TODO: There's a corner case here that needs to be checked.
+  
+  // Do the root solve.
+  // TODO: This should be done with something like TOMS748 once it's
+  // available.
+  Real n, P, T, mu;
+  bool result = NumTools::Root::false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
+  if (!result) {
+    return false;
+  }
+
+  // Retrieve the primitive variables.
+  prim(IDN, k, j, i) = n*peos->GetBaryonMass();
+  prim(IPR, k, j, i) = P;
+  prim(ITM, k, j, i) = T;
+  // Before we retrieve the velocity, we need to raise S.
+  Real S_u[3] = {0.0};
+  RaiseForm(S_u, S_d, g3u);
+  // Now we can get Wv.
+  prim(IVX, k, j, i) = S_u[0]*mu;
+  prim(IVY, k, j, i) = S_u[1]*mu;
+  prim(IVZ, k, j, i) = S_u[2]*mu;
+
+  // TODO: We probably need to check here for some physical violations.
 
   return true;
 }

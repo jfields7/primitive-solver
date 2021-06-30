@@ -14,6 +14,7 @@ class DoNothing {
   protected:
     Real n_atm;
     Real T_atm;
+    Real v_max;
 
     bool PrimitiveFloor(Real& n, Real v[3], Real& t) {return false;}
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {return false;}

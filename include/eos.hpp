@@ -13,6 +13,7 @@
 //    Real Pressure(Real n, Real T, Real *Y)
 //    Real Entropy(Real n, Real T, Real *Y)
 //    Real Enthalpy(Real n, Real T, Real *Y)
+//    Real MinimumEnthalpy()
 //    Real SoundSpeed(Real n, Real T, Real *Y)
 //    Real SpecificEnergy(Real n, Real T, Real *Y)
 //  And it must also have the following protected member variables:
@@ -43,6 +44,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::Enthalpy;
     using EOSPolicy::SoundSpeed;
     using EOSPolicy::SpecificEnergy;
+    using EOSPolicy::MinimumEnthalpy;
 
     // EOSPolicy member variables
     // The number of particle species used by the EOS.
@@ -57,15 +59,18 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     // ErrorPolicy member variables
     using ErrorPolicy::n_atm;
     using ErrorPolicy::T_atm;
+    using ErrorPolicy::v_max;
 
   public:
     //! \fn EOS()
     //  \brief Constructor for the EOS. It sets a default value for the floor.
     //
-    //  n_atm gets fixed to 1e-10, and T_atm is set to 1.0.
+    //  n_atm gets fixed to 1e-10, and T_atm is set to 1.0. v_max is fixed to 
+    //  1.0e - 1e15.
     EOS() {
       n_atm = 1e-10;
       T_atm = 1.0;
+      v_max = 1.0 - 1e-15;
     }
 
     //! \fn Real GetTemperatureFromE(Real n, Real e, Real *Y)
@@ -137,6 +142,14 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \return The enthalpy per baryon for this EOS.
     inline Real GetEnthalpy(Real n, Real T, Real *Y) {
       return Enthalpy(n, T, Y);
+    }
+
+    //! \fn Real GetMinimumEnthalpy()
+    //  \brief Get the global minimum for enthalpy per baryon from the EOS.
+    //
+    //  \return the minimum enthalpy per baryon.
+    inline Real GetMinimumEnthalpy() {
+      return MinimumEnthalpy();
     }
 
     //! \fn Real GetSoundSpeed(Real n, Real T, Real *Y)
@@ -249,6 +262,22 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //         Also adjusts the tau floor to be consistent.
     inline void SetTemperatureFloor(Real floor) {
       T_atm = (floor >= 0.0) ? floor : 0.0;
+    }
+
+    //! \fn Real GetMaxVelocity() const
+    //  \brief Get the maximum velocity according to the ErrorPolicy.
+    inline Real GetMaxVelocity() const {
+      return v_max;
+    }
+
+    //! \fn void SetMaxVelocity(Real v)
+    //  \brief Set the maximum velocity in the ErrorPolicy.
+    //
+    //  The velocity will be automatically restricted to the range [0,1 - 1e-15].
+    //
+    //  \param[in] v The maximum velocity
+    inline void SetMaxVelocity(Real v) {
+      v_max = (v >= 0) ? ((v <= 1.0-1e-15) ? v : 1.0e-15) : 0.0;
     }
 };
 

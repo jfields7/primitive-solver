@@ -42,6 +42,9 @@ class IdealGas{
     /// Calculate the enthalpy per baryon using the ideal gas law.
     Real Enthalpy(Real n, Real T, Real *Y);
 
+    /// Get the minimum enthalpy per baryon according to the ideal gas law.
+    Real MinimumEnthalpy();
+
     /// Calculate the sound speed for an ideal gas.
     Real SoundSpeed(Real n, Real T, Real *Y);
 
