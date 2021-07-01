@@ -10,6 +10,8 @@
 //  Kastaun et al., Phys. Rev. D 103, 023018 (2021).
 
 #include <cmath>
+// FIXME: Debug only!
+#include <iostream>
 
 #include <numtoolsroot.h>
 
@@ -157,15 +159,13 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
 
   // Estimate the energy density.
   Real eoverD = qbar - mu*rbarsq + 1.0;
-  Real ehat = D*(qbar - mu*rbarsq + 1.0);
+  Real ehat = D*eoverD;
   // TODO: Limit ehat to a physical regime.
 
   // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
   Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
   Real Phat = peos->GetPressure(nhat, That, Y);
   Real hhat = peos->GetEnthalpy(nhat, That, Y)/mb;
-  // An alternative estimate for enthalpy which may be useful.
-  // Real hhat = q + Phat/D + 1.0 - bsq + 0.5*(bsq/(What*What) + rbsq)
 
   // Now we can get two different estimates for nu = h/W.
   Real nu_a = hhat/What;
@@ -178,6 +178,13 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   *n = nhat;
   *T = That;
   *P = Phat;
+
+  // FIXME: Debug only!
+  std::cout << "    D   = " << D << "\n";
+  std::cout << "    q   = " << q << "\n";
+  std::cout << "    bsq = " << bsq << "\n";
+  std::cout << "    rsq = " << rsq << "\n";
+  std::cout << "    rbsq = " << rbsq << "\n";
 
   return mu - muhat;
 }
@@ -268,6 +275,8 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   // Do the root solve.
   // TODO: This should be done with something like TOMS748 once it's
   // available.
+  NumTools::Root::tol = 1e-15;
+  NumTools::Root::iterations = 30;
   Real n, P, T, mu;
   bool result = NumTools::Root::false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   if (!result) {
@@ -275,16 +284,18 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   }
 
   // Retrieve the primitive variables.
-  prim(IDN, k, j, i) = n*peos->GetBaryonMass();
+  Real rho = n*peos->GetBaryonMass();
+  Real murho = mu/rho;
+  prim(IDN, k, j, i) = rho;
   prim(IPR, k, j, i) = P;
   prim(ITM, k, j, i) = T;
   // Before we retrieve the velocity, we need to raise S.
   Real S_u[3] = {0.0};
   RaiseForm(S_u, S_d, g3u);
   // Now we can get Wv.
-  prim(IVX, k, j, i) = S_u[0]*mu;
-  prim(IVY, k, j, i) = S_u[1]*mu;
-  prim(IVZ, k, j, i) = S_u[2]*mu;
+  prim(IVX, k, j, i) = S_u[0]*murho;
+  prim(IVY, k, j, i) = S_u[1]*murho;
+  prim(IVZ, k, j, i) = S_u[2]*murho;
 
   // TODO: We probably need to check here for some physical violations.
 
@@ -353,8 +364,8 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
   Real HWsqpb = HWsq + Bsq;
   Sx = sdetg*(HWsqpb*v_d[0] - Bv*B_d[0]);
   Sy = sdetg*(HWsqpb*v_d[1] - Bv*B_d[1]);
-  Sy = sdetg*(HWsqpb*v_d[2] - Bv*B_d[2]);
-  tau = sdetg*(HWsqpb - p - 0.5*(Bv*Bv + Bsq/Wsq));
+  Sz = sdetg*(HWsqpb*v_d[2] - Bv*B_d[2]);
+  tau = sdetg*(HWsqpb - p - 0.5*(Bv*Bv + Bsq/Wsq)) - D;
 }
 // }}}
 

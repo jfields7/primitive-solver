@@ -86,7 +86,11 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Athen
   Real T_old = prim(ITM, k, j, i);
 
   ps->PrimToCon(prim, cons, bu, gd, gu, i, j, k);
-  ps->ConToPrim(prim, cons, bu, gd, gu, i, j, k);
+  bool success = ps->ConToPrim(prim, cons, bu, gd, gu, i, j, k);
+
+  if(!success) {
+    std::cout << "An error occurred during the primitive solve.\n";
+  }
 
   Real rho_new = prim(IDN, k, j, i);
   Real Wvx_new = prim(IVX, k, j, i);
@@ -102,7 +106,6 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Athen
   Real err_p = GetError(p_old, p_new);
   Real err_T = GetError(T_old, T_new);
 
-  bool success = true;
   if (err_rho > tol) {
     std::cout << "  rho\n";
     PrintError(rho_old, rho_new);
