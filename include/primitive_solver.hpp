@@ -142,7 +142,7 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real xsq = x*x;
   const Real musq = mu*mu;
   const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
-  const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq*rbsq);
+  const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
   const Real mb = peos->GetBaryonMass();
 
   // Now we can estimate the velocity.
@@ -229,7 +229,8 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   // the EOSPolicy wants us to do.
 
   // Calculate some utility quantities.
-  Real b_u[3] = {B_u[0]/D, B_u[1]/D, B_u[2]/D};
+  Real sqrtD = std::sqrt(D);
+  Real b_u[3] = {B_u[0]/sqrtD, B_u[1]/sqrtD, B_u[2]/sqrtD};
   Real r_d[3] = {S_d[0]/D, S_d[1]/D, S_d[2]/D};
   Real r_u[3];
   RaiseForm(r_u, r_d, g3u);
