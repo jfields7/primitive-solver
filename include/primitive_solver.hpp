@@ -127,7 +127,8 @@ void PrimitiveSolver<EOSPolicy, ErrorPolicy>::UpperRoot(Real &f, Real &df, Real 
   const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
   const Real dis = std::sqrt(min_h*min_h + rbarsq);
   const Real dx = -bsq*xsq;
-  const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
+  //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
+  const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
   f = mu*dis - 1.0;
   df = dis + mu*drbarsq/(2.0*dis);
 }
@@ -141,8 +142,16 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real x = 1.0/(1.0 + mu*bsq);
   const Real xsq = x*x;
   const Real musq = mu*mu;
-  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
-  const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
+  const Real den = 1.0 + mu*bsq;
+  const Real mux = mu/den;
+  const Real muxsq = mux/den;
+  const Real musqxsq = muxsq*muxsq;
+  //const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+  // An alternative calculation of rbarsq that may be more accurate.
+  //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
+  const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
+  //const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
+  const Real qbar = q - 0.5*(bsq + musqxsq*(bsq*rsq - rbsq));
   const Real mb = peos->GetBaryonMass();
 
   // Now we can estimate the velocity.
@@ -150,10 +159,11 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real vhatsq = std::fmin(musq*rbarsq, v_max*v_max);
 
   // Using the velocity estimate, predict the Lorentz factor.
-  const Real What = 1.0/std::sqrt(1.0 - vhatsq);
+  //const Real What = 1.0/std::sqrt(1.0 - vhatsq);
+  const Real iWhat = std::sqrt(1.0 - vhatsq);
 
   // Now estimate the number density.
-  Real rhohat = D/What;
+  Real rhohat = D*iWhat;
   Real nhat = rhohat/mb;
   // TODO: Limit nhat to a physical regime.
 
@@ -168,7 +178,7 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   Real hhat = peos->GetEnthalpy(nhat, That, Y)/mb;
 
   // Now we can get two different estimates for nu = h/W.
-  Real nu_a = hhat/What;
+  Real nu_a = hhat*iWhat;
   Real nu_b = eoverD + Phat/D;
   Real nuhat = std::fmax(nu_a, nu_b);
 
@@ -180,11 +190,11 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   *P = Phat;
 
   // FIXME: Debug only!
-  std::cout << "    D   = " << D << "\n";
+  /*std::cout << "    D   = " << D << "\n";
   std::cout << "    q   = " << q << "\n";
   std::cout << "    bsq = " << bsq << "\n";
   std::cout << "    rsq = " << rsq << "\n";
-  std::cout << "    rbsq = " << rbsq << "\n";
+  std::cout << "    rbsq = " << rbsq << "\n";*/
 
   return mu - muhat;
 }
@@ -200,14 +210,14 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   const Real g3d[NSPMETRIC] = {gd(I11, i), gd(I12, i), gd(I13, i),
                                gd(I22, i), gd(I23, i), gd(I33, i)};
   const Real ialphasq = -gu(I00, i);
-  const Real alphasq = -1.0/ialphasq; // Lapse squared
+  const Real alphasq = 1.0/ialphasq; // Lapse squared
   const Real beta_u[3] = {gu(I01, i)*alphasq, gu(I02, i)*alphasq, gu(I03, i)*alphasq}; // Shift vector
   const Real g3u[NSPMETRIC] = {gu(I11, i) + beta_u[0]*beta_u[0]*ialphasq,
                                gu(I12, i) + beta_u[0]*beta_u[1]*ialphasq,
                                gu(I13, i) + beta_u[0]*beta_u[2]*ialphasq,
-                               gu(I22, i) + beta_u[2]*beta_u[2]*ialphasq,
-                               gu(I23, i) + beta_u[2]*beta_u[3]*ialphasq,
-                               gu(I33, i) + beta_u[3]*beta_u[3]*ialphasq};
+                               gu(I22, i) + beta_u[1]*beta_u[1]*ialphasq,
+                               gu(I23, i) + beta_u[1]*beta_u[2]*ialphasq,
+                               gu(I33, i) + beta_u[2]*beta_u[2]*ialphasq};
 
   // Get the inverse volume element of the 3-metric.
   Real isdetg = 1.0/std::sqrt(GetDeterminant(g3d));
@@ -217,7 +227,8 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   Real S_d[3] = {cons(IM1, k, j, i)*isdetg, cons(IM2, k, j, i)*isdetg, cons(IM3, k, j, i)*isdetg};
   Real tau = cons(IEN, k, j, i)*isdetg;
   // FIXME: Confirm that the magnetic field is densitized as well.
-  Real B_u[3] = {b(IB1, k, j, i)*isdetg, b(IB2, k, j, i)*isdetg, b(IB3, k, j, i)*isdetg};
+  //Real B_u[3] = {b(IB1, k, j, i)*isdetg, b(IB2, k, j, i)*isdetg, b(IB3, k, j, i)*isdetg};
+  Real B_u[3] = {b(IB1, k, j, i), b(IB2, k, j, i), b(IB3, k, j, i)};
   // Extract the particle fractions.
   Real Y[n_species] = {0.0};
   for (int s = 0; s < n_species; s++) {
@@ -260,14 +271,18 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   Real muh = 1.0/min_h;
   // Check if a tighter upper bound exists.
   if(rsqr > min_h*min_h) {
+    Real mu = 0.0;
     // We don't need the bound to be that tight, so we reduce
     // the accuracy of the root solve for speed reasons.
     NumTools::Root::tol = 1e-3;
     NumTools::Root::iterations = 10;
-    bool result = NumTools::Root::newton_raphson(&UpperRoot, muh, bsqr, rsqr, rbsqr, min_h);
+    bool result = NumTools::Root::newton_raphson(&UpperRoot, mu, bsqr, rsqr, rbsqr, min_h);
     // Scream if the bracketing failed.
     if (!result) {
       return false;
+    }
+    else {
+      muh = mu;
     }
   }
 
