@@ -126,8 +126,8 @@ void StrongVelocity(AthenaArray<Real>& prim, int nx, int ny, int nz) {
   for (int k = 0; k < nz; k++) {
     for (int j = 0; j < ny; j++) {
       for (int i = 0; i < nx; i++) {
-        prim(IVX, k, j, i) = 10.0;
-        prim(IVY, k, j, i) = 10.0;
+        prim(IVX, k, j, i) = 15.0;
+        prim(IVY, k, j, i) = 5.0;
         prim(IVZ, k, j, i) = 10.0;
       }
     }
@@ -154,9 +154,9 @@ void StrongField(AthenaArray<Real>& bu, int nx, int ny, int nz) {
   for (int k = 0; k < nz; k++) {
     for (int j = 0; j < ny; j++) {
       for (int i = 0; i < nx; i++) {
-        bu(IB1, k, j, i) = 50.0;
-        bu(IB2, k, j, i) = 50.0;
-        bu(IB3, k, j, i) = 50.0;
+        bu(IB1, k, j, i) = 20.0;
+        bu(IB2, k, j, i) = 40.0;
+        bu(IB3, k, j, i) = 30.0;
       }
     }
   }

@@ -145,13 +145,11 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real den = 1.0 + mu*bsq;
   const Real mux = mu/den;
   const Real muxsq = mux/den;
-  const Real musqxsq = muxsq*muxsq;
-  //const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
   // An alternative calculation of rbarsq that may be more accurate.
   //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
-  const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
-  //const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
-  const Real qbar = q - 0.5*(bsq + musqxsq*(bsq*rsq - rbsq));
+  //const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
+  const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
   const Real mb = peos->GetBaryonMass();
 
   // Now we can estimate the velocity.
@@ -301,7 +299,9 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
 
   // Retrieve the primitive variables.
   Real rho = n*peos->GetBaryonMass();
-  Real murho = mu/rho;
+  Real rbmu = rb*mu;
+  Real W = D/rho;
+  Real Wmux = W*mu/(1.0 + mu*bsqr);
   prim(IDN, k, j, i) = rho;
   prim(IPR, k, j, i) = P;
   prim(ITM, k, j, i) = T;
@@ -309,9 +309,9 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   Real S_u[3] = {0.0};
   RaiseForm(S_u, S_d, g3u);
   // Now we can get Wv.
-  prim(IVX, k, j, i) = S_u[0]*murho;
-  prim(IVY, k, j, i) = S_u[1]*murho;
-  prim(IVZ, k, j, i) = S_u[2]*murho;
+  prim(IVX, k, j, i) = Wmux*(r_u[0] + rbmu*b_u[0]);
+  prim(IVY, k, j, i) = Wmux*(r_u[1] + rbmu*b_u[1]);
+  prim(IVZ, k, j, i) = Wmux*(r_u[2] + rbmu*b_u[2]);
 
   // TODO: We probably need to check here for some physical violations.
 
