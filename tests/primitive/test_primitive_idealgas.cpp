@@ -16,12 +16,14 @@
 using namespace Primitive;
 
 // Test functions specific to this particular test suite.
+// TestConstruction {{{
 bool TestConstruction() {
   EOS<IdealGas, DoNothing> eos;
   PrimitiveSolver<IdealGas, DoNothing> ps{&eos};
   const int n_species = eos.GetNSpecies();
   return (&eos == ps.GetEOS() && ps.GetNSpecies() == n_species);
 }
+// }}}
 
 // MinkowskiMetric {{{
 void MinkowskiMetric(AthenaArray<Real>& gd, AthenaArray<Real>& gu, int nx) {
@@ -189,8 +191,23 @@ void StrongField(AthenaArray<Real>& bu, int nx, int ny, int nz) {
 }
 // }}}
 
+// InitializeVariables {{{
+void InitializeVariables(EOS<IdealGas, DoNothing>& eos, AthenaArray<Real>& prim, int nx, int ny, int nz) {
+  Real mb = eos.GetBaryonMass();
+  for (int k = 0; k < nz; k++) {
+    for (int j = 0; j < ny; j++) {
+      for (int i = 0; i < nx; i++) {
+        prim(IDN, k, j, i) = 10.0;
+        prim(ITM, k, j, i) = 5.0;
+        prim(IPR, k, j, i) = eos.GetPressure(prim(IDN, k, j, i)/mb, prim(ITM, k, j, i), nullptr);
+      }
+    }
+  }
+}
+// }}}
+
 int main(int argc, char *argv[]) {
-  UnitTests tester{"Primitive Solver"};
+  UnitTests tester{"Primitive Solver, Ideal Gas"};
 
   // Validate that the primitive solver gets constructed as expected.
   tester.RunTest(&TestConstruction, "Construction Test");
@@ -204,47 +221,40 @@ int main(int argc, char *argv[]) {
   int nx = 5;
   int ny = nx;
   int nz = nx;
+  Real tol = 1e-12;
   prim.NewAthenaArray(7, nx, ny, nz);
   cons.NewAthenaArray(8, nx, ny, nz);
   bu.NewAthenaArray(3, nx, ny, nz);
   gd.NewAthenaArray(NMETRIC, nx);
   gu.NewAthenaArray(NMETRIC, nx);
   Real mb = eos.GetBaryonMass();
-  // Initialize the new variables.
-  for (int k = 0; k < nz; k++) {
-    for (int j = 0; j < ny; j++) {
-      for (int i = 0; i < nx; i++) {
-        prim(IDN, k, j, i) = 10.0;
-        prim(ITM, k, j, i) = 5.0;
-        prim(IPR, k, j, i) = eos.GetPressure(prim(IDN, k, j, i)/mb, prim(ITM, k, j, i), nullptr);
-      }
-    }
-  }
+  // Initialize the new variables on a Minkowski metric.
+  InitializeVariables(eos, prim, nx, ny, nz);
   MinkowskiMetric(gd, gu, nx);
 
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>, 
                  "Conserved to Primitive Test - Flat, Fieldless, Static", 
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test a strong field at zero velocity and curvature.
   StrongField(bu, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Flat, Static, Strong Field",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test a strongly relativistic flow with no field or curvature.
   ZeroField(bu, nx, ny, nz);
   StrongVelocity(prim, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Flat, Fieldless, Relativistic Flow",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test static flow with no field but strong gravity.
   ZeroVelocity(prim, nx, ny, nz);
   SchwarzschildMetric(gd, gu, nx);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Fieldless, Static, Strong Gravity",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test a strongly relativistic flow with a strong field but no curvature.
   StrongField(bu, nx, ny, nz);
@@ -252,27 +262,27 @@ int main(int argc, char *argv[]) {
   MinkowskiMetric(gd, gu, nx);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Flat, Strong Field and Flow",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test a strongly relativistic flow with strong gravity but no magnetic field.
   ZeroField(bu, nx, ny, nz);
   SchwarzschildMetric(gd, gu, nx);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Fieldless, Strong Flow and Gravity",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test a static fluid with strong gravity and a strong magnetic field.
   ZeroVelocity(prim, nx, ny, nz);
   StrongField(bu, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Static, Strong Field and Gravity",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Test a strongly relativistic flow with strong gravity and a strong magnetic field.
   StrongVelocity(prim, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Strong Flow, Field, and Gravity",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Now we need to test how the code behaves in a screwball coordinate system.
   // Static flow, no magnetic field.
@@ -281,26 +291,26 @@ int main(int argc, char *argv[]) {
   ScrewballMinkowskiMetric(gd, gu, nx);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Minkowski, Static and Fieldless",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Strong flow, no magnetic field.
   StrongVelocity(prim, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Minkowski, Strong Flow and Fieldless",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Strong field, no flow.
   ZeroVelocity(prim, nx, ny, nz);
   StrongField(bu, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Minkowski, Static and Strong Flow",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Strong field and flow
   StrongVelocity(prim, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Minkowski, Strong Flow and Field",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   
   // Now we can try the same thing for the Schwarzschild metric.
@@ -309,26 +319,57 @@ int main(int argc, char *argv[]) {
   ScrewballSchwarzschildMetric(gd, gu, nx);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Schwarzschild, Static and Fieldless",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Strong flow, no magnetic field.
   StrongVelocity(prim, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Schwarzschild, Strong Flow and Fieldless",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Strong field, no flow.
   ZeroVelocity(prim, nx, ny, nz);
   StrongField(bu, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Schwarzschild, Static and Strong Flow",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   // Strong field and flow
   StrongVelocity(prim, nx, ny, nz);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Schwarzschild, Strong Flow and Field",
-                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, 1e-10);
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
+
+
+  // Baryon mass consistency tests.
+  // Zero field or flow
+  MinkowskiMetric(gd, gu, nx);
+  ZeroField(bu, nx, ny, nz);
+  ZeroVelocity(prim, nx, ny, nz);
+  eos.SetBaryonMass(10.3);
+  InitializeVariables(eos, prim, nx, ny, nz);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test - Static and Fieldless",
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
+
+  // Relativistic flow, no field
+  StrongVelocity(prim, nx, ny, nz);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test - Strong Flow and Fieldless",
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
+  
+  // Strong field, no flow
+  ZeroVelocity(prim, nx, ny, nz);
+  StrongField(bu, nx, ny, nz);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test - Static and Strong Field",
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
+
+  // Relativistic flow and strong field
+  StrongVelocity(prim, nx, ny, nz);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test - Strong Flow and Field",
+                 &ps, prim, cons, bu, gd, gu, 0, 0, 0, tol);
 
   tester.PrintSummary();
 }
