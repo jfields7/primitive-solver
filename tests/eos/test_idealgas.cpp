@@ -80,6 +80,30 @@ int main(int argc, char *argv[]) {
   tester.RunTest(&TestSpecificEnergy<IdealGas, DoNothing>, "Specific Energy Test",
                  &eos, n, T, Y, tol);
 
+  // A few quantities in the ideal gas depend on the baryon mass. We need to make sure
+  // that these are treated consistently if the baryon mass is not one.
+  eos.SetBaryonMass(1.5);
+
+  // Energy density
+  tester.RunTest(&TestTemperatureFromEnergy<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test -- Energy",
+                 &eos, n, T, Y, tol);
+
+  // Enthalpy
+  tester.RunTest(&TestEnthalpy<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test -- Enthalpy",
+                 &eos, n, T, Y, tol);
+
+  // Specific Energy
+  tester.RunTest(&TestSpecificEnergy<IdealGas, DoNothing>,
+                 "Baryon Mass Consistency Test -- Specific Energy",
+                 &eos, n, T, Y, tol);
+
+  // Sound Speed
+  tester.RunTest(&TestSoundSpeed,
+                 "Baryon Mass Consistency Test -- Sound Speed",
+                 &eos, n, Y, tol);
+
   tester.PrintSummary();
 
   return 0;

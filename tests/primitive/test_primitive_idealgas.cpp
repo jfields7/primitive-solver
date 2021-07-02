@@ -72,13 +72,39 @@ void ScrewballMinkowskiMetric(AthenaArray<Real> gd, AthenaArray<Real> gu, int nx
   gd.ZeroClear();
   gu.ZeroClear();
 
+  // This horribly useless metric corresponds to the equations
+  // a = t - x,
+  // b = x + t + y,
+  // c = y - z,
+  // d = z + y + t.
+  // It's not useful for anything, it just has a really ugly
+  // metric that tests that everything works correctly.
   for (int i = 0; i < nx; i++) {
-    gd(I01, i) = -0.5;
+    /*gd(I01, i) = -0.5;
     gd(I22, i) = 0.5;
     gd(I33, i) = 0.5;
 
     gu(I01, i) = -2.0;
     gu(I22, i) = 2.0;
+    gu(I33, i) = 2.0;*/
+
+    gd(I00, i) = 2.0/9.0;
+    gd(I01, i) = 8.0/9.0;
+    gd(I02, i) = -4.0/9.0;
+    gd(I03, i) = -1.0/9.0;
+    gd(I11, i) = 5.0/9.0;
+    gd(I12, i) = -7.0/9.0;
+    gd(I13, i) = -4.0/9.0;
+    gd(I22, i) = 8.0/9.0;
+    gd(I23, i) = 2.0/9.0;
+    gd(I33, i) = 5.0/9.0;
+    
+    gu(I00, i) = 1.0;
+    gu(I01, i) = 2.0;
+    gu(I02, i) = 2.0;
+    gu(I03, i) = 1.0;
+    gu(I12, i) = 1.0;
+    gu(I22, i) = 3.0;
     gu(I33, i) = 2.0;
   }
 }
