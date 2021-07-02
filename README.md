@@ -25,25 +25,62 @@ EOS<IdealGas, ResetFloor> eos;
 
 In order to align with most EOS tables for neutron stars, an `EOS` object revolves around three thermodynamic variables: number density in the rest frame (`n`), temperature (`T`), and particle density fractions (such as the fraction of electrons, quarks, etc.) (`Y`). The rationale for this is that most EOS tables calculate energy density as functions of `n`, `T`, and `Y`, so any other quantity requires an expensive root find. Other thermodynamic quantities can be calculated using the following functions:
 ```c++
-Real GetEnergy(Real n, Real T, Real *Y) // total fluid energy density
-Real GetPressure(Real n, Real T, Real *Y) // fluid pressure
-Real GetEntropy(Real n, Real T, Real *Y) // entropy per baryon
-Real GetEnthalpy(Real n, Real T, Real *Y) // enthalpy per baryon
-Real GetSoundSpeed(Real n, Real T, Real *Y) // speed of sound in the fluid
-Real GetSpecificEnergy(Real n, Real T, Real *Y) // specific energy
+Real GetEnergy(Real n, Real T, Real *Y); // total fluid energy density
+Real GetPressure(Real n, Real T, Real *Y); // fluid pressure
+Real GetEntropy(Real n, Real T, Real *Y); // entropy per baryon
+Real GetEnthalpy(Real n, Real T, Real *Y); // enthalpy per baryon
+Real GetSoundSpeed(Real n, Real T, Real *Y); // speed of sound in the fluid
+Real GetSpecificEnergy(Real n, Real T, Real *Y); // specific energy
 ```
 
 **Note that the specific entropy and enthalpy returned by `EOS` are per baryon, not per mass.** 
 
 Because the Valencia formulation typically used in GRMHD is based on pressure instead of temperature, two utility functions are provided to calculate the temperature:
 ```c++
-Real GetTemperatureFromE(Real n, Real e, Real *Y) // temperature from energy density
-Real GetTemperatureFromP(Real n, Real p, Real *Y) // temperature from pressure
+Real GetTemperatureFromE(Real n, Real e, Real *Y); // temperature from energy density
+Real GetTemperatureFromP(Real n, Real p, Real *Y); // temperature from pressure
 ```
 
 Additionally, `EOS` also provides functions to access to two member variables:
 ```c++
-Real GetNSpecies() // Number of particle species
-Real GetBaryonMass() // Mass of a baryon as used by the EOS
+Real GetNSpecies(); // Number of particle species
+Real GetBaryonMass(); // Mass of a baryon as used by the EOS
 ```
-Both the number of particle fractions and baryon mass are fixed by the EOS and cannot be changed at runtime in any of the provided EOSes (and user-implemented EOSes should generally maintain this policy).
+Both the number of particle fractions and baryon mass are frequently fixed by the specific EOS, so `EOS` does not provide functionality to change them. Specific EOSes may provide this functionality, but it should be neither expected nor required in the general case.
+
+There is one more function provided by `EOS` that is used specifically by the primitive solver:
+```c++
+Real GetMinimumEnthalpy();
+```
+This function, which should be a constant-time operation, returns the global minimum of the enthalpy per baryon.
+
+## Using the Primitive Solver
+The primitive solver is embedded in a class called `PrimitiveSolver`. Because it must store a pointer to the `EOS` object, it is also a template class:
+```c++
+template<typename EOSPolicy, typename ErrorPolicy> class PrimitiveSolver;
+```
+
+The constructor takes a single argument to an `EOS` pointer, so an instantiation would look something like this:
+```c++
+PrimitiveSolver<IdealGas, ResetFloor> ps(&eos);
+```
+
+Because all the heavy lifting should be done by the `EOS` object itself, `PrimitiveSolver` only has a few member functions:
+```c++
+bool PrimToCon(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
+               AthenaArray<Real>& bu, AthenaArray<Real>& gd,
+               AthenaArray<Real>& gu, int i, int j, int k);
+bool ConToPrim(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
+               AthenaArray<Real>& bu, AthenaArray<Real>& gd,
+               AthenaArray<Real>& gu, int i, int j, int k);
+```
+The `PrimToCon()` function converts a set of primitive variables `prim = (rho, v^i, P, T, Y)` with a magnetic field `bu = B^i` into conserved variables `cons = (D, S_i, tau)`. The `ConToPrim()` function does the inverse. It takes a set of conserved variables and a magnetic field and inverts them to get the primitive variables. In addition to `prim`, `cons`, and `bu`, both functions also require the 4-metric, `gd`, and the inverse 4-metric, `gu`, along with a array indices `i, j, k`. There are a couple notes here:
+1. Note that the conserved variables, in accordance with practices used in most numerical relativity codes, are densitized by a factor of `sqrt(gam)`, where `gam` is the determinant of the 3-metric `gam_ij`. However, the magnetic field should *always* be undensitized when passed to `PrimitiveSolver`.
+2. Though `prim`, `cons`, and `bu` are four-dimensional arrays (variables + 3 spatial dimensions), `gu` and `gd` are only 2-dimensional (variables + 1 spatial dimension). This is due to an oddity in how metrics are currently handled in GR-Athena++, where the metric is extracted at a fixed `j` and `k` index, leaving only a single line in `i`.
+
+Additionally, `PrimitiveSolver` has two functions for accessing constant member variables:
+```c++
+EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const; // Get a pointer to the EOS used by this PrimitiveSolver.
+const int GetNSpecies() const; // Get the number of particle fractions this PrimitiveSolver expects.
+```
+

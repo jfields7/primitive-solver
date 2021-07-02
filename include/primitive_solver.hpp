@@ -34,9 +34,6 @@ class PrimitiveSolver {
     /// The number of separate particle species in the EOS.
     const int n_species;
 
-    /// The minimum enthalpy for the EOS.
-    Real min_h;
-
     //! \brief function for the upper bound of the root
     //
     //  The upper bound is the solution to the function
@@ -74,7 +71,6 @@ class PrimitiveSolver {
   public:
     /// Constructor
     PrimitiveSolver(EOS<EOSPolicy, ErrorPolicy> *eos) : peos(eos), n_species(eos->GetNSpecies()) {
-      min_h = (peos->GetMinimumEnthalpy())/(peos->GetBaryonMass());
     }
 
     /// Destructor
@@ -265,6 +261,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   // Make sure that the magnetic field is physical.
   
   // Bracket the root.
+  Real min_h = peos->GetMinimumEnthalpy()/peos->GetBaryonMass();
   Real mul = 0.0;
   Real muh = 1.0/min_h;
   // Check if a tighter upper bound exists.
