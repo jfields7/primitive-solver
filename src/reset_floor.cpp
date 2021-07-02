@@ -7,6 +7,9 @@ using namespace Primitive;
 
 /// Constructor
 ResetFloor::ResetFloor() {
+  fail_conserved_floor = false;
+  fail_primitive_floor = false;
+  adjust_conserved = true;
 }
 
 /// Floor for the primitive variables

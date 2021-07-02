@@ -18,6 +18,10 @@ class ResetFloor {
     Real T_atm;
     Real v_max;
 
+    bool fail_conserved_floor;
+    bool fail_primitive_floor;
+    bool adjust_conserved;
+
     /// Constructor
     ResetFloor();
 
@@ -26,6 +30,22 @@ class ResetFloor {
 
     /// Floor for conserved variables
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor);
+
+  public:
+    /// Set the failure mode for conserved flooring
+    inline void SetConservedFloorFailure(bool failure) {
+      fail_conserved_floor = failure;
+    }
+
+    /// Set the failure mode for primitive flooring
+    inline void SetPrimitiveFloorFailure(bool failure) {
+      fail_primitive_floor = failure;
+    }
+
+    /// Set whether or not it's okay to adjust the conserved variables.
+    inline void SetAdjustConserved(bool adjust) {
+      adjust_conserved = adjust;
+    }
 };
 
 }; // namespace

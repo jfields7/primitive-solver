@@ -60,6 +60,9 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::n_atm;
     using ErrorPolicy::T_atm;
     using ErrorPolicy::v_max;
+    using ErrorPolicy::fail_conserved_floor;
+    using ErrorPolicy::fail_primitive_floor;
+    using ErrorPolicy::adjust_conserved;
 
   public:
     //! \fn EOS()
@@ -191,15 +194,15 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //! \fn void ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
     //  \brief Apply the floor to the primitive variables.
     //
-    //  \param[in,out] n  The number density
-    //  \param[in,out] vu The velocity vector (contravariant)
-    //  \param[in,out] p  The pressure
-    //  \param[out]    T  The temperature
-    //  \param[in]     Y  An array of size n_species of the particle fractions.
+    //  \param[in,out] n   The number density
+    //  \param[in,out] Wvu The velocity vector (contravariant)
+    //  \param[in,out] p   The pressure
+    //  \param[out]    T   The temperature
+    //  \param[in]     Y   An array of size n_species of the particle fractions.
     //
     //  \return true if the primitives were adjusted, false otherwise.
-    bool ApplyPrimitiveFloor(Real& n, Real v[3], Real& p, Real& T, Real *Y) {
-      bool result = PrimitiveFloor(n, v, T);
+    bool ApplyPrimitiveFloor(Real& n, Real Wvu[3], Real& p, Real& T, Real *Y) {
+      bool result = PrimitiveFloor(n, Wvu, T);
       if (result) {
         p = Pressure(n, T, Y);
       }
@@ -278,6 +281,31 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] v The maximum velocity
     inline void SetMaxVelocity(Real v) {
       v_max = (v >= 0) ? ((v <= 1.0-1e-15) ? v : 1.0e-15) : 0.0;
+    }
+
+    //! \fn const bool IsConservedFlooringFailure() const
+    //  \brief Find out if the EOSPolicy fails flooring the conserved variables.
+    // 
+    // \return true or false
+    inline const bool IsConservedFlooringFailure() const {
+      return fail_conserved_floor;
+    }
+
+    //! \fn const bool IsPrimitiveFlooringFailure() const
+    //  \brief Find out if the EOSPolicy fails flooring the primitive variables.
+    //
+    //  \return true or false
+    inline const bool IsPrimitiveFlooringFailure() const {
+      return fail_primitive_floor;
+    }
+
+    //! \fn const bool KeepPrimAndConConsistent() const
+    //  \brief Find out if the EOSPolicy wants the conserved variables to be
+    //         adjusted to match the primitive variables.
+    //  
+    //  \return true or false
+    inline const bool KeepPrimAndConConsistent() const {
+      return adjust_conserved;
     }
 };
 

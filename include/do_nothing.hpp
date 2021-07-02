@@ -16,6 +16,10 @@ class DoNothing {
     Real T_atm;
     Real v_max;
 
+    const bool fail_conserved_floor = false;
+    const bool fail_primitive_floor = false;
+    const bool adjust_conserved = false;
+
     bool PrimitiveFloor(Real& n, Real v[3], Real& t) {return false;}
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {return false;}
 };

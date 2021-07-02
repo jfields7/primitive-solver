@@ -229,9 +229,12 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
     Y[s] = cons(IYD + s, k, j, i)/cons(IDN, k, j, i);
   }
 
-  // TODO
-  // If D is below the atmosphere, we need to do whatever
-  // the EOSPolicy wants us to do.
+  // Check the conserved variables for consistency and do whatever
+  // the EOSPolicy wants us to.
+  bool floored = peos->ApplyConservedFloor(D, S_d, tau, Y);
+  if (floored && peos->IsConservedFlooringFailure()) {
+    return false;
+  }
 
   // Calculate some utility quantities.
   Real sqrtD = std::sqrt(D);
@@ -299,18 +302,37 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
   Real rbmu = rb*mu;
   Real W = D/rho;
   Real Wmux = W*mu/(1.0 + mu*bsqr);
-  prim(IDN, k, j, i) = rho;
-  prim(IPR, k, j, i) = P;
-  prim(ITM, k, j, i) = T;
   // Before we retrieve the velocity, we need to raise S.
   Real S_u[3] = {0.0};
   RaiseForm(S_u, S_d, g3u);
   // Now we can get Wv.
-  prim(IVX, k, j, i) = Wmux*(r_u[0] + rbmu*b_u[0]);
-  prim(IVY, k, j, i) = Wmux*(r_u[1] + rbmu*b_u[1]);
-  prim(IVZ, k, j, i) = Wmux*(r_u[2] + rbmu*b_u[2]);
+  Real Wv_u[3] = {0.0};
+  Wv_u[0] = Wmux*(r_u[0] + rbmu*b_u[0]);
+  Wv_u[1] = Wmux*(r_u[1] + rbmu*b_u[1]);
+  Wv_u[2] = Wmux*(r_u[2] + rbmu*b_u[2]);
+  
+  // Apply the flooring policy to the primitive variables.
+  floored = peos->ApplyPrimitiveFloor(n, Wv_u, P, T, Y);
+  if (floored && peos->IsPrimitiveFlooringFailure()) {
+    return false;
+  }
 
-  // TODO: We probably need to check here for some physical violations.
+  prim(IDN, k, j, i) = rho;
+  prim(IPR, k, j, i) = P;
+  prim(ITM, k, j, i) = T;
+  prim(IVX, k, j, i) = Wv_u[0];
+  prim(IVY, k, j, i) = Wv_u[1];
+  prim(IVZ, k, j, i) = Wv_u[2];
+  for (int s = 0; s < n_species; s++) {
+    prim(IYF + s, k, j, i) = Y[s];
+  }
+
+  // If we floored the primitive variables, we should check
+  // if the EOS wants us to adjust the conserved variables back
+  // in bounds. If that's the case, then we'll do it.
+  if (floored && peos->KeepPrimAndConConsistent()) {
+    PrimToCon(prim, cons, b, gd, gu, i, j, k);
+  }
 
   return true;
 }
