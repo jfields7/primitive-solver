@@ -16,7 +16,6 @@
 #include <numtoolsroot.h>
 
 #include <eos.hpp>
-#include <athena_arrays.hpp>
 #include <geom_math.hpp>
 
 namespace Primitive {
@@ -83,12 +82,10 @@ class PrimitiveSolver {
     //  \param[in,out] bu    The magnetic field
     //  \param[in]     gd    The full 4x4 metric
     //  \param[in]     gu    The full 4x4 inverse metric
-    //  \param[in]     i,j,k The position in the array
     //
     //  \return success or failure
-    bool ConToPrim(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
-                   AthenaArray<Real>& b, AthenaArray<Real>& gd,
-                   AthenaArray<Real>& gu, int i, int j, int k);
+    bool ConToPrim(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
+                   Real gd[NMETRIC], Real gu[NMETRIC]);
 
     //! \brief Get the conserved variables from the primitive variables.
     //
@@ -97,12 +94,10 @@ class PrimitiveSolver {
     //  \param[in]    bu    The magnetic field
     //  \param[in]    gd    The full 4x4 metric
     //  \param[in]    gu    The full 4x4 inverse metric
-    //  \param[in]    i,j,k The position in the array
     //
     //  \return success or failure
-    bool PrimToCon(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
-                   AthenaArray<Real>& bu, AthenaArray<Real>& gd,
-                   AthenaArray<Real>& gu, int i, int j, int k);
+    bool PrimToCon(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
+                   Real gd[NMETRIC], Real gu[NMETRIC]);
 
     /// Get the EOS used by this PrimitiveSolver.
     inline EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const {
@@ -184,11 +179,11 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   *P = Phat;
 
   // FIXME: Debug only!
-  /*std::cout << "    D   = " << D << "\n";
+  std::cout << "    D   = " << D << "\n";
   std::cout << "    q   = " << q << "\n";
   std::cout << "    bsq = " << bsq << "\n";
   std::cout << "    rsq = " << rsq << "\n";
-  std::cout << "    rbsq = " << rbsq << "\n";*/
+  std::cout << "    rbsq = " << rbsq << "\n";
 
   return mu - muhat;
 }
@@ -196,37 +191,34 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
 
 // ConToPrim {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
-       AthenaArray<Real>& cons, AthenaArray<Real>& b, AthenaArray<Real>& gd,
-       AthenaArray<Real>& gu, int i, int j, int k) {
+bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real cons[NCONS],
+      Real b[NMAG], Real gd[NMETRIC], Real gu[NMETRIC]) {
 
   // Extract the 3-metric and inverse 3-metric.
-  const Real g3d[NSPMETRIC] = {gd(I11, i), gd(I12, i), gd(I13, i),
-                               gd(I22, i), gd(I23, i), gd(I33, i)};
-  const Real ialphasq = -gu(I00, i);
+  const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
+                               gd[I22], gd[I23], gd[I33]};
+  const Real ialphasq = -gu[I00];
   const Real alphasq = 1.0/ialphasq; // Lapse squared
-  const Real beta_u[3] = {gu(I01, i)*alphasq, gu(I02, i)*alphasq, gu(I03, i)*alphasq}; // Shift vector
-  const Real g3u[NSPMETRIC] = {gu(I11, i) + beta_u[0]*beta_u[0]*ialphasq,
-                               gu(I12, i) + beta_u[0]*beta_u[1]*ialphasq,
-                               gu(I13, i) + beta_u[0]*beta_u[2]*ialphasq,
-                               gu(I22, i) + beta_u[1]*beta_u[1]*ialphasq,
-                               gu(I23, i) + beta_u[1]*beta_u[2]*ialphasq,
-                               gu(I33, i) + beta_u[2]*beta_u[2]*ialphasq};
+  const Real beta_u[3] = {gu[I01]*alphasq, gu[I02]*alphasq, gu[I03]*alphasq}; // Shift vector
+  const Real g3u[NSPMETRIC] = {gu[I11] + beta_u[0]*beta_u[0]*ialphasq,
+                               gu[I12] + beta_u[0]*beta_u[1]*ialphasq,
+                               gu[I13] + beta_u[0]*beta_u[2]*ialphasq,
+                               gu[I22] + beta_u[1]*beta_u[1]*ialphasq,
+                               gu[I23] + beta_u[1]*beta_u[2]*ialphasq,
+                               gu[I33] + beta_u[2]*beta_u[2]*ialphasq};
 
   // Get the inverse volume element of the 3-metric.
-  Real isdetg = 1.0/std::sqrt(GetDeterminant(g3d));
+  //Real isdetg = 1.0/std::sqrt(GetDeterminant(g3d));
 
   // Extract the undensitized conserved variables.
-  Real D = cons(IDN, k, j, i)*isdetg;
-  Real S_d[3] = {cons(IM1, k, j, i)*isdetg, cons(IM2, k, j, i)*isdetg, cons(IM3, k, j, i)*isdetg};
-  Real tau = cons(IEN, k, j, i)*isdetg;
-  // FIXME: Confirm that the magnetic field is densitized as well.
-  //Real B_u[3] = {b(IB1, k, j, i)*isdetg, b(IB2, k, j, i)*isdetg, b(IB3, k, j, i)*isdetg};
-  Real B_u[3] = {b(IB1, k, j, i), b(IB2, k, j, i), b(IB3, k, j, i)};
+  Real D = cons[IDN];
+  Real S_d[3] = {cons[IM1], cons[IM2], cons[IM3]};
+  Real tau = cons[IEN];
+  Real B_u[3] = {b[IB1], b[IB2], b[IB3]};
   // Extract the particle fractions.
   Real Y[n_species] = {0.0};
   for (int s = 0; s < n_species; s++) {
-    Y[s] = cons(IYD + s, k, j, i)/cons(IDN, k, j, i);
+    Y[s] = cons[IYD + s]/cons[IDN];
   }
 
   // Check the conserved variables for consistency and do whatever
@@ -317,21 +309,21 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
     return false;
   }
 
-  prim(IDN, k, j, i) = rho;
-  prim(IPR, k, j, i) = P;
-  prim(ITM, k, j, i) = T;
-  prim(IVX, k, j, i) = Wv_u[0];
-  prim(IVY, k, j, i) = Wv_u[1];
-  prim(IVZ, k, j, i) = Wv_u[2];
+  prim[IDN] = rho;
+  prim[IPR] = P;
+  prim[ITM] = T;
+  prim[IVX] = Wv_u[0];
+  prim[IVY] = Wv_u[1];
+  prim[IVZ] = Wv_u[2];
   for (int s = 0; s < n_species; s++) {
-    prim(IYF + s, k, j, i) = Y[s];
+    prim[IYF + s] = Y[s];
   }
 
   // If we floored the primitive variables, we should check
   // if the EOS wants us to adjust the conserved variables back
   // in bounds. If that's the case, then we'll do it.
   if (floored && peos->KeepPrimAndConConsistent()) {
-    PrimToCon(prim, cons, b, gd, gu, i, j, k);
+    PrimToCon(prim, cons, b, gd, gu);
   }
 
   return true;
@@ -340,25 +332,24 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(AthenaArray<Real>& prim,
 
 // PrimToCon {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
-       AthenaArray<Real>& cons, AthenaArray<Real>& bu, AthenaArray<Real>& gd,
-       AthenaArray<Real>& gu,int i, int j, int k) {
+bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
+      Real bu[NMAG], Real gd[NMETRIC], Real gu[NMETRIC]) {
   // Extract the three metric.
-  const Real g3d[NSPMETRIC] = {gd(I11, i), gd(I12, i), gd(I13, i),
-                               gd(I22, i), gd(I23, i), gd(I33, i)};
+  const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
+                               gd[I22], gd[I23], gd[I33]};
   
   // Get the volume element of the 3-metric.
-  Real sdetg = std::sqrt(GetDeterminant(g3d));
+  //Real sdetg = std::sqrt(GetDeterminant(g3d));
 
   // Extract the primitive variables
-  const Real &rho = prim(IDN, k, j, i); // rest-mass density
-  const Real Wv_u[3] = {prim(IVX, k, j, i), prim(IVY, k, j, i), prim(IVZ, k, j, i)};
-  const Real &p   = prim(IPR, k, j, i); // pressure
-  const Real &t   = prim(ITM, k, j, i); // temperature
-  const Real B_u[3] = {bu(IB1, k, j, i), bu(IB2, k, j, i), bu(IB3, k, j, i)};
+  const Real &rho = prim[IDN]; // rest-mass density
+  const Real Wv_u[3] = {prim[IVX], prim[IVY], prim[IVZ]};
+  const Real &p   = prim[IPR]; // pressure
+  const Real &t   = prim[ITM]; // temperature
+  const Real B_u[3] = {bu[IB1], bu[IB2], bu[IB3]};
   Real Y[n_species] = {0.0};
   for (int s = 0; s < n_species; s++) {
-    Y[s] = prim(IYF + s, k, j, i);
+    Y[s] = prim[IYF + s];
   }
 
   // Note that Athena passes in Wv, not v.
@@ -382,25 +373,25 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(AthenaArray<Real>& prim,
   const Real mb = peos->GetBaryonMass();
 
   // Extract the conserved variables
-  Real &D = cons(IDN, k, j ,i); // Relativistic density
-  Real &Sx = cons(IM1, k, j, i); // Relativistic momentum density (x)
-  Real &Sy = cons(IM2, k, j, i); // Relativistic momentum density (y)
-  Real &Sz = cons(IM3, k, j, i); // Relativistic momentum density (z)
-  Real &tau = cons(IEN, k, j, i); // Relativistic energy - D
+  Real &D = cons[IDN]; // Relativistic density
+  Real &Sx = cons[IM1]; // Relativistic momentum density (x)
+  Real &Sy = cons[IM2]; // Relativistic momentum density (y)
+  Real &Sz = cons[IM3]; // Relativistic momentum density (z)
+  Real &tau = cons[IEN]; // Relativistic energy - D
 
   // Set the conserved quantities.
   // Total enthalpy density
   Real H = rho*peos->GetEnthalpy(rho/mb, t, Y)/mb;
   Real HWsq = H*Wsq;
-  D = sdetg*rho*W;
+  D = rho*W;
   for (int s = 0; s < n_species; s++) {
-    cons(IYD + s, k, j, i) = D*Y[s];
+    cons[IYD + s]= D*Y[s];
   }
   Real HWsqpb = HWsq + Bsq;
-  Sx = sdetg*(HWsqpb*v_d[0] - Bv*B_d[0]);
-  Sy = sdetg*(HWsqpb*v_d[1] - Bv*B_d[1]);
-  Sz = sdetg*(HWsqpb*v_d[2] - Bv*B_d[2]);
-  tau = sdetg*(HWsqpb - p - 0.5*(Bv*Bv + Bsq/Wsq)) - D;
+  Sx = (HWsqpb*v_d[0] - Bv*B_d[0]);
+  Sy = (HWsqpb*v_d[1] - Bv*B_d[1]);
+  Sz = (HWsqpb*v_d[2] - Bv*B_d[2]);
+  tau = (HWsqpb - p - 0.5*(Bv*Bv + Bsq/Wsq)) - D;
 }
 // }}}
 

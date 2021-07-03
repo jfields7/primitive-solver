@@ -2,6 +2,7 @@ obj
 lib
 tests/obj
 tests/bin
+debugger.nb
 
 *.obj
 *.swp

@@ -76,28 +76,28 @@ bool TestSpecificEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Rea
 
 /// Check that ConToPrim and PrimToCon are consistent.
 template<typename EOSPolicy, typename ErrorPolicy>
-bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, AthenaArray<Real> prim, AthenaArray<Real> cons,
-    AthenaArray<Real> bu, AthenaArray<Real> gd, AthenaArray<Real> gu, int i, int j, int k, const Real tol) {
-  Real rho_old = prim(IDN, k, j, i);
-  Real Wvx_old = prim(IVX, k, j, i);
-  Real Wvy_old = prim(IVY, k, j, i);
-  Real Wvz_old = prim(IVZ, k, j, i);
-  Real p_old = prim(IPR, k, j, i);
-  Real T_old = prim(ITM, k, j, i);
+bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real prim[NPRIM], Real cons[NCONS],
+    Real bu[NMAG], Real gd[NMETRIC], Real gu[NMETRIC], const Real tol) {
+  Real rho_old = prim[IDN];
+  Real Wvx_old = prim[IVX];
+  Real Wvy_old = prim[IVY];
+  Real Wvz_old = prim[IVZ];
+  Real p_old = prim[IPR];
+  Real T_old = prim[ITM];
 
-  ps->PrimToCon(prim, cons, bu, gd, gu, i, j, k);
-  bool success = ps->ConToPrim(prim, cons, bu, gd, gu, i, j, k);
+  ps->PrimToCon(prim, cons, bu, gd, gu);
+  bool success = ps->ConToPrim(prim, cons, bu, gd, gu);
 
   if(!success) {
     std::cout << "An error occurred during the primitive solve.\n";
   }
 
-  Real rho_new = prim(IDN, k, j, i);
-  Real Wvx_new = prim(IVX, k, j, i);
-  Real Wvy_new = prim(IVY, k, j, i);
-  Real Wvz_new = prim(IVZ, k, j, i);
-  Real p_new = prim(IPR, k, j, i);
-  Real T_new = prim(ITM, k, j, i);
+  Real rho_new = prim[IDN];
+  Real Wvx_new = prim[IVX];
+  Real Wvy_new = prim[IVY];
+  Real Wvz_new = prim[IVZ];
+  Real p_new = prim[IPR];
+  Real T_new = prim[ITM];
 
   Real err_rho = GetError(rho_old, rho_new);
   Real err_Wvx = GetError(Wvx_old, Wvx_new);
@@ -141,12 +141,12 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Athen
   }
 
   // Reset the primitive variables to their old values.
-  prim(IDN, k, j, i) = rho_old;
-  prim(IVX, k, j, i) = Wvx_old;
-  prim(IVY, k, j, i) = Wvy_old;
-  prim(IVZ, k, j, i) = Wvz_old;
-  prim(IPR, k, j, i) = p_old;
-  prim(ITM, k, j, i) = T_old;
+  prim[IDN] = rho_old;
+  prim[IVX] = Wvx_old;
+  prim[IVY] = Wvy_old;
+  prim[IVZ] = Wvz_old;
+  prim[IPR] = p_old;
+  prim[ITM] = T_old;
 
   return success;
 }
