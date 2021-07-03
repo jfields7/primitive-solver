@@ -179,11 +179,11 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   *P = Phat;
 
   // FIXME: Debug only!
-  std::cout << "    D   = " << D << "\n";
+  /*std::cout << "    D   = " << D << "\n";
   std::cout << "    q   = " << q << "\n";
   std::cout << "    bsq = " << bsq << "\n";
   std::cout << "    rsq = " << rsq << "\n";
-  std::cout << "    rbsq = " << rbsq << "\n";
+  std::cout << "    rbsq = " << rbsq << "\n"*/
 
   return mu - muhat;
 }

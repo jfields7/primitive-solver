@@ -1,5 +1,5 @@
 # PrimitiveSolver
-PrimitiveSolver is a library that provides a simple interface for constructing and using general equations of state (EOSes) in GRMHD simulations. It requires the [NumTools](https://github.com/jfields7/num-tools) library to work. The code itself is based on Wolfgang Kastaun's [RePrimAnd](https://github.com/wokast/RePrimAnd) library, particularly its algorithm for recovering the primitive variables of the GRMHD equations (see <https://arxiv.org/abs/2005.01821>). It is intended to interact with [GR-Athena++](https://arxiv.org/abs/2101.08289), but its dependencies are limited to the `AthenaArray` data structure and the names of a few data types.
+PrimitiveSolver is a library that provides a simple interface for constructing and using general equations of state (EOSes) in GRMHD simulations. It requires the [NumTools](https://github.com/jfields7/num-tools) library to work. The code itself is based on Wolfgang Kastaun's [RePrimAnd](https://github.com/wokast/RePrimAnd) library, particularly its algorithm for recovering the primitive variables of the GRMHD equations (see <https://arxiv.org/abs/2005.01821>). It is intended to interact with [GR-Athena++](https://arxiv.org/abs/2101.08289), but it has no strict dependencies on the code.
 
 To compile PrimitiveSolver, run `make`.
 
@@ -67,16 +67,16 @@ PrimitiveSolver<IdealGas, ResetFloor> ps(&eos);
 
 Because all the heavy lifting should be done by the `EOS` object itself, `PrimitiveSolver` only has a few member functions:
 ```c++
-bool PrimToCon(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
-               AthenaArray<Real>& bu, AthenaArray<Real>& gd,
-               AthenaArray<Real>& gu, int i, int j, int k);
-bool ConToPrim(AthenaArray<Real>& prim, AthenaArray<Real>& cons,
-               AthenaArray<Real>& bu, AthenaArray<Real>& gd,
-               AthenaArray<Real>& gu, int i, int j, int k);
+bool PrimToCon(Real prim[NPRIM], Real cons[NCONS],
+               Real bu[NMAG], Real gd[NMETRIC],
+               Real gu[NMETRIC]);
+bool ConToPrim(Real prim[NPRIM], Real cons[NCONS],
+               Real bu[NMAG], Real gd[NMETRIC],
+               Real gu[NMETRIC]);
 ```
-The `PrimToCon()` function converts a set of primitive variables `prim = (rho, v^i, P, T, Y)` with a magnetic field `bu = B^i` into conserved variables `cons = (D, S_i, tau)`. The `ConToPrim()` function does the inverse. It takes a set of conserved variables and a magnetic field and inverts them to get the primitive variables. In addition to `prim`, `cons`, and `bu`, both functions also require the 4-metric, `gd`, and the inverse 4-metric, `gu`, along with a array indices `i, j, k`. There are a couple notes here:
-1. Note that the conserved variables, in accordance with practices used in most numerical relativity codes, are densitized by a factor of `sqrt(gam)`, where `gam` is the determinant of the 3-metric `gam_ij`. However, the magnetic field should *always* be undensitized when passed to `PrimitiveSolver`.
-2. Though `prim`, `cons`, and `bu` are four-dimensional arrays (variables + 3 spatial dimensions), `gu` and `gd` are only 2-dimensional (variables + 1 spatial dimension). This is due to an oddity in how metrics are currently handled in GR-Athena++, where the metric is extracted at a fixed `j` and `k` index, leaving only a single line in `i`.
+The `PrimToCon()` function converts a set of primitive variables `prim = (rho, v^i, P, T, Y)` with a magnetic field `bu = B^i` into conserved variables `cons = (D, S_i, tau)`. The `ConToPrim()` function does the inverse. It takes a set of conserved variables and a magnetic field and inverts them to get the primitive variables. In addition to `prim`, `cons`, and `bu`, both functions also require the 4-metric, `gd`, and the inverse 4-metric, `gu`. There are a couple notes here:
+1. Note that none of the variables are densitized. Because there are a variety of differing opinions on when to densitize and undensitize, how to interpolate GR quantities to align with MHD quantities, etc., the code simply leaves it to the user to handle these things.
+2. `NPRIM` is *not* the same size as `NCONS`. Because `NPRIM` also stores the temperature, it has one extra variable.
 
 Additionally, `PrimitiveSolver` has two functions for accessing constant member variables:
 ```c++
