@@ -4,6 +4,7 @@
 #include <eos.hpp>
 #include <primitive_solver.hpp>
 #include <ps_types.hpp>
+#include <ps_error.hpp>
 #include <testing.hpp>
 
 /// Check that the temperature and energy density equations are consistent.
@@ -86,10 +87,11 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   Real T_old = prim[ITM];
 
   ps->PrimToCon(prim, cons, bu, gd, gu);
-  bool success = ps->ConToPrim(prim, cons, bu, gd, gu);
+  Primitive::Error result = ps->ConToPrim(prim, cons, bu, gd, gu);
 
-  if(!success) {
+  if(result != Primitive::Error::SUCCESS) {
     std::cout << "An error occurred during the primitive solve.\n";
+    return false;
   }
 
   Real rho_new = prim[IDN];
@@ -106,6 +108,7 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   Real err_p = GetError(p_old, p_new);
   Real err_T = GetError(T_old, T_new);
 
+  bool success = true;
   if (err_rho > tol) {
     std::cout << "  rho\n";
     PrintError(rho_old, rho_new);

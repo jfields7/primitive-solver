@@ -17,6 +17,7 @@
 
 #include <eos.hpp>
 #include <geom_math.hpp>
+#include <ps_error.hpp>
 
 namespace Primitive {
 
@@ -47,6 +48,18 @@ class PrimitiveSolver {
     //  \param[in]  h_min The minimum enthalpy
     static void UpperRoot(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real h_min);
 
+    //! \brief function for the upper bound of the root given
+    //         a specified Lorentz factor.
+    //
+    //  \param[out] f    The value of the root function at mu
+    //  \param[out] df   The derivative of the root function
+    //  \param[in]  mu   The guess for the root
+    //  \param[in]  bsq  The square magnitude of the magnetic field
+    //  \param[in]  rsq  The square magnitude of the specific momentum S/D
+    //  \param[in]  rbsq The square of the product /f$r\cdot b\f$
+    //  \param[in]  W    The Lorentz factor
+    static void MuFromW(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real W);
+
     //! \brief master function for the root solve
     //
     //  The root solve is based on the master function
@@ -67,6 +80,24 @@ class PrimitiveSolver {
     //  \return f evaluated at mu for the given constants.
     static Real RootFunction(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
         EOS<EOSPolicy, ErrorPolicy> *const peos, Real* n, Real* T, Real* P);
+
+    //! \brief Check and handle the corner case for rho being too small or large.
+    //
+    //  Using the minimum and maximum values of rho along with some physical
+    //  limitations on the velocity using S, we can predict if rho is going
+    //  to violate constraints set by the EOS on how big or small it can get.
+    //  We can also use these constraints to tighten the bounds on mu.
+    //  
+    //  \param[in,out] mul   The lower bound for mu
+    //  \param[in,out] muh   The upper bound for mu
+    //  \param[in]     D     The relativistic density
+    //  \param[in]     bsq   The square magnitude of the magnetic field
+    //  \param[in]     rsq   The square magnitude of the specific momentum S/D
+    //  \param[in]     rbsq  The square of the product \f$r\cdot b\f$
+    //  \param[in]     h_min The minimum enthalpy
+    //
+    //  \return an Error code, usually RHO_TOO_BIG, RHO_TOO_SMALL, or SUCCESS
+    Error CheckDensityValid(Real& mul, Real& muh, Real D, Real bsq, Real rsq, Real rbsq, Real h_min);
   public:
     /// Constructor
     PrimitiveSolver(EOS<EOSPolicy, ErrorPolicy> *eos) : peos(eos), n_species(eos->GetNSpecies()) {
@@ -83,8 +114,8 @@ class PrimitiveSolver {
     //  \param[in]     gd    The full 4x4 metric
     //  \param[in]     gu    The full 4x4 inverse metric
     //
-    //  \return success or failure
-    bool ConToPrim(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
+    //  \return an error code
+    Error ConToPrim(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
                    Real gd[NMETRIC], Real gu[NMETRIC]);
 
     //! \brief Get the conserved variables from the primitive variables.
@@ -95,8 +126,8 @@ class PrimitiveSolver {
     //  \param[in]    gd    The full 4x4 metric
     //  \param[in]    gu    The full 4x4 inverse metric
     //
-    //  \return success or failure
-    bool PrimToCon(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
+    //  \return an error code
+    Error PrimToCon(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
                    Real gd[NMETRIC], Real gu[NMETRIC]);
 
     /// Get the EOS used by this PrimitiveSolver.
@@ -125,6 +156,23 @@ void PrimitiveSolver<EOSPolicy, ErrorPolicy>::UpperRoot(Real &f, Real &df, Real 
 }
 // }}}
 
+// MuFromW {{{
+template<typename EOSPolicy, typename ErrorPolicy>
+void PrimitiveSolver<EOSPolicy, ErrorPolicy>::MuFromW(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real W) {
+  const Real musq = mu*mu;
+  const Real x = 1.0/(1.0 + mu*bsq);
+  const Real xsq = x*x;
+  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+  const Real vsq = musq*rbarsq;
+  const Real dx = -bsq*xsq;
+  //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
+  const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
+  const Real dvsq = 2.0*mu*rbarsq + musq*drbarsq;
+  f = vsq + 1.0/(W*W) - 1.0;
+  df = dvsq;
+}
+// }}}
+
 // RootFunction {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
@@ -136,7 +184,8 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real den = 1.0 + mu*bsq;
   const Real mux = mu/den;
   const Real muxsq = mux/den;
-  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+  const Real rbarsq = rsq*xsq + mux*(1.0 + x)*rbsq;
+  //const Real rbarsq = xsq*(rsq + mu*(2.0 + mu*bsq)*rbsq);
   // An alternative calculation of rbarsq that may be more accurate.
   //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
   //const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
@@ -189,9 +238,55 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
 }
 // }}}
 
+// CheckDensityValid {{{
+template<typename EOSPolicy, typename ErrorPolicy>
+Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real& muh, Real D, 
+      Real bsq, Real rsq, Real rbsq, Real h_min) {
+  // There are a few things considered:
+  // 1. If D > rho_max, we need to make sure that W isn't too large.
+  //    W_max can be estimated by considering the zero-field limit
+  //    of S^2/D^2 if h = h_min.
+  //    - If W is larger than W_max, then rho is just too big.
+  //    - Otherwise, we can bound mu by using W to do a root solve
+  //      for mu.
+  // 2. If D < W_max*rho_min, then we need to make sure W isn't less
+  //    than 1.
+  //    - If W is less than 1, it means rho is actually smaller than
+  //      rho_min.
+  //    - Otherwise, we can bound mu by using W to do a root solve
+  //      for mu.
+  Real W_max = std::sqrt(1.0 + rsq/(h_min*h_min));
+  Real rho_max = peos->GetMaximumDensity();
+  Real rho_min = peos->GetMinimumDensity();
+  if (D > rho_max) {
+    Real W = D/rho_max;
+    if (W > W_max) {
+      // W is not physical, so rho must be larger than rho_max.
+      return Error::RHO_TOO_BIG;
+    }
+    else {
+      // We can tighten up the bounds for muh.
+      NumTools::Root::newton_raphson(&MuFromW, muh, bsq, rsq, rbsq, W);
+    }
+  }
+  if (D < W_max*rho_min) {
+    Real W = D/rho_min;
+    if (W < 1.0) {
+      // W is not physical, so rho must be smaller than rho_min.
+      return Error::RHO_TOO_SMALL;
+    }
+    else {
+      // We can tighten up the bounds for mul.
+      NumTools::Root::newton_raphson(&MuFromW, mul, bsq, rsq, rbsq, W);
+    }
+  }
+  return Error::SUCCESS;
+}
+// }}}
+
 // ConToPrim {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real cons[NCONS],
+Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real cons[NCONS],
       Real b[NMAG], Real gd[NMETRIC], Real gu[NMETRIC]) {
 
   // Extract the 3-metric and inverse 3-metric.
@@ -225,7 +320,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
   // the EOSPolicy wants us to.
   bool floored = peos->ApplyConservedFloor(D, S_d, tau, Y);
   if (floored && peos->IsConservedFlooringFailure()) {
-    return false;
+    return Error::CONS_FLOOR;
   }
 
   // Calculate some utility quantities.
@@ -243,12 +338,12 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
   // Make sure there are no NaNs at this point.
   if (!std::isfinite(D) || !std::isfinite(rsqr) || !std::isfinite(q) ||
       !std::isfinite(rbsqr) || !std::isfinite(bsqr)) {
-    return false;    
+    return Error::NANS_IN_CONS;
   }
   // We have to check the particle fractions separately.
   for (int s = 0; s < n_species; s++) {
     if (!std::isfinite(Y[s])) {
-      return false;
+      return Error::NANS_IN_CONS;
     }
   }
 
@@ -260,7 +355,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
   Real mul = 0.0;
   Real muh = 1.0/min_h;
   // Check if a tighter upper bound exists.
-  if(rsqr > min_h*min_h) {
+  if (rsqr > min_h*min_h) {
     Real mu = 0.0;
     // We don't need the bound to be that tight, so we reduce
     // the accuracy of the root solve for speed reasons.
@@ -269,14 +364,21 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
     bool result = NumTools::Root::newton_raphson(&UpperRoot, mu, bsqr, rsqr, rbsqr, min_h);
     // Scream if the bracketing failed.
     if (!result) {
-      return false;
+      return Error::BRACKETING_FAILED;
     }
     else {
       muh = mu;
     }
   }
 
-  // TODO: There's a corner case here that needs to be checked.
+  // Check the corner case where the density is outside the permitted
+  // bounds according to the ErrorPolicy.
+  Error error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
+  if (error != Error::SUCCESS) {
+    // TODO: This is probably something that should be handled by the ErrorPolicy.
+    return error;
+  }
+
   
   // Do the root solve.
   // TODO: This should be done with something like TOMS748 once it's
@@ -286,7 +388,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
   Real n, P, T, mu;
   bool result = NumTools::Root::false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   if (!result) {
-    return false;
+    return Error::NO_SOLUTION;
   }
 
   // Retrieve the primitive variables.
@@ -306,7 +408,7 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
   // Apply the flooring policy to the primitive variables.
   floored = peos->ApplyPrimitiveFloor(n, Wv_u, P, T, Y);
   if (floored && peos->IsPrimitiveFlooringFailure()) {
-    return false;
+    return Error::PRIM_FLOOR;
   }
 
   prim[IDN] = rho;
@@ -326,13 +428,13 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real c
     PrimToCon(prim, cons, b, gd, gu);
   }
 
-  return true;
+  return Error::SUCCESS;
 }
 // }}}
 
 // PrimToCon {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
+Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
       Real bu[NMAG], Real gd[NMETRIC], Real gu[NMETRIC]) {
   // Extract the three metric.
   const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
@@ -392,6 +494,8 @@ bool PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real c
   Sy = (HWsqpb*v_d[1] - Bv*B_d[1]);
   Sz = (HWsqpb*v_d[2] - Bv*B_d[2]);
   tau = (HWsqpb - p - 0.5*(Bv*Bv + Bsq/Wsq)) - D;
+
+  return Error::SUCCESS;
 }
 // }}}
 

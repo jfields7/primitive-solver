@@ -20,6 +20,11 @@ class IdealGas{
     /// Baryon mass
     Real mb;
 
+    /// Maximum density
+    Real max_rho;
+    /// Minimum density
+    Real min_rho;
+
     /// Constructor
     IdealGas();
 

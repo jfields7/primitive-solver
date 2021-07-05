@@ -2,6 +2,7 @@
 #include <eos_units.hpp>
 #include <cmath>
 #include <stdexcept>
+#include <limits>
 
 //! \file idealgas.cpp
 //  \brief Implementation of IdealGas.
@@ -14,6 +15,9 @@ IdealGas::IdealGas() {
   gamma = 5.0/3.0;
   gammam1 = gamma - 1.0;
   mb = 1.0;
+
+  min_rho = 0.0;
+  max_rho = std::numeric_limits<Real>::max();
 }
 
 Real IdealGas::TemperatureFromE(Real n, Real e, Real *Y) {

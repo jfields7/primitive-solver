@@ -51,6 +51,10 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::n_species;
     // The baryon mass
     using EOSPolicy::mb;
+    // Maximum density
+    using EOSPolicy::max_rho;
+    // Minimum density
+    using EOSPolicy::min_rho;
 
     // ErrorPolicy member functions
     using ErrorPolicy::PrimitiveFloor;
@@ -281,6 +285,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] v The maximum velocity
     inline void SetMaxVelocity(Real v) {
       v_max = (v >= 0) ? ((v <= 1.0-1e-15) ? v : 1.0e-15) : 0.0;
+    }
+
+    //! \brief Get the maximum density permitted by the EOS.
+    inline Real GetMaximumDensity() const {
+      return max_rho;
+    }
+
+    //! \brief Get the minimum density permitted by the EOS.
+    inline Real GetMinimumDensity() const {
+      return min_rho;
     }
 
     //! \fn const bool IsConservedFlooringFailure() const
