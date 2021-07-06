@@ -17,6 +17,7 @@ class ResetFloor {
     Real n_atm;
     Real T_atm;
     Real v_max;
+    Real max_bsq_field;
 
     bool fail_conserved_floor;
     bool fail_primitive_floor;

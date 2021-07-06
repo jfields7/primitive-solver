@@ -340,8 +340,12 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     }
   }
 
-  // TODO
   // Make sure that the magnetic field is physical.
+  // TODO: This is another thing that should probably be handled
+  // by the ErrorPolicy.
+  if (bsqr > peos->GetMaximumSquaredMagneticField()/D) {
+    return Error::MAG_TOO_BIG;
+  }
   
   // Bracket the root.
   Real min_h = peos->GetMinimumEnthalpy()/peos->GetBaryonMass();

@@ -15,6 +15,7 @@ class DoNothing {
     Real n_atm;
     Real T_atm;
     Real v_max;
+    Real max_bsq_field;
 
     const bool fail_conserved_floor = false;
     const bool fail_primitive_floor = false;
