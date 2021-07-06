@@ -10,8 +10,9 @@ namespace Primitive{
 
 class IdealGas{
   protected:
-    /// An ideal gas doesn't care about particle species, so...
-    const int n_species = 0;
+    /// An ideal gas doesn't care about particle species, so this
+    /// shouldn't really matter much.
+    int n_species;
 
     /// Adiabatic index
     Real gamma;
@@ -75,6 +76,10 @@ class IdealGas{
     inline void SetBaryonMass(Real m) {
       mb = m;
     }
+
+    /// Set the number of species. Throw an exception if
+    /// the number of species is invalid.
+    void SetNSpecies(int n);
 };
 
 }; // namespace

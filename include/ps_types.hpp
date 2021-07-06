@@ -8,7 +8,8 @@
 //  Therefore, all type definitions should be consistent with Athena.
 //
 
-#define NHYDRO 5
+#define MAX_SPECIES 3
+#define NHYDRO ((5) + (MAX_SPECIES))
 
 using Real = double;
 enum ConsIndex {IDN=0, IM1=1, IM2=2, IM3=3, IEN=4, IYD=5, NCONS=(NHYDRO)};

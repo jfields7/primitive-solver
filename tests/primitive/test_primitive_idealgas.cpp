@@ -20,8 +20,7 @@ using namespace Primitive;
 bool TestConstruction() {
   EOS<IdealGas, DoNothing> eos;
   PrimitiveSolver<IdealGas, DoNothing> ps{&eos};
-  const int n_species = eos.GetNSpecies();
-  return (&eos == ps.GetEOS() && ps.GetNSpecies() == n_species);
+  return (&eos == ps.GetEOS());
 }
 // }}}
 
@@ -162,6 +161,22 @@ void InitializeVariables(EOS<IdealGas, DoNothing>& eos, Real prim[NPRIM]) {
 }
 // }}}
 
+// ParticleFractions {{{
+void ParticleFractions(Real prim[NPRIM], int s) {
+  switch(s) {
+    case 3:
+      prim[IYF + 2] = 0.25;
+    case 2:
+      prim[IYF + 1] = 0.25;
+    case 1:
+      prim[IYF] = 0.25;
+      break;
+    case 0:
+      break;
+  }
+}
+// }}}
+
 int main(int argc, char *argv[]) {
   UnitTests tester{"Primitive Solver, Ideal Gas"};
 
@@ -182,6 +197,7 @@ int main(int argc, char *argv[]) {
   Real mb = eos.GetBaryonMass();
   // Initialize the new variables on a Minkowski metric.
   InitializeVariables(eos, prim);
+  ParticleFractions(prim,MAX_SPECIES);
   MinkowskiMetric(gd, gu);
 
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>, 
@@ -321,6 +337,63 @@ int main(int argc, char *argv[]) {
   StrongVelocity(prim);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Baryon Mass Consistency Test - Strong Flow and Field",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // One species test
+  // Flat, fieldless, static
+  eos.SetBaryonMass(1.0);
+  InitializeVariables(eos, prim);
+  ZeroField(bu);
+  ZeroVelocity(prim);
+  eos.SetNSpecies(1);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Flat, Fieldless, Static",
+                 &ps, prim, cons, bu, gd, gu, tol);
+  
+  // Flat, static, strong field
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Flat, Static, Strong Field",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Flat, no field, relativistic flow
+  ZeroField(bu);
+  StrongVelocity(prim);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Flat, Fieldless, Relativistic Flow",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Flat, strong field, strong flow
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Flat, Strong Flow and Field",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Static and fieldless, strong gravity
+  ZeroField(bu);
+  ZeroVelocity(prim);
+  SchwarzschildMetric(gd, gu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Static and Fieldless, Strong Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Static, strong gravity and field
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Static, Strong Field and Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Fieldless, strong flow and gravity
+  ZeroField(bu);
+  StrongVelocity(prim);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Fieldless, Strong Flow and Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Strong flow, field, and gravity
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "One Species Test - Strong Flow, Field, and Gravity",
                  &ps, prim, cons, bu, gd, gu, tol);
 
   tester.PrintSummary();

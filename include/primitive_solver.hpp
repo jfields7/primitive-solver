@@ -31,9 +31,6 @@ class PrimitiveSolver {
     /// unlikely and dangerous.
     EOS<EOSPolicy, ErrorPolicy> *const peos;
     
-    /// The number of separate particle species in the EOS.
-    const int n_species;
-
     //! \brief function for the upper bound of the root
     //
     //  The upper bound is the solution to the function
@@ -100,7 +97,7 @@ class PrimitiveSolver {
     Error CheckDensityValid(Real& mul, Real& muh, Real D, Real bsq, Real rsq, Real rbsq, Real h_min);
   public:
     /// Constructor
-    PrimitiveSolver(EOS<EOSPolicy, ErrorPolicy> *eos) : peos(eos), n_species(eos->GetNSpecies()) {
+    PrimitiveSolver(EOS<EOSPolicy, ErrorPolicy> *eos) : peos(eos) {
     }
 
     /// Destructor
@@ -133,11 +130,6 @@ class PrimitiveSolver {
     /// Get the EOS used by this PrimitiveSolver.
     inline EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const {
       return peos;
-    }
-
-    /// Get the number of species this PrimitiveSolver expects.
-    inline const int GetNSpecies() const {
-      return n_species;
     }
 };
 
@@ -311,7 +303,8 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   Real tau = cons[IEN];
   Real B_u[3] = {b[IB1], b[IB2], b[IB3]};
   // Extract the particle fractions.
-  Real Y[n_species] = {0.0};
+  const int n_species = peos->GetNSpecies();
+  Real Y[MAX_SPECIES] = {0.0};
   for (int s = 0; s < n_species; s++) {
     Y[s] = cons[IYD + s]/cons[IDN];
   }
@@ -449,7 +442,8 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real 
   const Real &p   = prim[IPR]; // pressure
   const Real &t   = prim[ITM]; // temperature
   const Real B_u[3] = {bu[IB1], bu[IB2], bu[IB3]};
-  Real Y[n_species] = {0.0};
+  const int n_species = peos->GetNSpecies();
+  Real Y[MAX_SPECIES] = {0.0};
   for (int s = 0; s < n_species; s++) {
     Y[s] = prim[IYF + s];
   }

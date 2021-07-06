@@ -85,6 +85,11 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   Real Wvz_old = prim[IVZ];
   Real p_old = prim[IPR];
   Real T_old = prim[ITM];
+  const int n_species = ps->GetEOS()->GetNSpecies();
+  Real Y_old[MAX_SPECIES] = {0.0};
+  for (int s = 0; s < n_species; s++) {
+    Y_old[s] = prim[IYF + s];
+  }
 
   ps->PrimToCon(prim, cons, bu, gd, gu);
   Primitive::Error result = ps->ConToPrim(prim, cons, bu, gd, gu);
@@ -100,6 +105,10 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   Real Wvz_new = prim[IVZ];
   Real p_new = prim[IPR];
   Real T_new = prim[ITM];
+  Real Y_new[MAX_SPECIES] = {0.0};
+  for (int s = 0; s < n_species; s++) {
+    Y_new[s] = prim[IYF + s];
+  }
 
   Real err_rho = GetError(rho_old, rho_new);
   Real err_Wvx = GetError(Wvx_old, Wvx_new);
@@ -107,6 +116,10 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   Real err_Wvz = GetError(Wvz_old, Wvz_new);
   Real err_p = GetError(p_old, p_new);
   Real err_T = GetError(T_old, T_new);
+  Real err_Y[MAX_SPECIES] = {0.0};
+  for (int s = 0; s < n_species; s++) {
+    err_Y[s] = GetError(Y_old[s], Y_new[s]);
+  }
 
   bool success = true;
   if (err_rho > tol) {
@@ -142,6 +155,13 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
     PrintError(T_old, T_new);
     success = false;
   }
+  for (int s = 0; s < n_species; s++) {
+    if (err_Y[s] > tol) {
+      std::cout << "  Y[\n" << s << "]\n";
+      PrintError(Y_old[s], Y_new[s]);
+      success = false;
+    }
+  }
 
   // Reset the primitive variables to their old values.
   prim[IDN] = rho_old;
@@ -150,6 +170,9 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   prim[IVZ] = Wvz_old;
   prim[IPR] = p_old;
   prim[ITM] = T_old;
+  for (int s = 0; s < n_species; s++) {
+    prim[IYF + s] = Y_old[s];
+  }
 
   return success;
 }

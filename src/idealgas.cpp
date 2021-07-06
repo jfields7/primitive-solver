@@ -18,6 +18,7 @@ IdealGas::IdealGas() {
 
   min_rho = 0.0;
   max_rho = std::numeric_limits<Real>::max();
+  n_species = 0;
 }
 
 Real IdealGas::TemperatureFromE(Real n, Real e, Real *Y) {
@@ -37,7 +38,7 @@ Real IdealGas::Pressure(Real n, Real T, Real *Y) {
 }
 
 Real IdealGas::Entropy(Real n, Real T, Real *Y) {
-  throw std::logic_error("IdealGas: Entropy not currently implemented.");
+  throw std::logic_error("IdealGas::Entropy not currently implemented.");
 }
 
 Real IdealGas::Enthalpy(Real n, Real T, Real *Y) {
@@ -54,4 +55,11 @@ Real IdealGas::SoundSpeed(Real n, Real T, Real *Y) {
 
 Real IdealGas::SpecificEnergy(Real n, Real T, Real *Y) {
   return T/(mb*gammam1);
+}
+
+void IdealGas::SetNSpecies(int n) {
+  if (n > MAX_SPECIES || n < 0) {
+    throw std::out_of_range("IdealGas::SetNSpecies - n cannot exceed MAX_SPECIES.");
+  }
+  n_species = n;
 }
