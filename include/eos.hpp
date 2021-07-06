@@ -19,6 +19,8 @@
 //  And it must also have the following protected member variables:
 //    const int n_species
 //    Real mb
+//    Real max_rho
+//    Real min_rho
 //
 //  It must also take an object for an error policy that implements the
 //  following functions:

@@ -7,19 +7,17 @@
 //  purposes.
 
 #include <ps_types.hpp>
+#include <error_policy_interface.hpp>
 
 namespace Primitive {
 
-class DoNothing {
+class DoNothing : public ErrorPolicyInterface {
   protected:
-    Real n_atm;
-    Real T_atm;
-    Real v_max;
-    Real max_bsq_field;
-
-    const bool fail_conserved_floor = false;
-    const bool fail_primitive_floor = false;
-    const bool adjust_conserved = false;
+    DoNothing() {
+      fail_conserved_floor = false;
+      fail_primitive_floor = false;
+      adjust_conserved = false;
+    }
 
     bool PrimitiveFloor(Real& n, Real v[3], Real& t) {return false;}
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {return false;}

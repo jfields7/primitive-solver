@@ -9,20 +9,12 @@
 //  If the pressure is floored, all other quantities are ignored.
 
 #include <ps_types.hpp>
+#include <error_policy_interface.hpp>
 
 namespace Primitive {
 
-class ResetFloor {
+class ResetFloor : public ErrorPolicyInterface {
   protected:
-    Real n_atm;
-    Real T_atm;
-    Real v_max;
-    Real max_bsq_field;
-
-    bool fail_conserved_floor;
-    bool fail_primitive_floor;
-    bool adjust_conserved;
-
     /// Constructor
     ResetFloor();
 
