@@ -17,9 +17,14 @@ class PiecewisePolytrope {
     Real *density_pieces;
     Real *kappa_pieces;
     Real *a_pieces;
+    Real *gamma_pieces;
     bool initialized;
 
     /// Allocate memory for the different EOS pieces.
+    void AllocateMemory();
+
+    /// Find the index of the piece that the density aligns with.
+    int FindPiece(Real n) const;
   protected:
     /// An ideal gas doesn't really care about the particle species.
     const int n_species = 0;
@@ -74,7 +79,6 @@ class PiecewisePolytrope {
     inline bool IsInitialized() const {
       return initialized;
     }
-
 };
 
 }; // namespace
