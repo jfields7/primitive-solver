@@ -248,8 +248,8 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
   //    - Otherwise, we can bound mu by using W to do a root solve
   //      for mu.
   Real W_max = std::sqrt(1.0 + rsq/(h_min*h_min));
-  Real rho_max = peos->GetMaximumDensity();
-  Real rho_min = peos->GetMinimumDensity();
+  Real rho_max = peos->GetMaximumDensity()*peos->GetBaryonMass();
+  Real rho_min = peos->GetMinimumDensity()*peos->GetBaryonMass();
   if (D > rho_max) {
     Real W = D/rho_max;
     if (W > W_max) {
