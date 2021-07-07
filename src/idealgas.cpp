@@ -18,6 +18,8 @@ IdealGas::IdealGas() {
 
   min_n = 0.0;
   max_n = std::numeric_limits<Real>::max();
+  min_e = 0.0;
+  max_e = std::numeric_limits<Real>::max();
   n_species = 0;
 }
 

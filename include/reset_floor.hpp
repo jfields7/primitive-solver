@@ -29,6 +29,12 @@ class ResetFloor : public ErrorPolicyInterface {
     /// Response to excess magnetization
     Error MagnetizationResponse(Real& bsq, Real b_u[3]);
 
+    /// Policy for resetting density
+    void DensityLimits(Real& n, Real n_min, Real n_max);
+
+    /// Policy for resetting energy
+    void EnergyLimits(Real& e, Real e_min, Real e_max);
+
   public:
     /// Set the failure mode for conserved flooring
     inline void SetConservedFloorFailure(bool failure) {

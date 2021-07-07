@@ -7,9 +7,9 @@
 #include <ps_types.hpp>
 #include <eos_policy_interface.hpp>
 
-namespace Primitive{
+namespace Primitive {
 
-class IdealGas : public EOSPolicyInterface{
+class IdealGas : public EOSPolicyInterface {
   protected:
     /// Adiabatic index
     Real gamma;

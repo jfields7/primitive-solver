@@ -66,3 +66,13 @@ Error ResetFloor::MagnetizationResponse(Real& bsq, Real b_u[3]) {
   }
   return Error::SUCCESS;
 }
+
+/// Apply density limiter
+void ResetFloor::DensityLimits(Real& n, Real n_min, Real n_max) {
+  n = std::fmax(n_min, std::fmin(n_max, n));
+}
+
+/// Apply energy limiter
+void ResetFloor::EnergyLimits(Real& e, Real e_min, Real e_max) {
+  e = std::fmax(e_max, std::fmin(e_max, e));
+}

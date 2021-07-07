@@ -16,7 +16,8 @@
 //    Real MinimumEnthalpy()
 //    Real SoundSpeed(Real n, Real T, Real *Y)
 //    Real SpecificEnergy(Real n, Real T, Real *Y)
-//  And it must also have the following protected member variables:
+//  And it must also have the following protected member variables
+//  (available via EOSPolicyInterface):
 //    const int n_species
 //    Real mb
 //    Real max_rho
@@ -26,7 +27,10 @@
 //  following functions:
 //    bool PrimitiveFloor(Real& n, Real& v[3], Real& p)
 //    bool ConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
-//  And the following protected variables:
+//    void DensityLimits(Real& n, Real n_min, Real n_max);
+//    void EnergyLimits(Real& e, Real e_min, Real e_max);
+//  And the following protected variables (available via
+//  ErrorPolicyInterface):
 //    Real n_atm
 //    Real T_atm
 //    Real v_max
@@ -66,11 +70,17 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::max_n;
     // Minimum density
     using EOSPolicy::min_n;
+    // Maximum energy
+    using EOSPolicy::max_e;
+    // Minimum energy
+    using EOSPolicy::min_e;
 
     // ErrorPolicy member functions
     using ErrorPolicy::PrimitiveFloor;
     using ErrorPolicy::ConservedFloor;
     using ErrorPolicy::MagnetizationResponse;
+    using ErrorPolicy::DensityLimits;
+    using ErrorPolicy::EnergyLimits;
 
     // ErrorPolicy member variables
     using ErrorPolicy::n_atm;
@@ -209,7 +219,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return mb;
     }
 
-    //! \fn void ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
+    //! \fn bool ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
     //  \brief Apply the floor to the primitive variables.
     //
     //  \param[in,out] n   The number density
@@ -227,7 +237,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return result;
     }
 
-    //! \fn void ApplyConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
+    //! \fn bool ApplyConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
     //  \brief Apply the floor to the conserved variables.
     //
     //  \param[in,out] D   The relativistic number density
@@ -311,6 +321,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return min_n;
     }
 
+    //! \brief Get the maximum energy density permitted by the EOS.
+    inline Real GetMaximumEnergy() const {
+      return max_e;
+    }
+
+    //! \brief Get the minimum energy density permitted by the EOS.
+    inline Real GetMinimumEnergy() const {
+      return min_e;
+    }
+
     //! \fn const bool IsConservedFlooringFailure() const
     //  \brief Find out if the EOSPolicy fails flooring the conserved variables.
     // 
@@ -351,6 +371,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //! \brief Respond to excess magnetization
     inline Error DoMagnetizationResponse(Real& bsq, Real b_u[3]) {
       return MagnetizationResponse(bsq, b_u);
+    }
+
+    //! \brief Limit the density to a physical range
+    inline void ApplyDensityLimits(Real& n) {
+      DensityLimits(n, min_n, max_n);
+    }
+
+    //! \brief Limit the energy to a physical range
+    inline void ApplyEnergyLimits(Real& e) {
+      EnergyLimits(e, min_e, max_e);
     }
 };
 
