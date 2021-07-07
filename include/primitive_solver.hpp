@@ -195,13 +195,11 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   // Now estimate the number density.
   Real rhohat = D*iWhat;
   Real nhat = rhohat/mb;
-  // TODO: Limit nhat to a physical regime.
   peos->ApplyDensityLimits(nhat);
 
   // Estimate the energy density.
   Real eoverD = qbar - mu*rbarsq + 1.0;
   Real ehat = D*eoverD;
-  // TODO: Limit ehat to a physical regime.
   peos->ApplyEnergyLimits(ehat);
 
   // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.

@@ -37,11 +37,28 @@ int PiecewisePolytrope::FindPiece(Real n) const {
 Real PiecewisePolytrope::TemperatureFromE(Real n, Real e, Real *Y) {
   int p = FindPiece(n);
   
-  return 0;
+  return (gamma_pieces[p] - 1.0)*(e - a_pieces[p])/(mb*n);
 }
+
+Real PiecewisePolytrope::TemperatureFromP(Real n, Real p, Real *Y) {
+  return p/n;
+}
+
 
 Real PiecewisePolytrope::Energy(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
 
   return a_pieces[p] + n*(mb + T/(gamma_pieces[p] - 1.0));
+}
+
+Real PiecewisePolytrope::Pressure(Real n, Real T, Real *Y) {
+  return n*T;
+}
+
+Real PiecewisePolytrope::Entropy(Real n, Real T, Real *Y) {
+  throw std::logic_error("PiecewisePolytrope::Entropy not currently implemented.");
+}
+
+Real PiecewisePolytrope::Enthalpy(Real n, Real T, Real *Y) {
+  
 }
