@@ -348,6 +348,9 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   }
   else if (error == Error::CONS_ADJUSTED) {
     adjust_cons = true;
+    // We need to recalculate rb if b_u is rescaled.
+    rb = Contract(b_u, r_d);
+    rbsqr = rb*rb;
   }
   
   // Bracket the root.

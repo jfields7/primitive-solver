@@ -21,6 +21,18 @@ bool TestConstruction() {
   return (n_atm == eos.GetDensityFloor() && T_atm == eos.GetTemperatureFloor());
 }
 
+void PrintDetails(Real n, Real v[3], Real T, Real n_new, Real v_new[3], 
+                  Real T_new, Real n_atm, Real t_atm) {
+  std::cout << "  n = " << n << "\n";
+  std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
+  std::cout << "  T = " << T << "\n";
+  std::cout << "  n_new = " << n_new << "\n";
+  std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
+  std::cout << "  T_new = " << T_new << "\n";
+  std::cout << "  n_atm = " << n_atm << "\n";
+  std::cout << "  t_atm = " << t_atm << "\n";
+}
+
 bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real T) {
   Real n_new = n;
   Real v_new[3] = {v[0], v[1], v[2]};
@@ -47,14 +59,7 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
   else {
     if (n >= n_atm && T >= t_atm) {
       std::cout << "  Floor was applied to valid variables.\n";
-      std::cout << "  n = " << n << "\n";
-      std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-      std::cout << "  T = " << T << "\n";
-      std::cout << "  n_new = " << n_new << "\n";
-      std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-      std::cout << "  T_new = " << T_new << "\n";
-      std::cout << "  n_atm = " << n_atm << "\n";
-      std::cout << "  t_atm = " << t_atm << "\n";
+      PrintDetails(n, v, T, n_new, v_new, T_new, n_atm, t_atm);
       return false;
     }
     // If the floor was applied to the density, make sure the variables
@@ -67,14 +72,7 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
       }
       else {
         std::cout << "  Density floor was not applied correctly.\n";
-        std::cout << "  n = " << n << "\n";
-        std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-        std::cout << "  T = " << T << "\n";
-        std::cout << "  n_new = " << n_new << "\n";
-        std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-        std::cout << "  T_new = " << T_new << "\n";
-        std::cout << "  n_atm = " << n_atm << "\n";
-        std::cout << "  t_atm = " << t_atm << "\n";
+        PrintDetails(n, v, T, n_new, v_new, T_new, n_atm, t_atm);
         return false;
       }
     }
@@ -86,18 +84,32 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
       }
       else {
         std::cout << "  Temperature floor was not applied correctly.\n";
-        std::cout << "  n = " << n << "\n";
-        std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-        std::cout << "  T = " << T << "\n";
-        std::cout << "  n_new = " << n_new << "\n";
-        std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-        std::cout << "  T_new = " << T_new << "\n";
-        std::cout << "  n_atm = " << n_atm << "\n";
-        std::cout << "  t_atm = " << t_atm << "\n";
+        PrintDetails(n, v, T, n_new, v_new, T_new, n_atm, t_atm);
         return false;
       }
     }
   }
+}
+
+bool TestMagnetizationResponse(EOS<IdealGas, ResetFloor>* eos, Real bsq, Real b_u[3]) {
+  Real bsq_old = bsq;
+  Real b_u_old[3] = {b_u[0], b_u[1], b_u[2]};
+
+  Error result = eos->DoMagnetizationResponse(bsq, b_u);
+
+  Real bsq_max = eos->GetMaximumMagnetization();
+
+  // Make sure that the test worked when it was supposed to.
+  if ((result == Error::CONS_ADJUSTED && bsq != bsq_max) || 
+      (result == Error::SUCCESS && bsq > bsq_max)) {
+    std::cout << "  Magnetization was not rescaled properly.\n";
+    std::cout << "  bsq_old = " << bsq_old << "\n";
+    std::cout << "  bsq     = " << bsq << "\n";
+    std::cout << "  b_u_old = (" << b_u_old[0] << ", " << b_u_old[1] << ", " << b_u_old[2] << ")\n";
+    std::cout << "  b_u     = (" << b_u[0] << ", " << b_u[1] << ", " << b_u[2] << ")\n";
+    return false;
+  }
+  return true;
 }
 
 int main(int argc, char *argv[]) {
@@ -121,6 +133,25 @@ int main(int argc, char *argv[]) {
   n = 0.0;
   T = 0.0;
   tester.RunTest(&TestPrimitiveFloor, "All Invalid Primitive Floor Test", &eos, n, v, T);
+
+  // Do some magnetization tests.
+  eos.SetMaximumMagnetization(300.0);
+  Real b_u[3] = {11.0, 11.0, 11.0};
+  // We'll just hard-code flat Cartesian coordinates here.
+  Real bsq = b_u[0]*b_u[0] + b_u[1]*b_u[1] + b_u[2]*b_u[2];
+  tester.RunTest(&TestMagnetizationResponse, "Invalid Magnetization Test", &eos, bsq, b_u);
+  // Now we'll make sure that a fully saturated magnetization still passes.
+  b_u[0] = 10.0;
+  b_u[1] = 10.0;
+  b_u[2] = 10.0;
+  bsq = b_u[0]*b_u[0] + b_u[1]*b_u[1] + b_u[2]*b_u[2];
+  tester.RunTest(&TestMagnetizationResponse, "Saturated Magnetization Test", &eos, bsq, b_u);
+  // Check that a valid magnetization doesn't get rescaled.
+  b_u[0] = 5.0;
+  b_u[1] = 5.0;
+  b_u[2] = 5.0;
+  bsq = b_u[0]*b_u[0] + b_u[1]*b_u[1] + b_u[2]*b_u[2];
+  tester.RunTest(&TestMagnetizationResponse, "Valid Magnetization Test", &eos, bsq, b_u);
 
   tester.PrintSummary();
 }
