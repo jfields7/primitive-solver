@@ -130,9 +130,9 @@ void ZeroVelocity(Real prim[NPRIM]) {
 
 // StrongVelocity {{{
 void StrongVelocity(Real prim[NPRIM]) {
-  prim[IVX] = 15.0;
-  prim[IVY] = 5.0;
-  prim[IVZ] = 10.0;
+  prim[IVX] = 55.0;
+  prim[IVY] = 15.0;
+  prim[IVZ] = 30.0;
 }
 // }}}
 
@@ -146,9 +146,9 @@ void ZeroField(Real bu[NMAG]) {
 
 // StrongField {{{
 void StrongField(Real bu[NMAG]) {
-  bu[IB1] = 20.0;
-  bu[IB2] = 40.0;
-  bu[IB3] = 30.0;
+  bu[IB1] = 40.0;
+  bu[IB2] = 60.0;
+  bu[IB3] = 70.0;
 }
 // }}}
 

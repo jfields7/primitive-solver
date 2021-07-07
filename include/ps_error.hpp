@@ -14,7 +14,8 @@ namespace Primitive {
     BRACKETING_FAILED,
     NO_SOLUTION,
     CONS_FLOOR,
-    PRIM_FLOOR
+    PRIM_FLOOR,
+    CONS_ADJUSTED,
   };
 }; // namespace
 

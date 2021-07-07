@@ -1,7 +1,10 @@
 //! \file reset_floor.cpp
 //  \brief Implementation of the ResetFloor policy
 
+#include <cmath>
+
 #include <reset_floor.hpp>
+#include <ps_error.hpp>
 
 using namespace Primitive;
 
@@ -47,4 +50,19 @@ bool ResetFloor::ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) 
     return true;
   }
   return false;
+}
+
+/// Reset excess magnetization
+Error ResetFloor::MagnetizationResponse(Real& bsq, Real b_u[3]) {
+  if (bsq > max_bsq) {
+    Real factor = std::sqrt(max_bsq/bsq);
+    bsq = max_bsq;
+
+    b_u[0] /= factor;
+    b_u[1] /= factor;
+    b_u[2] /= factor;
+
+    return Error::CONS_ADJUSTED;
+  }
+  return Error::SUCCESS;
 }

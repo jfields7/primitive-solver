@@ -7,6 +7,7 @@
 //  purposes.
 
 #include <ps_types.hpp>
+#include <ps_error.hpp>
 #include <error_policy_interface.hpp>
 
 namespace Primitive {
@@ -21,6 +22,7 @@ class DoNothing : public ErrorPolicyInterface {
 
     bool PrimitiveFloor(Real& n, Real v[3], Real& t) {return false;}
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {return false;}
+    Error MagnetizationResponse(Real& bsq, Real b_u[3]) {return Error::SUCCESS;}
 };
 
 }; // namespace

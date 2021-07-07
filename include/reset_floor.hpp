@@ -13,6 +13,8 @@
 
 namespace Primitive {
 
+enum class Error;
+
 class ResetFloor : public ErrorPolicyInterface {
   protected:
     /// Constructor
@@ -23,6 +25,9 @@ class ResetFloor : public ErrorPolicyInterface {
 
     /// Floor for conserved variables
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor);
+
+    /// Response to excess magnetization
+    Error MagnetizationResponse(Real& bsq, Real b_u[3]);
 
   public:
     /// Set the failure mode for conserved flooring

@@ -16,7 +16,7 @@ class ErrorPolicyInterface {
     Real n_atm;
     Real T_atm;
     Real v_max;
-    Real max_bsq_field;
+    Real max_bsq;
     bool fail_conserved_floor;
     bool fail_primitive_floor;
     bool adjust_conserved;

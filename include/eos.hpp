@@ -41,6 +41,8 @@
 
 namespace Primitive {
 
+enum class Error;
+
 template <typename EOSPolicy, typename ErrorPolicy>
 class EOS : public EOSPolicy, public ErrorPolicy {
   private:
@@ -68,6 +70,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     // ErrorPolicy member functions
     using ErrorPolicy::PrimitiveFloor;
     using ErrorPolicy::ConservedFloor;
+    using ErrorPolicy::MagnetizationResponse;
 
     // ErrorPolicy member variables
     using ErrorPolicy::n_atm;
@@ -76,7 +79,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::fail_conserved_floor;
     using ErrorPolicy::fail_primitive_floor;
     using ErrorPolicy::adjust_conserved;
-    using ErrorPolicy::max_bsq_field;
+    using ErrorPolicy::max_bsq;
 
   public:
     //! \fn EOS()
@@ -88,7 +91,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       n_atm = 1e-10;
       T_atm = 1.0;
       v_max = 1.0 - 1e-15;
-      max_bsq_field = std::numeric_limits<Real>::max();
+      max_bsq = std::numeric_limits<Real>::max();
     }
 
     //! \fn Real GetTemperatureFromE(Real n, Real e, Real *Y)
@@ -334,15 +337,20 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \brief Get the maximum squared magnetic field permitted by the ErrorPolicy
-    inline Real GetMaximumSquaredMagneticField() const {
-      return max_bsq_field;
+    inline Real GetMaximumMagnetization() const {
+      return max_bsq;
     }
 
     //! \brief Set the maximum squared magnetic field permitted by the ErrorPolicy
     //         Adjusts the input to make sure it's nonnegative (does not
     //         return an error).
-    inline void SetMaximumSquaredMagneticField(double bsq) {
-      max_bsq_field = (bsq >= 0) ? bsq : 0.0;
+    inline void SetMaximumMagnetization(double bsq) {
+      max_bsq = (bsq >= 0) ? bsq : 0.0;
+    }
+
+    //! \brief Respond to excess magnetization
+    inline Error DoMagnetizationResponse(Real& bsq, Real b_u[3]) {
+      return MagnetizationResponse(bsq, b_u);
     }
 };
 

@@ -340,11 +340,14 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     }
   }
 
+  bool adjust_cons = false;
   // Make sure that the magnetic field is physical.
-  // TODO: This is another thing that should probably be handled
-  // by the ErrorPolicy.
-  if (bsqr > peos->GetMaximumSquaredMagneticField()/D) {
+  Error error = peos->DoMagnetizationResponse(bsqr, b_u);
+  if (error == Error::MAG_TOO_BIG) {
     return Error::MAG_TOO_BIG;
+  }
+  else if (error == Error::CONS_ADJUSTED) {
+    adjust_cons = true;
   }
   
   // Bracket the root.
@@ -370,7 +373,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
 
   // Check the corner case where the density is outside the permitted
   // bounds according to the ErrorPolicy.
-  Error error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
+  error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
   if (error != Error::SUCCESS) {
     // TODO: This is probably something that should be handled by the ErrorPolicy.
     return error;
@@ -407,6 +410,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   if (floored && peos->IsPrimitiveFlooringFailure()) {
     return Error::PRIM_FLOOR;
   }
+  adjust_cons = adjust_cons || floored;
 
   prim[IDN] = rho;
   prim[IPR] = P;
@@ -421,7 +425,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // If we floored the primitive variables, we should check
   // if the EOS wants us to adjust the conserved variables back
   // in bounds. If that's the case, then we'll do it.
-  if (floored && peos->KeepPrimAndConConsistent()) {
+  if (adjust_cons && peos->KeepPrimAndConConsistent()) {
     PrimToCon(prim, cons, b, gd, gu);
   }
 
