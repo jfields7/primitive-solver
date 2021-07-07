@@ -5,26 +5,15 @@
 //  \brief Defines an ideal gas equation of state.
 
 #include <ps_types.hpp>
+#include <eos_policy_interface.hpp>
 
 namespace Primitive{
 
-class IdealGas{
+class IdealGas : public EOSPolicyInterface{
   protected:
-    /// An ideal gas doesn't care about particle species, so this
-    /// shouldn't really matter much.
-    int n_species;
-
     /// Adiabatic index
     Real gamma;
     Real gammam1;
-
-    /// Baryon mass
-    Real mb;
-
-    /// Maximum density
-    Real max_rho;
-    /// Minimum density
-    Real min_rho;
 
     /// Constructor
     IdealGas();

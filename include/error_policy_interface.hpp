@@ -8,6 +8,8 @@
 //  being instantiated. It literally just provides member
 //  variables for an ErrorPolicy;
 
+namespace Primitive {
+
 class ErrorPolicyInterface {
   protected:
     ErrorPolicyInterface() = default;
@@ -21,5 +23,7 @@ class ErrorPolicyInterface {
     bool fail_primitive_floor;
     bool adjust_conserved;
 };
+
+} // namespace
 
 #endif

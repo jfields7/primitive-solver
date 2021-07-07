@@ -16,8 +16,8 @@ IdealGas::IdealGas() {
   gammam1 = gamma - 1.0;
   mb = 1.0;
 
-  min_rho = 0.0;
-  max_rho = std::numeric_limits<Real>::max();
+  min_n = 0.0;
+  max_n = std::numeric_limits<Real>::max();
   n_species = 0;
 }
 
