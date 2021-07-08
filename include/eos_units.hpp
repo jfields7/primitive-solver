@@ -1,13 +1,44 @@
 #ifndef EOS_UNITS_HPP
 #define EOS_UNITS_HPP
 
-/*!
- * \file eos_units.hpp
- * \brief contains unit definitions and conversion for the EOS solver.
- */
+//! \file eos_units.hpp
+//  \brief contains unit definitions and conversion for the EOS solver.
+//  
+//  Each unit system is defined as its own struct inside the EOSUnits namespace.
 
 namespace EOSUnits{
-  // Constants
+
+//! CGS Units
+struct CGS {
+  static Real const c   = 2.99792458e10; //! cm/s
+  static Real const G   = 6.67430e-8; //! cm^3 g^-1 s^-2
+  static Real const kb  = 1.380649e-16; //! erg K^-1
+  static Real const MeV = 1.602176634e-6; //! erg
+
+  static Real const length  = 1.0; //! cm
+  static Real const density = 1.0; //! cm^-3
+};
+
+//! Geometric units
+struct Geometric {
+  static Real const c   = 1.0;
+  static Real const G   = 1.0;
+  static Real const kb  = 1.0;
+  static Real const MeV = 1.32383331356638e-55; //! cm
+
+  static Real const length = 1.0; //! cm/cm
+  static Real const density = 1.0; //! cm^3/cm^3
+};
+
+//! Nuclear units
+struct Nuclear {
+  static Real const c;
+  static Real const kb  = 1.0;
+  static Real const MeV = 1.0;
+
+  static Real const length  = 1e13; //! fm/cm
+  static Real const density = 1e-39; //! cm^3/fm^3
+};
 
   // Speed of light
   const double c_in_cgs = 2.99792458e10; // cgs units -- cm/s
@@ -49,13 +80,6 @@ namespace EOSUnits{
   const double energy_in_natm = 1.323833314e-57; // Natural units -- m
   const double energy_in_nuc  = 1.0; // Nuclear units
   const double energy_in_code = 1.0; // Code units
-
-  // Baryon mass (amu)
-  /*const double baryon_in_cgs = 1.66053906660e-24; // cgs units -- g
-  const double baryon_in_si  = 1.66053906660e-27; // SI units -- kg
-  const double baryon_in_mev = 931.49410242; // MeV/c^2
-  const double baryon_in_nuc = 1.0;          // nuclear units*/
-  // Baryon mass, if it has to be defined, should be defined by the EOS.
 
   // Temperature (MeV)
 
