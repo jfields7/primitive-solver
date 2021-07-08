@@ -52,7 +52,7 @@ Real IdealGas::MinimumEnthalpy() {
 }
 
 Real IdealGas::SoundSpeed(Real n, Real T, Real *Y) {
-  return sqrt(gamma*gammam1*T/(gammam1*mb + gamma*T));
+  return std::sqrt(gamma*gammam1*T/(gammam1*mb + gamma*T));
 }
 
 Real IdealGas::SpecificEnergy(Real n, Real T, Real *Y) {

@@ -3,6 +3,12 @@
 
 //! \file piecewise_polytrope.hpp
 //  \brief Defines a piecewise-polytropic equation of state.
+//
+//  Each individual piece satisfies the form
+//  \f$P = \Kappa_i \rho^{\gamma_i}\f$,
+//  for some density \f$\rho > \rho_i\f$. The temperature is
+//  defined via the ideal gas law:
+//  \f$P = nk_B T\f$.
 
 #include <ps_types.hpp>
 #include <eos_policy_interface.hpp>
@@ -16,7 +22,6 @@ class PiecewisePolytrope : EOSPolicyInterface {
     
     /// Parameters for the EOS
     Real *density_pieces;
-    Real *kappa_pieces;
     Real *a_pieces;
     Real *gamma_pieces;
     bool initialized;
@@ -70,6 +75,9 @@ class PiecewisePolytrope : EOSPolicyInterface {
   public:
     /// Load the EOS parameters from a file.
     bool ReadParametersFromFile(std::string fname);
+
+    /// Initialize PiecewisePolytrope from data.
+    bool InitializeFromData(Real *densities, Real *kappas, Real *gammas, Real m, int n);
 
     /// Check if the EOS has been initialized properly.
     inline bool IsInitialized() const {
