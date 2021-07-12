@@ -6,10 +6,13 @@
 //  
 //  Each unit system is defined as its own struct inside the EOSUnits namespace.
 //  TODO: Check that these conversions are correct.
+//  TODO: Should I use the constants in CompOSE instead?
 
 namespace EOSUnits{
 
 //! CGS Units
+//
+//  Units with uncertainty are defined using the 2018 CODATA values.
 struct CGS {
   static Real const c    = 2.99792458e10; //! cm/s
   static Real const G    = 6.67430e-8; //! cm^3 g^-1 s^-2
