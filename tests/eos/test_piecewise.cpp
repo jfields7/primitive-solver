@@ -31,6 +31,54 @@ void Initialize(EOS<PiecewisePolytrope, DoNothing>& eos) {
   eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
 }
 
+bool TestReinitialization() {
+  EOS<PiecewisePolytrope, DoNothing> eos;
+  Initialize(eos);
+
+  // We should have data in here, but the wrong data.
+  // Let's reinitialize with a different set of data.
+  int N = 4;
+  Real gamma_pieces[N] = {1.3333, 1.7, 1.9, 2.1};
+  Real mb_nuc = 2.0;
+  Real rho_nuc = 1.0;
+  Real density_pieces[N] = {0.78, 1.4, 3.6, 6.4};
+  Real rho_min = 1e-10;
+  Real kappa0 = 3.0;
+
+  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
+  
+  if (!eos.IsInitialized()) {
+    std::cout << "  Failed to initialize EOS properly.\n";
+    return false;
+  }
+  if (eos.GetNPieces() != 4) {
+    std::cout << "  Wrong number of polytropes.\n";
+    if (eos.GetNPieces() == 3){
+      std::cout << "  n_pieces = 3 suggests a failed reinitialization.\n";
+    }
+    return false;
+  }
+
+  // Make sure that all the pieces were constructed correctly.
+  if (eos.GetGamma(0.5/mb_nuc) != gamma_pieces[0]) {
+    std::cout << "  First polytrope is incorrect.\n";
+    return false;
+  }
+  if (eos.GetGamma(1.25/mb_nuc) != gamma_pieces[1]) {
+    std::cout << "  Second polytrope is incorrect.\n";
+    return false;
+  }
+  if (eos.GetGamma(2.5/mb_nuc) != gamma_pieces[2]) {
+    std::cout << "  Third polytrope is incorrect.\n";
+    return false;
+  }
+  if (eos.GetGamma(5.0/mb_nuc) != gamma_pieces[3]) {
+    std::cout << "  Fourth polytrope is incorrect.\n";
+    return false;
+  }
+  return true;
+}
+
 bool TestConstruction() {
   EOS<PiecewisePolytrope, DoNothing> eos;
   if (eos.IsInitialized() || eos.GetNPieces() > 0) {
@@ -124,6 +172,9 @@ int main(int argc, char* argv[]) {
   UnitTests tester("Piecewise Polytropic EOS");
   // Validate that the EOS gets constructed as expected.
   tester.RunTest(&TestConstruction, "Construction Test");
+
+  // Validate that reinitialization works as expected.
+  tester.RunTest(&TestReinitialization, "Reinitialization Test");
 
   EOS<PiecewisePolytrope, DoNothing> eos;
   Initialize(eos);

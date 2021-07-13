@@ -106,7 +106,7 @@ bool PiecewisePolytrope::ReadParametersFromFile(std::string fname) {
 }
 
 bool PiecewisePolytrope::InitializeFromData(Real *densities, 
-      Real *gammas, Real rho_min, Real kappa0, Real m, int n) {
+      Real *gammas, Real rho_min, Real P0, Real m, int n) {
   // Make sure that we actually *have* polytropes.
   if (n <= 0) {
     return false;
@@ -135,20 +135,26 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   density_pieces[0] = densities[0]/m;
   gamma_pieces[0] = gammas[0];
   a_pieces[0] = 0.0; // TODO: Figure out what this actually is.
-  Real kappa = kappa0;
+  if (n > 1){
+    a_pieces[0] = P0/densities[0]*(1.0/(gammas[0]-1.0) - 1.0/(gammas[1] - 1.0));
+  }
+  else {
+    a_pieces[0] = 0.0;
+  }
+  Real P = P0;
   for (int i = 1; i < n; i++) {
     density_pieces[i] = densities[i]/m;
     gamma_pieces[i] = gammas[i];
     // Because we've rewritten the EOS in terms of temperature, we don't need
     // kappa in its current form. However, we can use it to define the a
     // constants that show up in our equations.
-    a_pieces[i] = a_pieces[i-1] + kappa*std::pow(densities[i-1],gammas[i-1]-1.0)*
+    a_pieces[i] = a_pieces[i-1] + P/densities[i-1] *
                   (1.0/(gammas[i-1] - 1.0) - 1.0/(gammas[i] - 1.0));
-    kappa = kappa*std::pow(densities[i-1],gammas[i-1] - gammas[i]);
+    P = P*std::pow(densities[i]/densities[i-1],gammas[i]);
   }
 
   // Find the minimum and maximum energies allowed by the EOS.
-  Real T_max = kappa/mb*std::pow(densities[n-1],gammas[n-1]-1.0);
+  Real T_max = P/max_n;
   min_e = Energy(min_n, 0.0, nullptr);
   max_e = Energy(max_n, T_max, nullptr);
   return true;

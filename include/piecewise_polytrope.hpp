@@ -81,11 +81,11 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     //  \param[in] densities The dividing densities
     //  \param[in] gammas    The adiabatic index for each polytrope
     //  \param[in] rho_min   The minimum density for the EOS
-    //  \param[in] kappa0    The pressure coefficient for the first polytrope
+    //  \param[in] P0        The pressure at the first polytrope division
     //  \param[in] m         The baryon mass
     //  \param[in] n         The number of pieces in the EOS
     bool InitializeFromData(Real *densities, Real *gammas, 
-                            Real rho_min, Real kappa0, Real m, int n);
+                            Real rho_min, Real P0, Real m, int n);
 
     /// Check if the EOS has been initialized properly.
     inline bool IsInitialized() const {
