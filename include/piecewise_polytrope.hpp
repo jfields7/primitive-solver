@@ -15,7 +15,7 @@
 
 namespace Primitive {
 
-class PiecewisePolytrope : EOSPolicyInterface {
+class PiecewisePolytrope : public EOSPolicyInterface {
   private:
     /// Number of polytropes in the EOS
     int n_pieces;
@@ -76,12 +76,30 @@ class PiecewisePolytrope : EOSPolicyInterface {
     /// Load the EOS parameters from a file.
     bool ReadParametersFromFile(std::string fname);
 
-    /// Initialize PiecewisePolytrope from data.
-    bool InitializeFromData(Real *densities, Real *kappas, Real *gammas, Real m, int n);
+    //! \brief Initialize PiecewisePolytrope from data.
+    //  
+    //  \param[in] densities The dividing densities
+    //  \param[in] gammas    The adiabatic index for each polytrope
+    //  \param[in] rho_min   The minimum density for the EOS
+    //  \param[in] kappa0    The pressure coefficient for the first polytrope
+    //  \param[in] m         The baryon mass
+    //  \param[in] n         The number of pieces in the EOS
+    bool InitializeFromData(Real *densities, Real *gammas, 
+                            Real rho_min, Real kappa0, Real m, int n);
 
     /// Check if the EOS has been initialized properly.
     inline bool IsInitialized() const {
       return initialized;
+    }
+
+    /// Find out how many polytropes are in the EOS.
+    inline int GetNPieces() const {
+      return n_pieces;
+    }
+
+    /// Get the adiabatic constant for a particular density.
+    inline Real GetGamma(Real n) const {
+      return gamma_pieces[FindPiece(n)];
     }
 };
 

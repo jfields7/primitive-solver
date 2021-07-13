@@ -33,13 +33,16 @@ $(OBJ_DIR)%.o : %.cpp
 eos_idealgas : $(OBJ_FILES)
 	$(call make_test,eos,test_idealgas)
 
+eos_piecewise : $(OBJ_FILES)
+	$(call make_test,eos,test_piecewise)
+
 error_resetfloor : $(OBJ_FILE)
 	$(call make_test,error,test_resetfloor)
 
 primitive_idealgas : $(OBJ_FILE)
 	$(call make_test,primitive,test_primitive_idealgas)
 
-tests: dirs eos_idealgas error_resetfloor primitive_idealgas
+tests: dirs eos_idealgas eos_piecewise error_resetfloor primitive_idealgas
 
 clean:
 	rm -rf $(OBJ_DIR)*
@@ -48,5 +51,6 @@ clean:
 run: dirs tests
 	cd bin; \
 	./test_idealgas; \
+  ./test_piecewise; \
 	./test_resetfloor; \
   ./test_primitive_idealgas
