@@ -100,7 +100,7 @@ bool TestConstruction() {
   }
 
   // Check that the min and max densities are correct.
-  if (eos.GetMinimumDensity() != 0.1) {
+  if (eos.GetMinimumDensity() != 0.0) {
     std::cout << "  Incorrect minimum density.\n";
     return false;
   }

@@ -31,25 +31,24 @@ void PiecewisePolytrope::AllocateMemory() {
     delete[] a_pieces;
     delete[] gamma_pieces;
   }
-  density_pieces = new Real[n_pieces];
-  a_pieces = new Real[n_pieces];
-  gamma_pieces = new Real[n_pieces];
+  // We store one extra polytrope just in case a
+  // minimum isn't specified.
+  density_pieces = new Real[n_pieces+1];
+  a_pieces = new Real[n_pieces+1];
+  gamma_pieces = new Real[n_pieces+1];
   initialized = true;
 }
 
 int PiecewisePolytrope::FindPiece(Real n) const {
-  int polytrope = -1;
+  // In case the density is below the minimum, we
+  // implement a default case that is stored just
+  // past the current polytrope.
+  int polytrope = n_pieces;
   for (int i = 0; i < n_pieces; i++) {
     if (n <= density_pieces[i]) {
       polytrope = i;
       break;
     }
-  }
-  if (polytrope == -1) {
-    // We need to do something if the density is invalid, 
-    // but I'm not sure what it is. Maybe we'll just throw
-    // an exception for now.
-    throw std::out_of_range("Input density does not correspond to a valid polytrope.");
   }
 
   return polytrope;
@@ -127,7 +126,7 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   // Initialize (most of) the member variables.
   n_pieces = n;
   mb = m;
-  min_n = rho_min/mb;
+  min_n = 0.0;
   max_n = densities[n-1]/mb;
   AllocateMemory();
 
@@ -153,9 +152,18 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
     P = P*std::pow(densities[i]/densities[i-1],gammas[i]);
   }
 
-  // Find the minimum and maximum energies allowed by the EOS.
+  // Set up the default case. Because of thermodynamic constraints,
+  // we must force a to be zero. Gamma is fixed by continuity.
+  a_pieces[n] = 0.0;
+  Real factor = (gammas[0] - 1.0)*rho_min*a_pieces[0];
+  Real P_min = P0*std::pow(rho_min/densities[0],gammas[0]);
+  gamma_pieces[n] = (gammas[0]*P_min + factor)/(P_min + factor);
+  density_pieces[n] = 0.0;
+
+  // Find the maximum energies allowed by the EOS. Because of the
+  // extension down to zero density, energy is just capped at 0.
   Real T_max = P/max_n;
-  min_e = Energy(min_n, 0.0, nullptr);
+  min_e = 0.0;
   max_e = Energy(max_n, T_max, nullptr);
   return true;
 }
