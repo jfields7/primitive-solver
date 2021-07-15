@@ -168,6 +168,45 @@ void RunTestSuite(UnitTests& tester, EOS<PiecewisePolytrope, DoNothing>* peos,
   ss.str(std::string());
 }
 
+bool ContinuityTest(EOS<PiecewisePolytrope, DoNothing>* peos, Real n, Real T, Real* Y, Real tol) {
+  Real np = n*(1.0 + tol);
+  Real nm = n*(1.0 - tol);
+
+  Real ep = peos->GetEnergy(np, T, Y);
+  Real em = peos->GetEnergy(nm, T, Y);
+
+  return true;
+}
+
+bool TestLowDensity() {
+  EOS<PiecewisePolytrope, DoNothing> eos;
+  int N = 3;
+  Real gamma_pieces[N] = {1.8, 2.3, 1.9};
+  Real density_pieces[N] = {1.0, 1.5, 3.0};
+  Real mb_nuc = 1.0;
+  Real rho_nuc = 1.0;
+  Real rho_min = 0.5;
+  Real P0 = 10.0;
+
+  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, P0, mb_nuc, N);
+
+  if (!eos.IsInitialized()) {
+    std::cout << "  There was an error initializing the EOS.\n";
+    return false;
+  }
+
+  Real min_gamma = eos.GetGamma(rho_min/2.0);
+  for (int i = 0; i < N; i++) {
+    if (min_gamma == gamma_pieces[i]) {
+      std::cout << "  Wrong piece retrieved for low densities.\n";
+      std::cout << "  Returning the i = " << i << " piece.\n";
+      return false;
+    }
+  }
+
+  return true;
+}
+
 int main(int argc, char* argv[]) {
   UnitTests tester("Piecewise Polytropic EOS");
   // Validate that the EOS gets constructed as expected.
@@ -193,6 +232,9 @@ int main(int argc, char* argv[]) {
   // 3rd polytrope tests
   n = 6.0;
   RunTestSuite(tester, &eos, n, T, Y, 2, tol);
+
+  // Low density test
+  tester.RunTest(&TestLowDensity, "Low Density Test");
 
   tester.PrintSummary();
   return 0;

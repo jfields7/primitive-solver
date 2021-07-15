@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <iostream>
 
 #include <piecewise_polytrope.hpp>
 #include <eos_units.hpp>
@@ -36,14 +37,16 @@ void PiecewisePolytrope::AllocateMemory() {
   density_pieces = new Real[n_pieces+1];
   a_pieces = new Real[n_pieces+1];
   gamma_pieces = new Real[n_pieces+1];
-  initialized = true;
 }
 
 int PiecewisePolytrope::FindPiece(Real n) const {
   // In case the density is below the minimum, we
   // implement a default case that is stored just
   // past the current polytrope.
-  int polytrope = n_pieces;
+  int polytrope;
+  if (n < density_pieces[n_pieces]) {
+    return n_pieces;
+  }
   for (int i = 0; i < n_pieces; i++) {
     if (n <= density_pieces[i]) {
       polytrope = i;
@@ -133,7 +136,6 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   // Now we can construct the different pieces.
   density_pieces[0] = densities[0]/m;
   gamma_pieces[0] = gammas[0];
-  a_pieces[0] = 0.0; // TODO: Figure out what this actually is.
   if (n > 1){
     a_pieces[0] = P0/densities[0]*(1.0/(gammas[0]-1.0) - 1.0/(gammas[1] - 1.0));
   }
@@ -149,6 +151,18 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
     // constants that show up in our equations.
     a_pieces[i] = a_pieces[i-1] + P/densities[i-1] *
                   (1.0/(gammas[i-1] - 1.0) - 1.0/(gammas[i] - 1.0));
+    // Let's double-check that the density is physical.
+    if (gamma_pieces[i] > 2.0) {
+      Real rho_max = std::pow((a_pieces[i] + 1.0)*std::pow(densities[i-1],gammas[i])
+                      *(gammas[i]-1.0)/(P*gammas[i]*(gammas[i]-2.0)), 1.0/(gammas[i]-1.0));
+      if (densities[i] > rho_max) {
+        std::cout << "The i = " << i 
+                  << " piece of the polytrope permits superluminal densities: \n";
+        std::cout << "  rho[i]     = " << densities[i] << "\n";
+        std::cout << "  rho_max[i] = " << rho_max << "\n";
+        return false;
+      }
+    }
     P = P*std::pow(densities[i]/densities[i-1],gammas[i]);
   }
 
@@ -158,12 +172,14 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   Real factor = (gammas[0] - 1.0)*rho_min*a_pieces[0];
   Real P_min = P0*std::pow(rho_min/densities[0],gammas[0]);
   gamma_pieces[n] = (gammas[0]*P_min + factor)/(P_min + factor);
-  density_pieces[n] = 0.0;
+  density_pieces[n] = rho_min/mb;
 
   // Find the maximum energies allowed by the EOS. Because of the
   // extension down to zero density, energy is just capped at 0.
   Real T_max = P/max_n;
   min_e = 0.0;
   max_e = Energy(max_n, T_max, nullptr);
+
+  initialized = true;
   return true;
 }
