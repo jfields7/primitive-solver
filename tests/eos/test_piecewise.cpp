@@ -20,10 +20,10 @@ using namespace Primitive;
 void Initialize(EOS<PiecewisePolytrope, DoNothing>& eos) {
   // This EOS is just a collection of goofy numbers
   // and in no way pertains to anything physical.
-  int N = 3;
+  const int N = 3;
   Real gamma_pieces[N] = {2.0, 1.7, 1.4};
   Real mb_nuc = 1.0;
-  Real rho_nuc = 1.0;
+  //Real rho_nuc = 1.0;
   Real density_pieces[N] = {1.0, 3.0, 10.0};
   Real rho_min = 0.1;
   Real kappa0 = 10.0;
@@ -37,10 +37,10 @@ bool TestReinitialization() {
 
   // We should have data in here, but the wrong data.
   // Let's reinitialize with a different set of data.
-  int N = 4;
+  const int N = 4;
   Real gamma_pieces[N] = {1.3333, 1.7, 1.9, 2.1};
   Real mb_nuc = 2.0;
-  Real rho_nuc = 1.0;
+  //Real rho_nuc = 1.0;
   Real density_pieces[N] = {0.78, 1.4, 3.6, 6.4};
   Real rho_min = 1e-10;
   Real kappa0 = 3.0;
@@ -168,23 +168,54 @@ void RunTestSuite(UnitTests& tester, EOS<PiecewisePolytrope, DoNothing>* peos,
   ss.str(std::string());
 }
 
-bool ContinuityTest(EOS<PiecewisePolytrope, DoNothing>* peos, Real n, Real T, Real* Y, Real tol) {
-  Real np = n*(1.0 + tol);
-  Real nm = n*(1.0 - tol);
+bool TestContinuity(EOS<PiecewisePolytrope, DoNothing>* peos, Real n, Real T, Real* Y, Real tol) {
+  // The energy density should be continuous, and it should depend linearly on the density.
+  // Therefore, we can estimate the slope at some points both above and below the transition
+  // density and predict exactly what it should be. If the two estimates for the energy density
+  // are not in reasonable agreement, there's probably a discontinuity.
 
-  Real ep = peos->GetEnergy(np, T, Y);
-  Real em = peos->GetEnergy(nm, T, Y);
+  // Get the densities just above and just below the transition density.
+  Real np1 = n*(1.0 + tol);
+  Real np2 = n*(1.0 + 2.0*tol);
+  Real nm1 = n*(1.0 - tol);
+  Real nm2 = n*(1.0 - 2.0*tol);
+
+  // Get two energy densities just beyond the transition density and
+  // just below the transition density.
+  Real ep1 = peos->GetEnergy(np1, T, Y);
+  Real ep2 = peos->GetEnergy(np2, T, Y);
+  Real em1 = peos->GetEnergy(nm1, T, Y);
+  Real em2 = peos->GetEnergy(nm2, T, Y);
+  
+  // Get estimates for the transition density's energy density.
+  Real ep = 2.0*ep1 - ep2;
+  Real em = 2.0*em1 - em2;
+
+  // The actual energy density at the transition density.
+  Real ea = peos->GetEnergy(n, T, Y);
+
+  // Now estimate the errors
+  Real error = GetError(ep, em);
+  
+  if (error > tol) {
+    std::cout << "  The energy density does not seem to be continuous:\n";
+    std::cout << "  e+ = " << ep << "\n";
+    std::cout << "  e- = " << em << "\n";
+    std::cout << "  Error: " << error << "\n";
+    std::cout << "  Actual energy density: " << ea << "\n";
+    return false;
+  }
 
   return true;
 }
 
 bool TestLowDensity() {
   EOS<PiecewisePolytrope, DoNothing> eos;
-  int N = 3;
+  const int N = 3;
   Real gamma_pieces[N] = {1.8, 2.3, 1.9};
   Real density_pieces[N] = {1.0, 1.5, 3.0};
   Real mb_nuc = 1.0;
-  Real rho_nuc = 1.0;
+  //Real rho_nuc = 1.0;
   Real rho_min = 0.5;
   Real P0 = 10.0;
 
@@ -221,20 +252,35 @@ int main(int argc, char* argv[]) {
 
   // 1st polytrope tests
   Real n = 0.5; // number density
-  Real T = 100.0; // temperature
+  Real T = eos.GetTemperatureFromE(n, 0, nullptr); // temperature
   Real *Y = nullptr; // crap
   RunTestSuite(tester, &eos, n, T, Y, 0, tol);
 
   // 2nd polytrope tests
   n = 1.5; // number density
+  T = eos.GetTemperatureFromE(n, 0, nullptr);
   RunTestSuite(tester, &eos, n, T, Y, 1, tol);
 
   // 3rd polytrope tests
   n = 6.0;
+  T = eos.GetTemperatureFromE(n, 0, nullptr);
   RunTestSuite(tester, &eos, n, T, Y, 2, tol);
 
   // Low density test
   tester.RunTest(&TestLowDensity, "Low Density Test");
+
+  // Test the transition densities.
+  n = 0.1;
+  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  tester.RunTest(&TestContinuity, "Default Transition Continuity Test", &eos, n, T, Y, tol);
+
+  n = 1.0;
+  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  tester.RunTest(&TestContinuity, "1st and 2nd Polytrope Continuity Test", &eos, n, T, Y, tol);
+
+  n = 3.0;
+  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  tester.RunTest(&TestContinuity, "2nd and 3rd Polytrope Continuity Test", &eos, n, T, Y, tol);
 
   tester.PrintSummary();
   return 0;

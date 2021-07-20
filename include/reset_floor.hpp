@@ -52,6 +52,6 @@ class ResetFloor : public ErrorPolicyInterface {
     }
 };
 
-}; // namespace
+} // namespace
 
 #endif

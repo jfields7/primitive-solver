@@ -71,6 +71,6 @@ class IdealGas : public EOSPolicyInterface {
     void SetNSpecies(int n);
 };
 
-}; // namespace
+} // namespace
 
 #endif

@@ -24,6 +24,7 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     Real *density_pieces;
     Real *a_pieces;
     Real *gamma_pieces;
+    Real *kappa_pieces;
     bool initialized;
 
     /// Allocate memory for the different EOS pieces.
@@ -103,6 +104,6 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     }
 };
 
-}; // namespace
+} // namespace
 
 #endif

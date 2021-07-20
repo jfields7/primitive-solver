@@ -384,6 +384,6 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 };
 
-}; // namespace
+} // namespace
 
 #endif

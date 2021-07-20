@@ -1,6 +1,6 @@
 CXX    := g++
 LIB    := ar cr
-RFLAGS := -std=c++11 -g
+RFLAGS := -std=c++11 -g -Wall -Wpedantic
 FLAGS  := 
 LDFLAGS :=
 LDLIBS := -lNumTools

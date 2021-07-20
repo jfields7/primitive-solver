@@ -175,7 +175,7 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real musq = mu*mu;
   const Real den = 1.0 + mu*bsq;
   const Real mux = mu/den;
-  const Real muxsq = mux/den;
+  //const Real muxsq = mux/den;
   const Real rbarsq = rsq*xsq + mux*(1.0 + x)*rbsq;
   //const Real rbarsq = xsq*(rsq + mu*(2.0 + mu*bsq)*rbsq);
   // An alternative calculation of rbarsq that may be more accurate.
@@ -201,6 +201,7 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   Real eoverD = qbar - mu*rbarsq + 1.0;
   Real ehat = D*eoverD;
   peos->ApplyEnergyLimits(ehat);
+  eoverD = ehat/D;
 
   // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
   Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
@@ -362,8 +363,10 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     Real mu = 0.0;
     // We don't need the bound to be that tight, so we reduce
     // the accuracy of the root solve for speed reasons.
-    NumTools::Root::tol = 1e-3;
-    NumTools::Root::iterations = 10;
+    //NumTools::Root::tol = 1e-3;
+    //NumTools::Root::iterations = 10;
+    NumTools::Root::tol = 1e-15;
+    NumTools::Root::iterations = 30;
     bool result = NumTools::Root::newton_raphson(&UpperRoot, mu, bsqr, rsqr, rbsqr, min_h);
     // Scream if the bracketing failed.
     if (!result) {
@@ -504,5 +507,5 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real 
 }
 // }}}
 
-}; // namespace
+} // namespace
 #endif

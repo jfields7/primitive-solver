@@ -96,6 +96,37 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
 
   if(result != Primitive::Error::SUCCESS) {
     std::cout << "An error occurred during the primitive solve.\n";
+    switch(result) {
+      case Primitive::Error::RHO_TOO_BIG:
+        std::cout << "  Rho is too large.\n";
+        break;
+      case Primitive::Error::RHO_TOO_SMALL:
+        std::cout << "  Rho is too small.\n";
+        break;
+      case Primitive::Error::NANS_IN_CONS:
+        std::cout << "  Incoming conservative variables contain NaNs.\n";
+        break;
+      case Primitive::Error::MAG_TOO_BIG:
+        std::cout << "  Incoming magnetic field is too large.\n";
+        break;
+      case Primitive::Error::BRACKETING_FAILED:
+        std::cout << "  Failed to bracket the root correctly.\n";
+        break;
+      case Primitive::Error::NO_SOLUTION:
+        std::cout << "  Failed to find a solution.\n";
+        break;
+      case Primitive::Error::CONS_FLOOR:
+        std::cout << "  Unpermitted conservative flooring occurred.\n";
+        break;
+      case Primitive::Error::PRIM_FLOOR:
+        std::cout << "  Unpermitted primitive flooring occurred.\n";
+        break;
+      case Primitive::Error::CONS_ADJUSTED:
+        std::cout << "  Unpermitted adjustment required in the conserved variables.\n";
+        break;
+      default:
+        std::cout << "  An unknown error occurred.\n";
+    }
     return false;
   }
 

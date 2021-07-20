@@ -26,6 +26,6 @@ class EOSPolicyInterface {
     Real min_e;
 };
 
-}; // namespace
+} // namespace
 
 #endif

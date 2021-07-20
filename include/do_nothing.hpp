@@ -27,6 +27,6 @@ class DoNothing : public ErrorPolicyInterface {
     void EnergyLimits(Real& e, Real e_min, Real e_max) {return;}
 };
 
-}; // namespace
+} // namespace
 
 #endif

@@ -17,6 +17,6 @@ namespace Primitive {
     PRIM_FLOOR,
     CONS_ADJUSTED,
   };
-}; // namespace
+} // namespace
 
 #endif

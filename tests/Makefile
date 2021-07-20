@@ -42,7 +42,10 @@ error_resetfloor : $(OBJ_FILE)
 primitive_idealgas : $(OBJ_FILE)
 	$(call make_test,primitive,test_primitive_idealgas)
 
-tests: dirs eos_idealgas eos_piecewise error_resetfloor primitive_idealgas
+primitive_piecewise : $(OBJ_FILE)
+	$(call make_test,primitive,test_primitive_piecewise)
+
+tests: dirs eos_idealgas eos_piecewise error_resetfloor primitive_idealgas primitive_piecewise
 
 clean:
 	rm -rf $(OBJ_DIR)*
@@ -53,4 +56,5 @@ run: dirs tests
 	./test_idealgas; \
   ./test_piecewise; \
 	./test_resetfloor; \
-  ./test_primitive_idealgas
+  ./test_primitive_idealgas; \
+  ./test_primitive_piecewise

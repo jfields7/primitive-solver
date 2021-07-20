@@ -64,6 +64,6 @@ struct Nuclear {
   static Real constexpr temperature = 8.61733326214518e-11; //! MeV/(erg/kb)
 };
 
-}; // namespace
+} // namespace
 
 #endif
