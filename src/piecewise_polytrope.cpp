@@ -78,15 +78,15 @@ Real PiecewisePolytrope::TemperatureFromP(Real n, Real p, Real *Y) {
 Real PiecewisePolytrope::Energy(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
 
-  //return n*(mb*(1.0 + a_pieces[p]) + T/(gamma_pieces[p] - 1.0));
-  Real rho = n*mb;
-  return rho*(1.0 + a_pieces[p]) + kappa_pieces[p]*std::pow(rho,gamma_pieces[p])/(gamma_pieces[p] - 1.0);
+  return n*(mb*(1.0 + a_pieces[p]) + T/(gamma_pieces[p] - 1.0));
+  //Real rho = n*mb;
+  //return rho*(1.0 + a_pieces[p]) + kappa_pieces[p]*std::pow(rho,gamma_pieces[p])/(gamma_pieces[p] - 1.0);
 }
 
 Real PiecewisePolytrope::Pressure(Real n, Real T, Real *Y) {
-  int p = FindPiece(n);
-  //return n*T;
-  return kappa_pieces[p]*std::pow(mb*n,gamma_pieces[p]);
+  //int p = FindPiece(n);
+  return n*T;
+  //return kappa_pieces[p]*std::pow(mb*n,gamma_pieces[p]);
 }
 
 Real PiecewisePolytrope::Entropy(Real n, Real T, Real *Y) {
@@ -95,8 +95,8 @@ Real PiecewisePolytrope::Entropy(Real n, Real T, Real *Y) {
 
 Real PiecewisePolytrope::Enthalpy(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
-  //return mb*(1.0 + a_pieces[p]) + gamma_pieces[p]/(gamma_pieces[p] - 1.0)*T;
-  return mb*(1.0 + a_pieces[p]) + mb*gamma_pieces[p]/(gamma_pieces[p] - 1.0)*kappa_pieces[p]*std::pow(mb*n, gamma_pieces[p]-1.0);
+  return mb*(1.0 + a_pieces[p]) + gamma_pieces[p]/(gamma_pieces[p] - 1.0)*T;
+  //return mb*(1.0 + a_pieces[p]) + mb*gamma_pieces[p]/(gamma_pieces[p] - 1.0)*kappa_pieces[p]*std::pow(mb*n, gamma_pieces[p]-1.0);
 }
 
 Real PiecewisePolytrope::MinimumEnthalpy() {
@@ -106,17 +106,17 @@ Real PiecewisePolytrope::MinimumEnthalpy() {
 Real PiecewisePolytrope::SoundSpeed(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
   Real gamma = gamma_pieces[p];
-  //Real gammam1 = gamma - 1.0;
-  //return std::sqrt(gammam1*gamma*T/(gammam1*mb*(1.0 + a_pieces[p]) + gamma*T));
-  Real P = Pressure(n, T, Y);
-  Real e = Energy(n, T, Y);
-  return std::sqrt(gamma*P/(e + P));
+  Real gammam1 = gamma - 1.0;
+  return std::sqrt(gammam1*gamma*T/(gammam1*mb*(1.0 + a_pieces[p]) + gamma*T));
+  //Real P = Pressure(n, T, Y);
+  //Real e = Energy(n, T, Y);
+  //return std::sqrt(gamma*P/(e + P));
 }
 
 Real PiecewisePolytrope::SpecificEnergy(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
-  //return a_pieces[p] + T/(mb*(gamma_pieces[p] - 1.0));
-  return a_pieces[p] + kappa_pieces[p]/(gamma_pieces[p] - 1.0)*std::pow(mb*n, gamma_pieces[p] - 1.0);
+  return a_pieces[p] + T/(mb*(gamma_pieces[p] - 1.0));
+  //return a_pieces[p] + kappa_pieces[p]/(gamma_pieces[p] - 1.0)*std::pow(mb*n, gamma_pieces[p] - 1.0);
 }
 
 bool PiecewisePolytrope::ReadParametersFromFile(std::string fname) {

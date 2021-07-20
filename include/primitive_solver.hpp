@@ -158,7 +158,8 @@ void PrimitiveSolver<EOSPolicy, ErrorPolicy>::MuFromW(Real &f, Real &df, Real mu
   const Real vsq = musq*rbarsq;
   const Real dx = -bsq*xsq;
   //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
-  const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
+  //const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
+  const Real drbarsq = 2.0*rsq*dx + x*(1.0 + x)*rbsq + mu*dx*(1.0 + 2.0*x)*rbsq;
   const Real dvsq = 2.0*mu*rbarsq + musq*drbarsq;
   f = vsq + 1.0/(W*W) - 1.0;
   df = dvsq;
@@ -379,11 +380,11 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
 
   // Check the corner case where the density is outside the permitted
   // bounds according to the ErrorPolicy.
-  error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
+  /*error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
   if (error != Error::SUCCESS) {
     // TODO: This is probably something that should be handled by the ErrorPolicy.
     return error;
-  }
+  }*/
 
   
   // Do the root solve.
