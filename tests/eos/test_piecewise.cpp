@@ -114,15 +114,23 @@ bool TestConstruction() {
 bool TestSoundSpeed(EOS<PiecewisePolytrope, DoNothing>* peos, Real n,
     Real *Y, Real tol) {
   bool success = true;
-  Real gamma = peos->GetGamma(n);
 
   // Test a range of temperatures
+  int p = peos->FindPiece(n);
+  Real rho = n*peos->GetBaryonMass();
+  Real P_cold = peos->GetColdPressure(n, p);
+  Real e_cold = peos->GetColdEnergy(n, p);
+  Real h_cold = (e_cold + P_cold)/rho;
+  Real csq_cold = peos->GetGamma(n)*P_cold/(e_cold + P_cold);
   for (Real T = 0; T < 1000.0; T += 50.0) {
-    Real p = peos->GetPressure(n, T, Y);
-    Real e = peos->GetEnergy(n, T, Y);
-    Real expected = sqrt(gamma*p/(e + p));
-    Real cs = peos->GetSoundSpeed(n, T, Y);
+    Real h = peos->GetEnthalpy(n, T, Y)*peos->GetBaryonMass();
+    Real P_th = peos->GetPressure(n, T, Y) - P_cold;
+    Real e_th = peos->GetEnergy(n, T, Y) - e_cold;
+    Real h_th = h - h_cold;
+    Real csq_th = peos->GetThermalGamma()*P_th/(e_th + P_th);
 
+    Real expected = sqrt((h_th*csq_th + h_cold*csq_cold)/h);
+    Real cs = peos->GetSoundSpeed(n, T, Y);
     Real err = GetError(expected, cs);
 
     if (err > tol) {

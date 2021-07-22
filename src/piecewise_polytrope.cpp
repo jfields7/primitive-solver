@@ -17,6 +17,7 @@ PiecewisePolytrope::PiecewisePolytrope() {
   n_pieces = 0;
   initialized = false;
   n_species = 0;
+  gamma_thermal = 5.0/3.0;
 }
 
 /// Destructor
@@ -112,12 +113,17 @@ Real PiecewisePolytrope::MinimumEnthalpy() {
 Real PiecewisePolytrope::SoundSpeed(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
 
-  Real P_cold = GetColdPressure(n, p);
-  Real gamma_cold = gamma_pieces[p];
-  Real csq_cold = gamma_cold*P_cold/((gamma_cold - 1.0)*(1.0 + a_pieces[p])*mb*n + gamma_cold*P_cold);
-  Real csq_hot = gamma_thermal*T/((gamma_thermal - 1.0)*mb + gamma_thermal*T);
+  Real rho = n*mb;
 
-  return std::sqrt(csq_cold + csq_hot);
+  Real h_cold = (GetColdEnergy(n, p) + GetColdPressure(n, p))/(n*mb);
+  Real h_th   = gamma_thermal/(gamma_thermal - 1.0)*T/mb;
+
+  Real P_cold = GetColdPressure(n, p);
+
+  Real csq_cold_w = gamma_pieces[p]*P_cold/rho;
+  Real csq_th_w = (gamma_thermal - 1.0)*h_th;
+
+  return std::sqrt((csq_cold_w + csq_th_w)/(h_th + h_cold));
 }
 
 Real PiecewisePolytrope::SpecificEnergy(Real n, Real T, Real *Y) {
@@ -200,10 +206,6 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   density_pieces[n] = rho_min/mb;
   pressure_pieces[n] = P_min;
 
-  // Find the maximum energies allowed by the EOS. Because of the
-  // extension down to zero density, energy is just capped at 0.
-  //Real T_max = T;
-  //Real T_max = kappa_pieces[n-1]*std::pow(densities[n-1],gammas[n-1]-1.0)/mb;
   // Because of the finite-temperature component, the energy density basically
   // just has to be positive.
   min_e = 0.0;

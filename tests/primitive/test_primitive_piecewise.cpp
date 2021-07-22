@@ -39,7 +39,7 @@ void InitializeVariables(EOS<PiecewisePolytrope, DoNothing>& eos, Real prim[NPRI
 
   Real mb = eos.GetBaryonMass();
   prim[IDN] = rho_min/2.0;
-  prim[ITM] = eos.GetTemperatureFromE(prim[IDN]/mb, 0, nullptr);
+  prim[ITM] = 10.0;
   prim[IPR] = eos.GetPressure(prim[IDN]/mb, prim[ITM], nullptr);
 }
 // }}}

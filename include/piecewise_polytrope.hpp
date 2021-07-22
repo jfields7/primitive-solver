@@ -31,15 +31,6 @@ class PiecewisePolytrope : public EOSPolicyInterface {
 
     /// Allocate memory for the different EOS pieces.
     void AllocateMemory();
-
-    /// Find the index of the piece that the density aligns with.
-    int FindPiece(Real n) const;
-
-    /// Polytropic Energy Density
-    Real GetColdEnergy(Real n, int p);
-
-    /// Polytropic Pressure
-    Real GetColdPressure(Real n, int p);
   protected:
     /// Constructor
     PiecewisePolytrope();
@@ -120,6 +111,15 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     inline Real GetThermalGamma() const {
       return gamma_thermal;
     }
+
+    /// Find the index of the piece that the density aligns with.
+    int FindPiece(Real n) const;
+
+    /// Polytropic Energy Density
+    Real GetColdEnergy(Real n, int p);
+
+    /// Polytropic Pressure
+    Real GetColdPressure(Real n, int p);
 };
 
 } // namespace
