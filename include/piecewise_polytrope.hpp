@@ -5,10 +5,11 @@
 //  \brief Defines a piecewise-polytropic equation of state.
 //
 //  Each individual piece satisfies the form
-//  \f$P = \Kappa_i \rho^{\gamma_i}\f$,
-//  for some density \f$\rho > \rho_i\f$. The temperature is
-//  defined via the ideal gas law:
-//  \f$P = nk_B T\f$.
+//  \f$P_\textrm{cold} = P_i \frac{\rho}{\rho_i}^{\gamma_i}\f$,
+//  for some density \f$\rho > \rho_i\f$. There is an additional
+//  finite-temperature portion added on top using the ideal gas
+//  law:
+//  \f$P_\textrm{therm} = nk_B T\f$
 
 #include <ps_types.hpp>
 #include <eos_policy_interface.hpp>
@@ -24,7 +25,8 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     Real *density_pieces;
     Real *a_pieces;
     Real *gamma_pieces;
-    Real *kappa_pieces;
+    Real *pressure_pieces;
+    Real gamma_thermal;
     bool initialized;
 
     /// Allocate memory for the different EOS pieces.
@@ -32,6 +34,12 @@ class PiecewisePolytrope : public EOSPolicyInterface {
 
     /// Find the index of the piece that the density aligns with.
     int FindPiece(Real n) const;
+
+    /// Polytropic Energy Density
+    Real GetColdEnergy(Real n, int p);
+
+    /// Polytropic Pressure
+    Real GetColdPressure(Real n, int p);
   protected:
     /// Constructor
     PiecewisePolytrope();
@@ -101,6 +109,16 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     /// Get the adiabatic constant for a particular density.
     inline Real GetGamma(Real n) const {
       return gamma_pieces[FindPiece(n)];
+    }
+
+    /// Set the adiabatic constant for the thermal part.
+    inline void SetThermalGamma(Real g) {
+      gamma_thermal = (g <= 1.0) ? 1.00001 : ((g >= 2.0) ? 2.00001 : g);
+    }
+
+    /// Get the adiabatic constant for the thermal part.
+    inline Real GetThermalGamma() const {
+      return gamma_thermal;
     }
 };
 

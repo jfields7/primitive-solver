@@ -259,18 +259,19 @@ int main(int argc, char* argv[]) {
 
   // 1st polytrope tests
   Real n = 0.5; // number density
-  Real T = eos.GetTemperatureFromE(n, 0, nullptr); // temperature
+  Real T = 5.0;
+  //Real T = eos.GetTemperatureFromE(n, 0, nullptr); // temperature
   Real *Y = nullptr; // crap
   RunTestSuite(tester, &eos, n, T, Y, 0, tol);
 
   // 2nd polytrope tests
   n = 1.5; // number density
-  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   RunTestSuite(tester, &eos, n, T, Y, 1, tol);
 
   // 3rd polytrope tests
   n = 6.0;
-  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   RunTestSuite(tester, &eos, n, T, Y, 2, tol);
 
   // Low density test
@@ -278,15 +279,15 @@ int main(int argc, char* argv[]) {
 
   // Test the transition densities.
   n = 0.1;
-  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   tester.RunTest(&TestContinuity, "Default Transition Continuity Test", &eos, n, T, Y, tol);
 
   n = 1.0;
-  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   tester.RunTest(&TestContinuity, "1st and 2nd Polytrope Continuity Test", &eos, n, T, Y, tol);
 
   n = 3.0;
-  T = eos.GetTemperatureFromE(n, 0, nullptr);
+  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   tester.RunTest(&TestContinuity, "2nd and 3rd Polytrope Continuity Test", &eos, n, T, Y, tol);
 
   tester.PrintSummary();
