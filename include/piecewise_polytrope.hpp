@@ -120,6 +120,10 @@ class PiecewisePolytrope : public EOSPolicyInterface {
 
     /// Polytropic Pressure
     Real GetColdPressure(Real n, int p);
+
+    /// Set the number of species. Throw an exception if
+    /// the number of species is invalid.
+    void SetNSpecies(int n);
 };
 
 } // namespace

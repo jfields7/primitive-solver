@@ -3,6 +3,7 @@ lib
 tests/obj
 tests/bin
 debugger.nb
+debugger.ipynb
 
 *.obj
 *.swp

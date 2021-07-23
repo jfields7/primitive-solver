@@ -224,3 +224,10 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   initialized = true;
   return true;
 }
+
+void PiecewisePolytrope::SetNSpecies(int n) {
+  if (n > MAX_SPECIES || n < 0) {
+    throw std::out_of_range("IdealGas::SetNSpecies - n cannot exceed MAX_SPECIES.");
+  }
+  n_species = n;
+}

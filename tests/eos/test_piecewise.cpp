@@ -189,18 +189,12 @@ bool TestContinuity(EOS<PiecewisePolytrope, DoNothing>* peos, Real n, Real T, Re
   Real nm1 = n*(1.0 - tol);
   Real nm2 = n*(1.0 - 2.0*tol);
 
-  // Temperatures just above and below the transition density.
-  Real Tp1 = peos->GetTemperatureFromE(np1, 0, Y);
-  Real Tp2 = peos->GetTemperatureFromE(np2, 0, Y);
-  Real Tm1 = peos->GetTemperatureFromE(nm1, 0, Y);
-  Real Tm2 = peos->GetTemperatureFromE(nm2, 0, Y);
-
   // Get two energy densities just beyond the transition density and
   // just below the transition density.
-  Real ep1 = peos->GetEnergy(np1, Tp1, Y);
-  Real ep2 = peos->GetEnergy(np2, Tp2, Y);
-  Real em1 = peos->GetEnergy(nm1, Tm1, Y);
-  Real em2 = peos->GetEnergy(nm2, Tm2, Y);
+  Real ep1 = peos->GetEnergy(np1, T, Y);
+  Real ep2 = peos->GetEnergy(np2, T, Y);
+  Real em1 = peos->GetEnergy(nm1, T, Y);
+  Real em2 = peos->GetEnergy(nm2, T, Y);
   
   // Get estimates for the transition density's energy density.
   Real ep = 2.0*ep1 - ep2;
