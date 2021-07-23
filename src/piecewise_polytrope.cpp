@@ -46,6 +46,10 @@ void PiecewisePolytrope::AllocateMemory() {
 }
 
 int PiecewisePolytrope::FindPiece(Real n) const {
+  // Throw an error if the polytrope hasn't been initialized yet.
+  if (!initialized) {
+    throw std::runtime_error("PiecewisePolytrope::FindPiece - EOS not initialized.");
+  }
   // In case the density is below the minimum, we
   // implement a default case that is stored just
   // past the current polytrope.
@@ -109,7 +113,6 @@ Real PiecewisePolytrope::MinimumEnthalpy() {
   return mb;
 }
 
-// TODO: Double-check that this expression is correct.
 Real PiecewisePolytrope::SoundSpeed(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
 
@@ -167,7 +170,6 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   gamma_pieces[0] = gammas[0];
   pressure_pieces[0] = P0;
   if (n > 1){
-    //a_pieces[0] = (T/mb)*(1.0/(gammas[0]-1.0) - 1.0/(gammas[1] - 1.0));
     a_pieces[0] = P0/densities[0]*(1.0/(gammas[0] - 1.0) - 1.0/(gammas[1] - 1.0));
   }
   else {
@@ -180,7 +182,6 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
     // Because we've rewritten the EOS in terms of temperature, we don't need
     // kappa in its current form. However, we can use it to define the a
     // constants that show up in our equations.
-    //a_pieces[i] = 1.0 + a_pieces[i-1] + (T/mb)*(1.0/(gammas[i-1] - 1.0) - 1.0/(gammas[i] - 1.0));
     a_pieces[i] = a_pieces[i-1] + pressure_pieces[i-1]/
                     densities[i-1]*(1.0/(gammas[i-1] - 1.0) - 1.0/(gammas[i] - 1.0));
     // Let's double-check that the density is physical.
@@ -212,14 +213,14 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   max_e = std::numeric_limits<Real>::max();
 
   // DEBUG ONLY:
-  for (int i = 0; i <= n; i++) {
+  /*for (int i = 0; i <= n; i++) {
     std::cout << "Polytrope: i = " << i << "\n";
     std::cout << "  n = " << density_pieces[i] << "\n";
     std::cout << "  gamma = " << gamma_pieces[i] << "\n";
     std::cout << "  a = " << a_pieces[i] << "\n";
     std::cout << "  pressure = " << pressure_pieces[i] << "\n";
   }
-  std::cout << "  P0 = " << P0 << "\n";
+  std::cout << "  P0 = " << P0 << "\n";*/
 
   initialized = true;
   return true;
@@ -227,7 +228,7 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
 
 void PiecewisePolytrope::SetNSpecies(int n) {
   if (n > MAX_SPECIES || n < 0) {
-    throw std::out_of_range("IdealGas::SetNSpecies - n cannot exceed MAX_SPECIES.");
+    throw std::out_of_range("PiecewisePolytrope::SetNSpecies - n cannot exceed MAX_SPECIES.");
   }
   n_species = n;
 }

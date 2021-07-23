@@ -6,62 +6,108 @@
 //  
 //  Each unit system is defined as its own struct inside the EOSUnits namespace.
 //  TODO: Check that these conversions are correct.
-//  TODO: Should I use the constants in CompOSE instead?
 
-namespace EOSUnits{
+#include <ps_types.hpp>
 
-//! CGS Units
-//
-//  Units with uncertainty are defined using the 2018 CODATA values.
-struct CGS {
-  static Real constexpr c    = 2.99792458e10; //! cm/s
-  static Real constexpr G    = 6.67430e-8; //! cm^3 g^-1 s^-2
-  static Real constexpr kb   = 1.380649e-16; //! erg K^-1
-  static Real constexpr Msun = 1.98847e33; //! g
-  static Real constexpr MeV  = 1.602176634e-6; //! erg
+namespace PrimitiveSolver {
 
-  static Real constexpr length  = 1.0;
-  static Real constexpr density = 1.0;
-  static Real constexpr mass = 1.0;
-  static Real constexpr energy = 1.0;
-  static Real constexpr pressure = 1.0;
-  static Real constexpr temperature = 1.0;
+struct UnitSystem {
+  const Real c;    //! Speed of light
+  const Real G;    //! Gravitational constant
+  const Real kb;   //! Planck constant
+  const Real Msun; //! Solar mass
+  const Real MeV;  // 10^6 electronvolt
+
+  const Real length;      //! Length unit
+  const Real density;     //! Number density unit
+  const Real mass;        //! Mass unit
+  const Real energy;      //! Energy unit
+  const Real pressure;    //! Pressure unit
+  const Real temperature; //! Temperature unit
+
+  //! \defgroup conversiongroup Conversion Methods
+  //  A collection of methods for getting unit
+  //  conversions from the original system to the
+  //  specified system.
+  //  \{
+  inline constexpr Real LengthConversion(UnitSystem& b) const {
+    return b.length/length;
+  }
+
+  inline constexpr Real DensityConversion(UnitSystem& b) const {
+    return b.density/density;
+  }
+
+  inline constexpr Real MassConversion(UnitSystem& b) const {
+    return b.mass/mass;
+  }
+
+  inline constexpr Real EnergyConversion(UnitSystem& b) const {
+    return b.energy/energy;
+  }
+
+  inline constexpr Real PressureConversion(UnitSystem& b) const {
+    return b.pressure/pressure;
+  }
+
+  inline constexpr Real TemperatureConversion(UnitSystem& b) const {
+    return b.temperature/temperature;
+  }
+  //! \}
 };
 
+// Global static objects for a particular unit system.
+
+//! CGS units
+//
+//  Fundamental constants are defined using the 2014
+//  CODATA values to be consistent with CompOSE. Solar
+//  mass is derived from the solar mass parameter given
+//  in the 2021 Astronomer's Almanac:
+//  GM_S = 1.32712442099e26 cm^3 s^-2
+static UnitSystem CGS{
+  2.99792458e10, // c, cm/s
+  6.67408e-8, // G, cm^3 g^-1 s^-2
+  1.38064852e-16, // kb, erg K^-1
+  1.98848e33, // Msun, g
+  1.6021766208e-6, // MeV, erg
+
+  1.0, // length, cm
+  1.0, // density, g cm^-3
+  1.0, // mass, g
+  1.0, // energy, erg
+  1.0, // pressure, erg/cm^3
+  1.0  // temperature, K
+};
 //! Geometric units
-struct Geometric {
-  static Real constexpr c    = 1.0;
-  static Real constexpr G    = 1.0;
-  static Real constexpr kb   = 1.0;
-  static Real constexpr Msun = 1.4766696910334395;  //! km
-  static Real constexpr MeV  = 1.32383331356638e-60; //! km
+static UnitSystem Geometric{
+  1.0, // c
+  1.0, // G
+  1.0, // kb
+  CGS.Msun * CGS.G/(CGS.c*CGS.c)*1e-5, // Msun, km
+  CGS.MeV * CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e-5, // MeV, km
 
-  // Geometric units for converting from their cgs equivalent.
-  static Real constexpr length      = 1.0e-5; //! km/cm
-  static Real constexpr density     = 1.0e15; //! cm^3/km^3
-  static Real constexpr mass        = 7.426160269118665e-34; //! erg*G/c^2*km/cm
-  static Real constexpr energy      = 8.26271763969804e-55; //! cm*c^4/G/erg
-  static Real constexpr pressure    = 8.26271763969804e-40; //! c^4/G/cm^2/erg
-  static Real constexpr temperature = 1.140791284653146e-70; //! cm*c^4/G*kb/erg
+  1e-5, // length, km
+  1e15, // number density, km^-3
+  CGS.G/(CGS.c*CGS.c)*1e-5, // mass, km
+  CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e-5, // energy, km
+  CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e10, // pressure, km^-2
+  CGS.kb*CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e-5, // temperature, km
 };
-
 //! Nuclear units
-//
-//  TODO: Especially double-check these.
-struct Nuclear {
-  static Real constexpr c    = 1.0;
-  static Real constexpr G    = 1.323833313566383e-42; //! fm
-  static Real constexpr kb   = 1.0;
-  static Real constexpr Msun = 1.115449865100704e60; //! MeV
-  static Real constexpr MeV  = 1.0;
+static UnitSystem Nuclear{
+  1.0, // c
+  CGS.G * CGS.MeV/(CGS.c*CGS.c*CGS.c*CGS.c)*1e13, // G, fm
+  1.0, // kb
+  CGS.Msun * (CGS.c*CGS.c) / CGS.MeV, // Msun, MeV
+  1.0, // MeV
 
-  // Nuclear units for converting from their cgs equivalent.
-  static Real constexpr length      = 1e13; //! fm/cm
-  static Real constexpr density     = 1e-39; //! cm^3/fm^3
-  static Real constexpr mass        = 5.609588603804452e26; //! MeV/(erg/c^2)
-  static Real constexpr energy      = 6.241509074460763e5;  //! MeV/erg
-  static Real constexpr pressure    = 6.241509074460763e34; //! (MeV/fm^3)/(erg/cm^3)
-  static Real constexpr temperature = 8.61733326214518e-11; //! MeV/(erg/kb)
+  1e13, // length, fm
+  1e-39, // number density, fm^-3
+  (CGS.c*CGS.c) / CGS.MeV, // mass, MeV
+  1.0/CGS.MeV, // energy, MeV
+  1e-39/CGS.MeV, // pressure, MeV/fm^3
+  CGS.kb/CGS.MeV, // temperature, MeV
 };
 
 } // namespace
