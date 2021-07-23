@@ -31,21 +31,27 @@ void Initialize(EOS<PiecewisePolytrope, DoNothing>& eos) {
   eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
 }
 
+void Reinitialize(EOS<PiecewisePolytrope, DoNothing>& eos) {
+  const int N = 4;
+  Real gamma_pieces[N] = {1.3333, 1.7, 1.9, 2.1};
+  Real mb_nuc = 2.0;
+  Real density_pieces[N] = {0.78, 1.4, 3.6, 6.4};
+  Real rho_min = 1e-10;
+  Real kappa0 = 3.0;
+
+  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
+}
+
 bool TestReinitialization() {
   EOS<PiecewisePolytrope, DoNothing> eos;
   Initialize(eos);
 
   // We should have data in here, but the wrong data.
   // Let's reinitialize with a different set of data.
+  Reinitialize(eos);
   const int N = 4;
   Real gamma_pieces[N] = {1.3333, 1.7, 1.9, 2.1};
   Real mb_nuc = 2.0;
-  //Real rho_nuc = 1.0;
-  Real density_pieces[N] = {0.78, 1.4, 3.6, 6.4};
-  Real rho_min = 1e-10;
-  Real kappa0 = 3.0;
-
-  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
   
   if (!eos.IsInitialized()) {
     std::cout << "  Failed to initialize EOS properly.\n";
@@ -123,7 +129,7 @@ bool TestSoundSpeed(EOS<PiecewisePolytrope, DoNothing>* peos, Real n,
   Real h_cold = (e_cold + P_cold)/rho;
   Real csq_cold = peos->GetGamma(n)*P_cold/(e_cold + P_cold);
   for (Real T = 0; T < 1000.0; T += 50.0) {
-    Real h = peos->GetEnthalpy(n, T, Y)*peos->GetBaryonMass();
+    Real h = peos->GetEnthalpy(n, T, Y)/peos->GetBaryonMass();
     Real P_th = peos->GetPressure(n, T, Y) - P_cold;
     Real e_th = peos->GetEnergy(n, T, Y) - e_cold;
     Real h_th = h - h_cold;
@@ -268,12 +274,10 @@ int main(int argc, char* argv[]) {
 
   // 2nd polytrope tests
   n = 1.5; // number density
-  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   RunTestSuite(tester, &eos, n, T, Y, 1, tol);
 
   // 3rd polytrope tests
   n = 6.0;
-  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   RunTestSuite(tester, &eos, n, T, Y, 2, tol);
 
   // Low density test
@@ -281,16 +285,26 @@ int main(int argc, char* argv[]) {
 
   // Test the transition densities.
   n = 0.1;
-  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   tester.RunTest(&TestContinuity, "Default Transition Continuity Test", &eos, n, T, Y, tol);
 
   n = 1.0;
-  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   tester.RunTest(&TestContinuity, "1st and 2nd Polytrope Continuity Test", &eos, n, T, Y, tol);
 
   n = 3.0;
-  //T = eos.GetTemperatureFromE(n, 0, nullptr);
   tester.RunTest(&TestContinuity, "2nd and 3rd Polytrope Continuity Test", &eos, n, T, Y, tol);
+
+  // Consistency test for different baryon mass.
+  Reinitialize(eos);
+  // 1st polytrope tests
+  n = 0.5;
+  std::cout << "Baryon Mass Consistency Tests\n";
+  RunTestSuite(tester, &eos, n, T, Y, 0, tol);
+  n = 1.0;
+  RunTestSuite(tester, &eos, n, T, Y, 1, tol);
+  n = 2.0;
+  RunTestSuite(tester, &eos, n, T, Y, 2, tol);
+  n = 5.0;
+  RunTestSuite(tester, &eos, n, T, Y, 3, tol);
 
   tester.PrintSummary();
   return 0;
