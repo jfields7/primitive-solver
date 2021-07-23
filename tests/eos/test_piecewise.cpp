@@ -9,7 +9,6 @@
 #include <ps_types.hpp>
 #include <piecewise_polytrope.hpp>
 #include <do_nothing.hpp>
-#include <eos_units.hpp>
 
 #include <testing.hpp>
 #include <testfunctions.hpp>

@@ -9,7 +9,7 @@
 
 #include <ps_types.hpp>
 
-namespace PrimitiveSolver {
+namespace Primitive {
 
 struct UnitSystem {
   const Real c;    //! Speed of light
