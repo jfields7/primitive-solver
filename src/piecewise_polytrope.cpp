@@ -7,9 +7,7 @@
 #include <limits>
 
 #include <piecewise_polytrope.hpp>
-#include <eos_units.hpp>
 
-using namespace EOSUnits;
 using namespace Primitive;
 
 /// Constructor

@@ -1,5 +1,4 @@
 #include <idealgas.hpp>
-#include <eos_units.hpp>
 #include <cmath>
 #include <stdexcept>
 #include <limits>
@@ -7,7 +6,6 @@
 //! \file idealgas.cpp
 //  \brief Implementation of IdealGas.
 
-using namespace EOSUnits;
 using namespace Primitive;
 
 /// Constructor
