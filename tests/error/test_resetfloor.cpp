@@ -114,6 +114,36 @@ bool TestMagnetizationResponse(EOS<IdealGas, ResetFloor>* eos, Real bsq, Real b_
   return true;
 }
 
+bool TestEnergyLimits(EOS<IdealGas, ResetFloor>* eos, Real n, Real T) {
+  Real e = eos->GetEnergy(n, T, nullptr);
+
+  Real e_adjusted = e;
+  eos->ApplyEnergyLimits(e_adjusted);
+
+  Real min_e = eos->GetMinimumEnergy();
+  Real max_e = eos->GetMaximumEnergy();
+  if (e < min_e && e_adjusted != min_e) {
+    std::cout << "  Small energy was not rescaled properly.\n";
+    std::cout << "  Expected: " << min_e << "\n";
+    std::cout << "  Actual: " << e_adjusted << "\n";
+    return false;
+  }
+  else if (e > max_e && e_adjusted != max_e) {
+    std::cout << "  Large energy was not rescaled properly.\n";
+    std::cout << "  Expected: " << max_e << "\n";
+    std::cout << "  Actual: " << e_adjusted << "\n";
+    return false;
+  }
+  else if (e >= min_e && e <= max_e && e != e_adjusted) {
+    std::cout << "  Valid energy was unexpectedly rescaled.\n";
+    std::cout << "  Expected: " << e << "\n";
+    std::cout << "  Actual: " << e_adjusted << "\n";
+    return false;
+  }
+
+  return true;
+}
+
 int main(int argc, char *argv[]) {
   UnitTests tester("Reset Floor Error Policy");
 
@@ -154,6 +184,15 @@ int main(int argc, char *argv[]) {
   b_u[2] = 5.0;
   bsq = b_u[0]*b_u[0] + b_u[1]*b_u[1] + b_u[2]*b_u[2];
   tester.RunTest(&TestMagnetizationResponse, "Valid Magnetization Test", &eos, bsq, b_u);
+
+  // Make sure that energy is rescaled correctly.
+  // Valid energy
+  n = 10.0;
+  T = 3.0;
+  tester.RunTest(&TestEnergyLimits, "Valid Energy Test", &eos, n, T);
+  // Negative energy
+  n = -1.0;
+  tester.RunTest(&TestEnergyLimits, "Negative Energy Test", &eos, n, T);
 
   tester.PrintSummary();
 }
