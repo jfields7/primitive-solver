@@ -248,7 +248,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return true if the conserved variables were adjusted, false otherwise.
     bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
-      return ConservedFloor(D, Sd, tau, GetTauFloor(Y));
+      return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(Y));
     }
 
     //! \fn Real GetDensityFloor() const

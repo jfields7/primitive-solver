@@ -21,7 +21,7 @@ class DoNothing : public ErrorPolicyInterface {
     }
 
     bool PrimitiveFloor(Real& n, Real v[3], Real& t) {return false;}
-    bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {return false;}
+    bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real D_floor, Real tau_floor) {return false;}
     Error MagnetizationResponse(Real& bsq, Real b_u[3]) {return Error::SUCCESS;}
     void DensityLimits(Real& n, Real n_min, Real n_max) {return;}
     void EnergyLimits(Real& e, Real e_min, Real e_max) {return;}

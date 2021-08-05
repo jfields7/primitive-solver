@@ -36,9 +36,9 @@ bool ResetFloor::PrimitiveFloor(Real& n, Real v[3], Real& t) {
 /// FIXME: This currently sets tau to the pressure atmosphere,
 /// but it needs to be replaced with something which is
 /// thermodynamically consistent.
-bool ResetFloor::ConservedFloor(Real& D, Real Sd[3], Real& tau, Real tau_floor) {
-  if (D < n_atm) {
-    D = n_atm;
+bool ResetFloor::ConservedFloor(Real& D, Real Sd[3], Real& tau, Real D_floor, Real tau_floor) {
+  if (D < D_floor) {
+    D = D_floor;
     Sd[0] = 0.0;
     Sd[1] = 0.0;
     Sd[2] = 0.0;
