@@ -419,7 +419,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   }
   adjust_cons = adjust_cons || floored;
 
-  prim[IDN] = rho;
+  prim[IDN] = n*peos->GetBaryonMass();
   prim[IPR] = P;
   prim[ITM] = T;
   prim[IVX] = Wv_u[0];
