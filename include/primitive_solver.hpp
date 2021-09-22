@@ -285,19 +285,6 @@ template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real cons[NCONS],
       Real b[NMAG], Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]) {
 
-  // Extract the 3-metric and inverse 3-metric.
-  /*const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
-                               gd[I22], gd[I23], gd[I33]};
-  const Real ialphasq = -gu[I00];
-  const Real alphasq = 1.0/ialphasq; // Lapse squared
-  const Real beta_u[3] = {gu[I01]*alphasq, gu[I02]*alphasq, gu[I03]*alphasq}; // Shift vector
-  const Real g3u[NSPMETRIC] = {gu[I11] + beta_u[0]*beta_u[0]*ialphasq,
-                               gu[I12] + beta_u[0]*beta_u[1]*ialphasq,
-                               gu[I13] + beta_u[0]*beta_u[2]*ialphasq,
-                               gu[I22] + beta_u[1]*beta_u[1]*ialphasq,
-                               gu[I23] + beta_u[1]*beta_u[2]*ialphasq,
-                               gu[I33] + beta_u[2]*beta_u[2]*ialphasq};*/
-
   // Extract the undensitized conserved variables.
   Real D = cons[IDN];
   Real S_d[3] = {cons[IM1], cons[IM2], cons[IM3]};
@@ -444,10 +431,6 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
 template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
       Real bu[NMAG], Real g3d[NMETRIC], Real g3u[NMETRIC]) {
-  // Extract the three metric.
-  /*const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
-                               gd[I22], gd[I23], gd[I33]};*/
-  
   // Extract the primitive variables
   const Real &rho = prim[IDN]; // rest-mass density
   const Real Wv_u[3] = {prim[IVX], prim[IVY], prim[IVZ]};
