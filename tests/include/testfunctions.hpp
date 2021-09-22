@@ -91,7 +91,7 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
     Y_old[s] = prim[IYF + s];
   }
 
-  ps->PrimToCon(prim, cons, bu, gd, gu);
+  ps->PrimToCon(prim, cons, bu, gd);
   Primitive::Error result = ps->ConToPrim(prim, cons, bu, gd, gu);
 
   if(result != Primitive::Error::SUCCESS) {

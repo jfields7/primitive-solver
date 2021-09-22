@@ -121,11 +121,10 @@ class PrimitiveSolver {
     //  \param[out]   cons  The array of conserved variables
     //  \param[in]    bu    The magnetic field
     //  \param[in]    g3d   The 3x3 spatial metric
-    //  \param[in]    g3u   The 3x3 spatial inverse metric
     //
     //  \return an error code
     Error PrimToCon(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
-                   Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]);
+                   Real g3d[NSPMETRIC]);
 
     /// Get the EOS used by this PrimitiveSolver.
     inline EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const {
@@ -420,7 +419,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // if the EOS wants us to adjust the conserved variables back
   // in bounds. If that's the case, then we'll do it.
   if (adjust_cons && peos->KeepPrimAndConConsistent()) {
-    PrimToCon(prim, cons, b, g3d, g3u);
+    PrimToCon(prim, cons, b, g3d);
   }
 
   return Error::SUCCESS;
@@ -430,7 +429,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
 // PrimToCon {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
-      Real bu[NMAG], Real g3d[NMETRIC], Real g3u[NMETRIC]) {
+      Real bu[NMAG], Real g3d[NMETRIC]) {
   // Extract the primitive variables
   const Real &rho = prim[IDN]; // rest-mass density
   const Real Wv_u[3] = {prim[IVX], prim[IVY], prim[IVZ]};

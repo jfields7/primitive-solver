@@ -118,7 +118,7 @@ class Benchmark {
                       bu[IB2] = By[iby];
                       bu[IB3] = Bz[ibz];
 
-                      ps->PrimToCon(prim, cons, bu, gd, gu);
+                      ps->PrimToCon(prim, cons, bu, gd);
                       //Primitive::Error result = ps->ConToPrim(prim, cons, bu, gd, gu);
                       ps->ConToPrim(prim, cons, bu, gd, gu);
 
