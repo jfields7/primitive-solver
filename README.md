@@ -68,13 +68,13 @@ PrimitiveSolver<IdealGas, ResetFloor> ps(&eos);
 Because all the heavy lifting should be done by the `EOS` object itself, `PrimitiveSolver` only has a few member functions:
 ```c++
 bool PrimToCon(Real prim[NPRIM], Real cons[NCONS],
-               Real bu[NMAG], Real gd[NMETRIC],
-               Real gu[NMETRIC]);
+               Real bu[NMAG], Real g3d[NSPMETRIC],
+               Real g3u[NSPMETRIC]);
 bool ConToPrim(Real prim[NPRIM], Real cons[NCONS],
-               Real bu[NMAG], Real gd[NMETRIC],
-               Real gu[NMETRIC]);
+               Real bu[NMAG], Real g3d[NSPMETRIC],
+               Real g3u[NSPMETRIC]);
 ```
-The `PrimToCon()` function converts a set of primitive variables `prim = (rho, v^i, P, T, Y)` with a magnetic field `bu = B^i` into conserved variables `cons = (D, S_i, tau, D_Y)`. The `ConToPrim()` function does the inverse. It takes a set of conserved variables and a magnetic field and inverts them to get the primitive variables. In addition to `prim`, `cons`, and `bu`, both functions also require the 4-metric, `gd`, and the inverse 4-metric, `gu`. There are a couple notes here:
+The `PrimToCon()` function converts a set of primitive variables `prim = (rho, v^i, P, T, Y)` with a magnetic field `bu = B^i` into conserved variables `cons = (D, S_i, tau, D_Y)`. The `ConToPrim()` function does the inverse. It takes a set of conserved variables and a magnetic field and inverts them to get the primitive variables. In addition to `prim`, `cons`, and `bu`, both functions also require the spatial metric, `g3d`, and the inverse spatial metric, `g3u`. There are a couple notes here:
 1. Note that none of the variables are densitized. Because there are a variety of differing opinions on when to densitize and undensitize, how to interpolate GR quantities to align with MHD quantities, etc., the code simply leaves it to the user to handle these things.
 2. `NPRIM` is *not* the same size as `NCONS`. Because `NPRIM` also stores the temperature, it has one extra variable.
 
