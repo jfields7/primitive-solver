@@ -49,8 +49,8 @@ int main(int argc, char *argv[]) {
   Real prim[NPRIM] = {0.0};
   Real cons[NCONS] = {0.0};
   Real bu[NMAG] = {0.0};
-  Real gd[NMETRIC] = {0.0};
-  Real gu[NMETRIC] = {0.0};
+  Real gd[NSPMETRIC] = {0.0};
+  Real gu[NSPMETRIC] = {0.0};
   //Real mb = eos.GetBaryonMass();
   // Initialize the new variables on a Minkowski metric.
   InitializeVariables(eos, prim);

@@ -23,7 +23,7 @@ class UnitTests {
     int test_count;
     int tests_passed;
     std::vector<std::string> tests_failed;
-    UnitTests(std::string name);
+    UnitTests(const std::string& name);
 
     template<class ... Types>
     void RunTest(bool (*test)(Types...), std::string name, Types ... args) {

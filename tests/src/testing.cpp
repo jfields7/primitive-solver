@@ -30,11 +30,11 @@ double GetError(double expected, double actual) {
   return fabs((actual - expected)/actual);
 }
 
-UnitTests::UnitTests(std::string name){
+UnitTests::UnitTests(const std::string& name){
   test_count = 0;
   tests_passed = 0;
   tests_failed = std::vector<std::string>();
-  suite_name = name;
+  suite_name = std::string(name);
 
   std::stringstream str;
   str << "Starting unit test suite: " << suite_name << "\n\n";

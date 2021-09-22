@@ -2,8 +2,11 @@ obj
 lib
 tests/obj
 tests/bin
+benchmark/bin
+benchmark/obj
 debugger.nb
 debugger.ipynb
 
 *.obj
 *.swp
+*.png

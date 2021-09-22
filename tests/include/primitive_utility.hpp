@@ -3,13 +3,13 @@
 
 #include <ps_types.hpp>
 
-void MinkowskiMetric(Real gd[NMETRIC], Real gu[NMETRIC]);
+void MinkowskiMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
 
-void SchwarzschildMetric(Real gd[NMETRIC], Real gu[NMETRIC]);
+void SchwarzschildMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
 
-void ScrewballMinkowskiMetric(Real gd[NMETRIC], Real gu[NMETRIC]);
+void ScrewballMinkowskiMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
 
-void ScrewballSchwarzschildMetric(Real gd[NMETRIC], Real gu[NMETRIC]);
+void ScrewballSchwarzschildMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
 
 void ZeroVelocity(Real prim[NPRIM]);
 

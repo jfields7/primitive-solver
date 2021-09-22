@@ -108,24 +108,24 @@ class PrimitiveSolver {
     //  \param[out]    prim  The array of primitive variables
     //  \param[in,out] cons  The array of conserved variables
     //  \param[in,out] bu    The magnetic field
-    //  \param[in]     gd    The full 4x4 metric
-    //  \param[in]     gu    The full 4x4 inverse metric
+    //  \param[in]     g3d   The 3x3 spatial metric
+    //  \param[in]     g3u   The 3x3 inverse spatial metric
     //
     //  \return an error code
     Error ConToPrim(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
-                   Real gd[NMETRIC], Real gu[NMETRIC]);
+                   Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]);
 
     //! \brief Get the conserved variables from the primitive variables.
     //
     //  \param[in]    prim  The array of primitive variables
     //  \param[out]   cons  The array of conserved variables
     //  \param[in]    bu    The magnetic field
-    //  \param[in]    gd    The full 4x4 metric
-    //  \param[in]    gu    The full 4x4 inverse metric
+    //  \param[in]    g3d   The 3x3 spatial metric
+    //  \param[in]    g3u   The 3x3 spatial inverse metric
     //
     //  \return an error code
     Error PrimToCon(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
-                   Real gd[NMETRIC], Real gu[NMETRIC]);
+                   Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]);
 
     /// Get the EOS used by this PrimitiveSolver.
     inline EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const {
@@ -283,10 +283,10 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
 // ConToPrim {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real cons[NCONS],
-      Real b[NMAG], Real gd[NMETRIC], Real gu[NMETRIC]) {
+      Real b[NMAG], Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]) {
 
   // Extract the 3-metric and inverse 3-metric.
-  const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
+  /*const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
                                gd[I22], gd[I23], gd[I33]};
   const Real ialphasq = -gu[I00];
   const Real alphasq = 1.0/ialphasq; // Lapse squared
@@ -296,10 +296,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
                                gu[I13] + beta_u[0]*beta_u[2]*ialphasq,
                                gu[I22] + beta_u[1]*beta_u[1]*ialphasq,
                                gu[I23] + beta_u[1]*beta_u[2]*ialphasq,
-                               gu[I33] + beta_u[2]*beta_u[2]*ialphasq};
-
-  // Get the inverse volume element of the 3-metric.
-  //Real isdetg = 1.0/std::sqrt(GetDeterminant(g3d));
+                               gu[I33] + beta_u[2]*beta_u[2]*ialphasq};*/
 
   // Extract the undensitized conserved variables.
   Real D = cons[IDN];
@@ -436,7 +433,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // if the EOS wants us to adjust the conserved variables back
   // in bounds. If that's the case, then we'll do it.
   if (adjust_cons && peos->KeepPrimAndConConsistent()) {
-    PrimToCon(prim, cons, b, gd, gu);
+    PrimToCon(prim, cons, b, g3d, g3u);
   }
 
   return Error::SUCCESS;
@@ -446,14 +443,11 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
 // PrimToCon {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
-      Real bu[NMAG], Real gd[NMETRIC], Real gu[NMETRIC]) {
+      Real bu[NMAG], Real g3d[NMETRIC], Real g3u[NMETRIC]) {
   // Extract the three metric.
-  const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
-                               gd[I22], gd[I23], gd[I33]};
+  /*const Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
+                               gd[I22], gd[I23], gd[I33]};*/
   
-  // Get the volume element of the 3-metric.
-  //Real sdetg = std::sqrt(GetDeterminant(g3d));
-
   // Extract the primitive variables
   const Real &rho = prim[IDN]; // rest-mass density
   const Real Wv_u[3] = {prim[IVX], prim[IVY], prim[IVZ]};
