@@ -236,6 +236,8 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
 template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real& muh, Real D, 
       Real bsq, Real rsq, Real rbsq, Real h_min) {
+  NumTools::Root& root = NumTools::Root::get_instance();
+
   // There are a few things considered:
   // 1. If D > rho_max, we need to make sure that W isn't too large.
   //    W_max can be estimated by considering the zero-field limit
@@ -260,7 +262,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
     }
     else {
       // We can tighten up the bounds for muh.
-      NumTools::Root::newton_raphson(&MuFromW, muh, bsq, rsq, rbsq, W);
+      root.newton_raphson(&MuFromW, muh, bsq, rsq, rbsq, W);
     }
   }
   if (D < W_max*rho_min) {
@@ -271,7 +273,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
     }
     else {
       // We can tighten up the bounds for mul.
-      NumTools::Root::newton_raphson(&MuFromW, mul, bsq, rsq, rbsq, W);
+      root.newton_raphson(&MuFromW, mul, bsq, rsq, rbsq, W);
     }
   }
   return Error::SUCCESS;
@@ -360,15 +362,16 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   Real mul = 0.0;
   Real muh = 1.0/min_h;
   // Check if a tighter upper bound exists.
+  NumTools::Root& root = NumTools::Root::get_instance();
   if (rsqr > min_h*min_h) {
     Real mu = 0.0;
     // We don't need the bound to be that tight, so we reduce
     // the accuracy of the root solve for speed reasons.
     //NumTools::Root::tol = 1e-3;
     //NumTools::Root::iterations = 10;
-    NumTools::Root::tol = 1e-15;
-    NumTools::Root::iterations = 30;
-    bool result = NumTools::Root::newton_raphson(&UpperRoot, mu, bsqr, rsqr, rbsqr, min_h);
+    root.tol = 1e-15;
+    root.iterations = 30;
+    bool result = root.newton_raphson(&UpperRoot, mu, bsqr, rsqr, rbsqr, min_h);
     // Scream if the bracketing failed.
     if (!result) {
       return Error::BRACKETING_FAILED;
@@ -390,10 +393,10 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // Do the root solve.
   // TODO: This should be done with something like TOMS748 once it's
   // available.
-  NumTools::Root::tol = 1e-15;
-  NumTools::Root::iterations = 30;
+  root.tol = 1e-15;
+  root.iterations = 30;
   Real n, P, T, mu;
-  bool result = NumTools::Root::false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
+  bool result = root.false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   if (!result) {
     return Error::NO_SOLUTION;
   }

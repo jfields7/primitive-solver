@@ -1,0 +1,39 @@
+[Density]
+size = 100;
+min = 1;
+max = 100;
+
+[Temperature]
+size = 100;
+min = 1;
+max = 100;
+
+[VelX]
+size = 3;
+min = 0;
+max = 100;
+
+[VelY]
+size = 3;
+min = 0;
+max = 100;
+
+[VelZ]
+size = 3;
+min = 0;
+max = 100;
+
+[MagX]
+size = 3;
+min = 0;
+max = 100;
+
+[MagY]
+size = 3;
+min = 0;
+max = 100;
+
+[MagZ]
+size = 3;
+min = 0;
+max = 100;

@@ -1,6 +1,7 @@
 CXX    := g++
 LIB    := ar cr
 RFLAGS := -std=c++11 -g -Wall -Wpedantic
+#RFLAGS := -std=c++11 -O3
 FLAGS  := 
 LDFLAGS :=
 LDLIBS := -lNumTools
@@ -19,6 +20,7 @@ OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))
 SRC_DIRS := $(dir $(SRC_FILES))
 VPATH := $(SRC_DIRS)
 TEST_DIR := tests/
+BENCHMARK_DIR := benchmark/
 INSTALL_DIR := /usr/local
 
 LIBRARY_NAME := libPrimitiveSolver.a
@@ -50,6 +52,7 @@ clean :
 	rm -rf $(OBJ_DIR)*
 	rm -rf $(LIBRARY)
 	cd $(TEST_DIR) && $(MAKE) clean
+	cd $(BENCHMARK_DIR) && $(MAKE) clean
 
 .PHONY: install
 install:
@@ -80,3 +83,11 @@ build_tests : $(LIBRARY)
 .PHONY: test
 test : $(LIBRARY)
 	cd $(TEST_DIR) && $(MAKE) run
+
+.PHONY: build_benchmark
+build_benchmark : $(LIBRARY)
+	$(MAKE) -C $(BENCHMARK_DIR)
+
+.PHONY: benchmark
+benchmark : $(LIBRARY)
+	cd $(BENCHMARK_DIR) && $(MAKE) run
