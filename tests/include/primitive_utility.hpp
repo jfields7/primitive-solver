@@ -1,3 +1,5 @@
+#ifndef PRIMITIVE_UTILITY_HPP
+#define PRIMITIVE_UTILITY_HPP
 //! \file primitive_utility.hpp
 //  \brief Test utilities specific to primitive solvers.
 
@@ -20,3 +22,5 @@ void ZeroField(Real bu[NMAG]);
 void StrongField(Real bu[NMAG]);
 
 void ParticleFractions(Real prim[NPRIM], int s);
+
+#endif
