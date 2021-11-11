@@ -173,8 +173,8 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real x = 1.0/(1.0 + mu*bsq);
   const Real xsq = x*x;
   const Real musq = mu*mu;
-  const Real den = 1.0 + mu*bsq;
-  const Real mux = mu/den;
+  //const Real den = 1.0 + mu*bsq;
+  const Real mux = mu*x;
   //const Real muxsq = mux/den;
   const Real rbarsq = rsq*xsq + mux*(1.0 + x)*rbsq;
   //const Real rbarsq = xsq*(rsq + mu*(2.0 + mu*bsq)*rbsq);
@@ -185,8 +185,10 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real mb = peos->GetBaryonMass();
 
   // Now we can estimate the velocity.
-  const Real v_max = peos->GetMaxVelocity();
-  const Real vhatsq = std::fmin(musq*rbarsq, v_max*v_max);
+  //const Real v_max = peos->GetMaxVelocity();
+  const Real h_min = peos->GetMinimumEnthalpy()/mb;
+  const Real vsq_max = rsq/(h_min*h_min + rsq);
+  const Real vhatsq = std::fmin(musq*rbarsq, vsq_max);
 
   // Using the velocity estimate, predict the Lorentz factor.
   //const Real What = 1.0/std::sqrt(1.0 - vhatsq);
@@ -201,7 +203,7 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   Real eoverD = qbar - mu*rbarsq + 1.0;
   Real ehat = D*eoverD;
   peos->ApplyEnergyLimits(ehat);
-  eoverD = ehat/D;
+  //eoverD = ehat/D;
 
   // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
   Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
@@ -210,7 +212,10 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
 
   // Now we can get two different estimates for nu = h/W.
   Real nu_a = hhat*iWhat;
-  Real nu_b = eoverD + Phat/D;
+  Real ahat = Phat / ehat;
+  //Real nu_b = eoverD + Phat/D;
+  //Real nu_b = (1.0 + ahat)*eoverD;
+  Real nu_b = (1.0 + ahat)*eoverD;
   Real nuhat = std::fmax(nu_a, nu_b);
 
   // Finally, we can get an estimate for muhat.
