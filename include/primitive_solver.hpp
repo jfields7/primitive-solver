@@ -187,7 +187,7 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   // Now we can estimate the velocity.
   //const Real v_max = peos->GetMaxVelocity();
   const Real h_min = peos->GetMinimumEnthalpy()/mb;
-  const Real vsq_max = rsq/(h_min*h_min + rsq);
+  const Real vsq_max = std::fmin(rsq/(h_min*h_min + rsq), peos->GetMaxVelocity());
   const Real vhatsq = std::fmin(musq*rbarsq, vsq_max);
 
   // Using the velocity estimate, predict the Lorentz factor.
@@ -367,7 +367,10 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
       return Error::BRACKETING_FAILED;
     }
     else {
-      muh = mu;
+      // To avoid problems with the case where the root and the upper bound collide,
+      // we will perturb the bound slightly upward.
+      // TODO: Is there a more rigorous way of treating this?
+      muh = mu*(1. + root.tol);
     }
   }
 
