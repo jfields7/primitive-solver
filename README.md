@@ -1,5 +1,5 @@
 # PrimitiveSolver
-PrimitiveSolver is a library that provides a simple interface for constructing and using general equations of state (EOSes) in GRMHD simulations. It requires the [NumTools](https://github.com/jfields7/num-tools) library to work. The code itself is based on Wolfgang Kastaun's [RePrimAnd](https://github.com/wokast/RePrimAnd) library, particularly its algorithm for recovering the primitive variables of the GRMHD equations (see <https://arxiv.org/abs/2005.01821>). It is intended to interact with [GR-Athena++](https://arxiv.org/abs/2101.08289), but it has no strict dependencies on the code.
+PrimitiveSolver is a library that provides a simple interface for constructing and using general equations of state (EOSes) in GRMHD simulations. It adapts the root-finding methods from the [NumTools](https://github.com/jfields7/num-tools) library but no longer requires it as an explicit dependency. The code itself is based on Wolfgang Kastaun's [RePrimAnd](https://github.com/wokast/RePrimAnd) library, particularly its algorithm for recovering the primitive variables of the GRMHD equations (see <https://arxiv.org/abs/2005.01821>). It is intended to interact with [GR-Athena++](https://arxiv.org/abs/2101.08289), but it has no strict dependencies on the code.
 
 To compile PrimitiveSolver, run `make`.
 
