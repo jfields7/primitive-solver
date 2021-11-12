@@ -114,30 +114,31 @@ bool TestMagnetizationResponse(EOS<IdealGas, ResetFloor>* eos, Real bsq, Real b_
   return true;
 }
 
-bool TestEnergyLimits(EOS<IdealGas, ResetFloor>* eos, Real n, Real T) {
-  Real e = eos->GetEnergy(n, T, nullptr);
+bool TestTemperatureLimits(EOS<IdealGas, ResetFloor>* eos, Real n, Real T) {
+  //Real e = eos->GetEnergy(n, T, nullptr);
 
-  Real e_adjusted = e;
-  eos->ApplyEnergyLimits(e_adjusted);
+  //Real e_adjusted = e;
+  Real T_adjusted = T;
+  eos->ApplyTemperatureLimits(T_adjusted);
 
-  Real min_e = eos->GetMinimumEnergy();
-  Real max_e = eos->GetMaximumEnergy();
-  if (e < min_e && e_adjusted != min_e) {
-    std::cout << "  Small energy was not rescaled properly.\n";
-    std::cout << "  Expected: " << min_e << "\n";
-    std::cout << "  Actual: " << e_adjusted << "\n";
+  Real min_T = eos->GetMinimumTemperature();
+  Real max_T = eos->GetMaximumTemperature();
+  if (T < min_T && T_adjusted != min_T) {
+    std::cout << "  Small temperature was not rescaled properly.\n";
+    std::cout << "  Expected: " << min_T << "\n";
+    std::cout << "  Actual: " << T_adjusted << "\n";
     return false;
   }
-  else if (e > max_e && e_adjusted != max_e) {
-    std::cout << "  Large energy was not rescaled properly.\n";
-    std::cout << "  Expected: " << max_e << "\n";
-    std::cout << "  Actual: " << e_adjusted << "\n";
+  else if (T > max_T && T_adjusted != max_T) {
+    std::cout << "  Large temperature was not rescaled properly.\n";
+    std::cout << "  Expected: " << max_T << "\n";
+    std::cout << "  Actual: " << T_adjusted << "\n";
     return false;
   }
-  else if (e >= min_e && e <= max_e && e != e_adjusted) {
-    std::cout << "  Valid energy was unexpectedly rescaled.\n";
-    std::cout << "  Expected: " << e << "\n";
-    std::cout << "  Actual: " << e_adjusted << "\n";
+  else if (T >= min_T && T <= max_T && T != T_adjusted) {
+    std::cout << "  Valid temperature was unexpectedly rescaled.\n";
+    std::cout << "  Expected: " << T << "\n";
+    std::cout << "  Actual: " << T_adjusted << "\n";
     return false;
   }
 
@@ -189,10 +190,10 @@ int main(int argc, char *argv[]) {
   // Valid energy
   n = 10.0;
   T = 3.0;
-  tester.RunTest(&TestEnergyLimits, "Valid Energy Test", &eos, n, T);
-  // Negative energy
-  n = -1.0;
-  tester.RunTest(&TestEnergyLimits, "Negative Energy Test", &eos, n, T);
+  tester.RunTest(&TestTemperatureLimits, "Valid Temperature Test", &eos, n, T);
+  // Negative temperature 
+  T = -1.0;
+  tester.RunTest(&TestTemperatureLimits, "Negative Temperature Test", &eos, n, T);
 
   tester.PrintSummary();
 }

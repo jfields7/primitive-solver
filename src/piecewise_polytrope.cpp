@@ -205,10 +205,10 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   density_pieces[n] = rho_min/mb;
   pressure_pieces[n] = P_min;
 
-  // Because of the finite-temperature component, the energy density basically
-  // just has to be positive.
-  min_e = 0.0;
-  max_e = std::numeric_limits<Real>::max();
+  // Because we're adding in a finite-temperature component via the ideal gas,
+  // the only restriction on the temperature is that it needs to be nonnegative.
+  min_T = 0.0;
+  max_T = std::numeric_limits<Real>::max();
 
   // DEBUG ONLY:
   /*for (int i = 0; i <= n; i++) {

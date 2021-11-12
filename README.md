@@ -103,8 +103,8 @@ int n_species;  // Number of particle species, should not exceed MAX_SPECIES
 Real mb;        // Baryon mass, should be fixed by the EOS
 Real max_n;     // Maximum number density, should be fixed by the EOS
 Real min_n;     // Minimum number density, should be fixed by the EOS
-Real max_e;     // Maximum energy density, should be fixed by the EOS (WARNING: SUBJECT TO CHANGE)
-Real min_e;     // Minimum energy density, should be fixed by the EOS (WARNING: SUBJECT TO CHANGE)
+Real max_T;     // Maximum temperature, should be fixed by the EOS
+Real min_T;     // Minimum temperature, should be fixed by the EOS
 ```
 
 The protected variables are all provided by the `EOSPolicyInterface` class, so the easiest way to make a new EOS policy is to inherit from it:
