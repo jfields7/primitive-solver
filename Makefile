@@ -4,8 +4,8 @@ RFLAGS := -std=c++11 -g -Wall -Wpedantic
 #RFLAGS := -std=c++11 -O3
 FLAGS  := 
 LDFLAGS :=
-LDLIBS := -lNumTools
-#LDLIBS := 
+#LDLIBS := -lNumTools
+LDLIBS := 
 
 INCLUDE = -I/usr/local/include
 LIBS    = -L/usr/local/lib
