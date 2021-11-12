@@ -84,3 +84,36 @@ EOS<EOSPolicy, ErrorPolicy> *const GetEOS() const; // Get a pointer to the EOS u
 const int GetNSpecies() const; // Get the number of particle fractions this PrimitiveSolver expects.
 ```
 
+# Adding a New Equation of State
+The `EOS` class implements all equations of state via policy classes. It expects the policy to define the following (protected) methods:
+```c++
+Real TemperatureFromE(Real n, Real e, Real *Y);  // Temperature from energy density
+Real TemperatureFromP(Real n, Real p, Real *Y);  // Temperature from pressure
+Real Energy(Real n, Real T, Real *Y);            // Energy density from temperature
+Real Pressure(Real n, Real T, Real *Y);          // Pressure from temperature
+Real Entropy(Real n, Real T, Real *Y);           // Entropy per baryon  (NOT per mass!)
+Real Enthalpy(Real n, Real T, Real *Y);          // Enthalpy per baryon (NOT per mass!)
+Real SoundSpeed(Real n, Real T, Real *Y);        // Sound speed from temperature
+Real SpecificEnergy(Real n, Real T, Real *Y);    // Specific energy from temperature
+Real MinimumEnthalpy();                          // Global minimum enthalpy per baryon (NOT per mass!)
+```
+It also expects the following member (protected) variables:
+```c++
+int n_species;  // Number of particle species, should not exceed MAX_SPECIES
+Real mb;        // Baryon mass, should be fixed by the EOS
+Real max_n;     // Maximum number density, should be fixed by the EOS
+Real min_n;     // Minimum number density, should be fixed by the EOS
+Real max_e;     // Maximum energy density, should be fixed by the EOS (WARNING: SUBJECT TO CHANGE)
+Real min_e;     // Minimum energy density, should be fixed by the EOS (WARNING: SUBJECT TO CHANGE)
+```
+
+The protected variables are all provided by the `EOSPolicyInterface` class, so the easiest way to make a new EOS policy is to inherit from it:
+```c++
+class NewEOSPolicy : public EOSPolicyInterface {
+  protected:
+    /// Implement all the methods above
+    /// ...
+  public:
+    /// Any additional methods specific to the EOS, such as an adiabatic index, should be made available here.
+};
+```
