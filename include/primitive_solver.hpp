@@ -157,8 +157,8 @@ void PrimitiveSolver<EOSPolicy, ErrorPolicy>::MuFromW(Real &f, Real &df, Real mu
   const Real vsq = musq*rbarsq;
   const Real dx = -bsq*xsq;
   //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
-  //const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
-  const Real drbarsq = 2.0*rsq*dx + x*(1.0 + x)*rbsq + mu*dx*(1.0 + 2.0*x)*rbsq;
+  const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
+  //const Real drbarsq = 2.0*rsq*dx + x*(1.0 + x)*rbsq + mu*dx*(1.0 + 2.0*x)*rbsq;
   const Real dvsq = 2.0*mu*rbarsq + musq*drbarsq;
   f = vsq + 1.0/(W*W) - 1.0;
   df = dvsq;
@@ -262,24 +262,52 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
   Real rho_min = peos->GetMinimumDensity()*peos->GetBaryonMass();
   if (D > rho_max) {
     Real W = D/rho_max;
-    if (W > W_max) {
+    Real f, df;
+    MuFromW(f, df, muh, bsq, rsq, rbsq, W);
+    if (f <= 0) {
       // W is not physical, so rho must be larger than rho_max.
       return Error::RHO_TOO_BIG;
     }
     else {
-      // We can tighten up the bounds for muh.
-      root.newton_raphson(&MuFromW, muh, bsq, rsq, rbsq, W);
+      MuFromW(f, df, mul, bsq, rsq, rbsq, W);
+      if (f < 0) {
+        Real mu;
+        Real mulc = mul;
+        Real muhc = muh;
+        // We can tighten up the bounds for mul.
+        // The derivative is zero at mu = 0, so we perturb it slightly.
+        if (mu <= root.tol) {
+          mu += root.tol;
+        }
+        bool result = root.newton_safe(&MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
+        if (!result) {
+          return Error::BRACKETING_FAILED;
+        }
+        mul = (mu > mul) ? mu : mul;
+      }
     }
   }
   if (D < W_max*rho_min) {
     Real W = D/rho_min;
-    if (W < 1.0) {
+    Real f, df;
+    MuFromW(f, df, mul, bsq, rsq, rbsq, W);
+    if (f >= 0) {
       // W is not physical, so rho must be smaller than rho_min.
       return Error::RHO_TOO_SMALL;
     }
     else {
-      // We can tighten up the bounds for mul.
-      root.newton_raphson(&MuFromW, mul, bsq, rsq, rbsq, W);
+      MuFromW(f, df, muh, bsq, rsq, rbsq, W);
+      if (f > 0) {
+        Real mu = muh;
+        Real mulc = mul;
+        Real muhc = muh;
+        // We can tighten up the bounds for muh.
+        bool result = root.newton_safe(&MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
+        if (!result) {
+          return Error::BRACKETING_FAILED;
+        }
+        muh = (mu < muh) ? mu : muh;
+      }
     }
   }
   return Error::SUCCESS;
@@ -376,11 +404,11 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
 
   // Check the corner case where the density is outside the permitted
   // bounds according to the ErrorPolicy.
-  /*error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
+  error = CheckDensityValid(mul, muh, D, bsqr, rsqr, rbsqr, min_h);
   if (error != Error::SUCCESS) {
     // TODO: This is probably something that should be handled by the ErrorPolicy.
     return error;
-  }*/
+  }
 
   
   // Do the root solve.
