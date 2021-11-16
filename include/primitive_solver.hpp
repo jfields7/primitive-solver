@@ -389,7 +389,9 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     //NumTools::Root::iterations = 10;
     root.tol = 1e-15;
     root.iterations = 30;
-    bool result = root.newton_raphson(&UpperRoot, mu, bsqr, rsqr, rbsqr, min_h);
+    Real mulc = mul;
+    Real mulh = muh;
+    bool result = root.newton_safe(&UpperRoot, mulc, mulh, mu, bsqr, rsqr, rbsqr, min_h);
     // Scream if the bracketing failed.
     if (!result) {
       return Error::BRACKETING_FAILED;
