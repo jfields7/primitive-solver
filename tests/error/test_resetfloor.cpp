@@ -17,33 +17,36 @@ using namespace Primitive;
 bool TestConstruction() {
   EOS<IdealGas, ResetFloor> eos;
   Real n_atm = 1e-10;
-  Real T_atm = 1.0;
-  return (n_atm == eos.GetDensityFloor() && T_atm == eos.GetTemperatureFloor());
+  /*Real T_atm = 1.0;
+  return (n_atm == eos.GetDensityFloor() && T_atm == eos.GetTemperatureFloor());*/
+  Real p_atm = 1e-10;
+  return (n_atm == eos.GetDensityFloor() && p_atm == eos.GetPressureFloor());
 }
 
-void PrintDetails(Real n, Real v[3], Real T, Real n_new, Real v_new[3], 
-                  Real T_new, Real n_atm, Real t_atm) {
+void PrintDetails(Real n, Real v[3], Real P, Real n_new, Real v_new[3], 
+                  Real P_new, Real n_atm, Real p_atm) {
   std::cout << "  n = " << n << "\n";
   std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
-  std::cout << "  T = " << T << "\n";
+  std::cout << "  P = " << P << "\n";
   std::cout << "  n_new = " << n_new << "\n";
   std::cout << "  v_new = (" << v_new[0] << "," << v_new[1] << "," << v_new[2] <<")\n";
-  std::cout << "  T_new = " << T_new << "\n";
+  std::cout << "  P_new = " << P_new << "\n";
   std::cout << "  n_atm = " << n_atm << "\n";
-  std::cout << "  t_atm = " << t_atm << "\n";
+  std::cout << "  p_atm = " << p_atm << "\n";
 }
 
-bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real T) {
+bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real P) {
   Real n_new = n;
   Real v_new[3] = {v[0], v[1], v[2]};
   Real *Y = nullptr;
-  Real T_new = T;
-  Real p_new = eos->GetPressure(n, T, Y);
+  Real p_new = P;
+  Real T_new = eos->GetTemperatureFromP(n, P, Y);
 
   bool result = eos->ApplyPrimitiveFloor(n_new, v_new, p_new, T_new, Y);
 
   Real n_atm = eos->GetDensityFloor();
-  Real t_atm = eos->GetTemperatureFloor();
+  //Real t_atm = eos->GetTemperatureFloor();
+  Real p_atm = eos->GetPressureFloor();
 
   // Make sure that the test worked when it was supposed to.
   if (!result) {
@@ -51,15 +54,15 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
       std::cout << "  Density was not floored as expected.\n";
       return false;
     }
-    if (T< t_atm) {
+    if (P < p_atm) {
       std::cout << "  Temperature was not floored as expected.\n";
       return false;
     }
   }
   else {
-    if (n >= n_atm && T >= t_atm) {
+    if (n >= n_atm && P >= p_atm) {
       std::cout << "  Floor was applied to valid variables.\n";
-      PrintDetails(n, v, T, n_new, v_new, T_new, n_atm, t_atm);
+      PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm);
       return false;
     }
     // If the floor was applied to the density, make sure the variables
@@ -67,24 +70,24 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
     else if (n < n_atm) {
       if (n_new == n_atm && 
           v_new[0] == 0.0 && v_new[1] == 0.0 && v_new[2] == 0.0 && 
-          T_new == t_atm) {
+          p_new == p_atm) {
         return true;
       }
       else {
         std::cout << "  Density floor was not applied correctly.\n";
-        PrintDetails(n, v, T, n_new, v_new, T_new, n_atm, t_atm);
+        PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm);
         return false;
       }
     }
-    else if (T < t_atm) {
+    else if (P < p_atm) {
       if (n_new == n &&
           v_new[0] == v[0] && v_new[1] == v[1] && v_new[2] == v[2] &&
-          T_new == t_atm) {
+          p_new == p_atm) {
         return true;
       }
       else {
-        std::cout << "  Temperature floor was not applied correctly.\n";
-        PrintDetails(n, v, T, n_new, v_new, T_new, n_atm, t_atm);
+        std::cout << "  Pressure floor was not applied correctly.\n";
+        PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm);
         return false;
       }
     }
@@ -156,16 +159,16 @@ int main(int argc, char *argv[]) {
   // Validate that the primitive variables get floored as expected.
   Real n = 1.0;
   Real v[3] = {0.1, 0.1, 0.1};
-  Real T = 1.0;
-  tester.RunTest(&TestPrimitiveFloor, "Valid Primitive Floor Test", &eos, n, v, T);
+  Real P = 1.0;
+  tester.RunTest(&TestPrimitiveFloor, "Valid Primitive Floor Test", &eos, n, v, P);
   n = 0.0;
-  tester.RunTest(&TestPrimitiveFloor, "Invalid Density Primitive Floor Test", &eos, n, v, T);
+  tester.RunTest(&TestPrimitiveFloor, "Invalid Density Primitive Floor Test", &eos, n, v, P);
   n = 1.0;
-  T = 0.0;
-  tester.RunTest(&TestPrimitiveFloor, "Invalid Pressure Primitive Floor Test", &eos, n, v, T);
+  P = 0.0;
+  tester.RunTest(&TestPrimitiveFloor, "Invalid Pressure Primitive Floor Test", &eos, n, v, P);
   n = 0.0;
-  T = 0.0;
-  tester.RunTest(&TestPrimitiveFloor, "All Invalid Primitive Floor Test", &eos, n, v, T);
+  P = 0.0;
+  tester.RunTest(&TestPrimitiveFloor, "All Invalid Primitive Floor Test", &eos, n, v, P);
 
   // Do some magnetization tests.
   eos.SetMaximumMagnetization(300.0);
@@ -189,7 +192,7 @@ int main(int argc, char *argv[]) {
   // Make sure that energy is rescaled correctly.
   // Valid energy
   n = 10.0;
-  T = 3.0;
+  Real T = 3.0;
   tester.RunTest(&TestTemperatureLimits, "Valid Temperature Test", &eos, n, T);
   // Negative temperature 
   T = -1.0;

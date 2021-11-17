@@ -21,7 +21,7 @@ class ResetFloor : public ErrorPolicyInterface {
     ResetFloor();
 
     /// Floor for primitive variables
-    bool PrimitiveFloor(Real& n, Real v[3], Real& t);
+    bool PrimitiveFloor(Real& n, Real v[3], Real& p);
 
     /// Floor for conserved variables
     bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real D_floor, Real tau_floor);
