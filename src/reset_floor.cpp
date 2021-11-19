@@ -33,9 +33,7 @@ bool ResetFloor::PrimitiveFloor(Real& n, Real v[3], Real& p) {
 }
 
 /// Floor for the conserved variables
-/// FIXME: This currently sets tau to the pressure atmosphere,
-/// but it needs to be replaced with something which is
-/// thermodynamically consistent.
+/// FIXME: Take a closer look at how the tau floor is performed.
 bool ResetFloor::ConservedFloor(Real& D, Real Sd[3], Real& tau, Real D_floor, Real tau_floor) {
   if (D < D_floor) {
     D = D_floor;
@@ -75,4 +73,18 @@ void ResetFloor::DensityLimits(Real& n, Real n_min, Real n_max) {
 /// Apply energy limiter
 void ResetFloor::TemperatureLimits(Real& T, Real T_min, Real T_max) {
   T = std::fmax(T_min, std::fmin(T_max, T));
+}
+
+/// Perform failure response.
+/// In this case, we simply floor everything.
+bool ResetFloor::FailureResponse(Real prim[NPRIM]) {
+  prim[IDN] = n_atm;
+  prim[IVX] = 0.0;
+  prim[IVY] = 0.0;
+  prim[IVZ] = 0.0;
+  prim[IPR] = p_atm;
+  for (int i = 0; i < MAX_SPECIES; i++) {
+    prim[IYF + i] = 0.0;
+  }
+  return true;
 }

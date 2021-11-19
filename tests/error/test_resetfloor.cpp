@@ -148,6 +148,49 @@ bool TestTemperatureLimits(EOS<IdealGas, ResetFloor>* eos, Real n, Real T) {
   return true;
 }
 
+bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
+  Real prim[NPRIM];
+  bool result = eos->DoFailureResponse(prim);
+
+  Real n_atm = eos->GetDensityFloor();
+  Real p_atm = eos->GetPressureFloor();
+  Real t_atm = eos->GetTemperatureFromP(n_atm, p_atm, &prim[IYF]);
+
+  if (!result) {
+    std::cout << "  Result from error response was unexpectedly false.\n";
+    return false;
+  }
+
+  if (prim[IDN] != n_atm) {
+    std::cout << "  Density was not reset properly.\n";
+    std::cout << "  Expected: " << n_atm << "\n";
+    std::cout << "  Actual: " << prim[IDN] << "\n";
+    return false;
+  }
+  if (prim[IPR] != p_atm) {
+    std::cout << "  Pressure was not reset properly.\n";
+    std::cout << "  Expected: " << p_atm << "\n";
+    std::cout << "  Actual: " << prim[IPR] << "\n";
+    return false;
+  }
+  if (prim[ITM] != t_atm) {
+    std::cout << "  Temperature was not reset properly.\n";
+    std::cout << "  Expected: " << t_atm << "\n";
+    std::cout << "  Actual: " << prim[ITM] << "\n";
+    return false;
+  }
+  if (prim[IVX] != 0.0 || prim[IVY] != 0.0 || prim[IVZ] != 0.0) {
+    std::cout << "  Velocity was not reset properly.\n";
+    std::cout << "  Expected: (0, 0, 0)" << "\n";
+    std::cout << "  Actual: " << "(" << prim[IVX] << ", "
+                                     << prim[IVY] << ", "
+                                     << prim[IVZ] << ")\n";
+    return false;
+  }
+  
+  return true;
+}
+
 int main(int argc, char *argv[]) {
   UnitTests tester("Reset Floor Error Policy");
 
@@ -197,6 +240,9 @@ int main(int argc, char *argv[]) {
   // Negative temperature 
   T = -1.0;
   tester.RunTest(&TestTemperatureLimits, "Negative Temperature Test", &eos, n, T);
+
+  // Make sure the primitive variables are reset to floor after failure.
+  tester.RunTest(&TestFailureResponse, "Failure Response Test", &eos);
 
   tester.PrintSummary();
 }

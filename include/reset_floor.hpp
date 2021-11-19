@@ -7,6 +7,7 @@
 //  We impose similar limits for D and tau. If the density is floored,
 //  the velocity is zeroed out and the pressure is also reset to the floor.
 //  If the pressure is floored, all other quantities are ignored.
+//  If the primitive solve fails, all points are set to floor.
 
 #include <ps_types.hpp>
 #include <error_policy_interface.hpp>
@@ -34,6 +35,9 @@ class ResetFloor : public ErrorPolicyInterface {
 
     /// Policy for resetting energy
     void TemperatureLimits(Real& T, Real T_min, Real T_max);
+
+    /// Policy for dealing with failed points
+    bool FailureResponse(Real prim[NPRIM]);
 
   public:
     /// Set the failure mode for conserved flooring

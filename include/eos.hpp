@@ -29,6 +29,7 @@
 //    bool ConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
 //    void DensityLimits(Real& n, Real n_min, Real n_max);
 //    void TemperatureLimits(Real& T, Real T_min, Real T_max);
+//    void FailureResponse(Real prim[NPRIM])
 //  And the following protected variables (available via
 //  ErrorPolicyInterface):
 //    Real n_atm
@@ -81,6 +82,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::MagnetizationResponse;
     using ErrorPolicy::DensityLimits;
     using ErrorPolicy::TemperatureLimits;
+    using ErrorPolicy::FailureResponse;
 
     // ErrorPolicy member variables
     using ErrorPolicy::n_atm;
@@ -376,6 +378,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //! \brief Limit the temperature to a physical range
     inline void ApplyTemperatureLimits(Real& T) {
       TemperatureLimits(T, min_T, max_T);
+    }
+
+    //! \brief Respond to a failed solve.
+    inline bool DoFailureResponse(Real prim[NPRIM]) {
+      bool result = FailureResponse(prim);
+      if (result) {
+        // Adjust the temperature to be consistent with the new primitive variables.
+        prim[ITM] = TemperatureFromP(prim[IDN], prim[IPR], &prim[IYF]);
+      }
+      return result;
     }
 };
 
