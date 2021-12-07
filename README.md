@@ -117,3 +117,153 @@ class NewEOSPolicy : public EOSPolicyInterface {
     /// Any additional methods specific to the EOS, such as an adiabatic index, should be made available here.
 };
 ```
+
+# Unit Tests
+It is strongly recommended that any new `EOSPolicy` or `ErrorPolicy` classes have unit tests to go with them. There is a basic unit testing framework included in the repository under the `tests` folder. There are folders for three kinds of tests: `error` includes tests for the `ErrorPolicy`, `eos` contains tests for a specific `EOSPolicy`, and `primitive` contains tests for running `PrimitiveSolver` with a specific `EOSPolicy`.
+
+## Running and Adding New Unit Tests
+Tests can be run from the repository root by running `make test`. This runs a separate Makefile inside `tests` that compiles each test and runs it. Inside `tests\Makefile`, each set of tests has its own executable (again, the framework is very basic). Suppose we wrote a new `EOSPolicy` for the Synge relativistic ideal gas. Then we could add the following recipe:
+```make
+eos_synge : $(OBJ_FILES)
+	$(call make_test,eos,test_synge)
+```
+The `make_test` function takes two arguments: a directory (relative to `tests`) and a source file. In this case, we're saying that we have a test at `./eos/test_synge.cpp`. From there, `make_test` will automatically compile the test with all the correct libraries and header files.
+
+The next step is to make sure that the recipe is actually applied correctly. So, we need to append the test to the `tests` recipe inside the Makefile:
+```make
+tests: dirs ... eos_synge
+```
+
+Lastly, we need to make sure that the test is executed when we type `make test` in the repository root. There is one more recipe, `run`, in the test Makefile for this. Append the new test to run as follows, making sure to add the trailing `; \` to the line before:
+```make
+run: dirs tests
+	...
+	...; \
+	./test_synge
+```
+
+Now when we compile with `make test`, the new tests will automatically run.
+
+## Unit Testing Framework
+The unit testing framework can be included in test source code via the `testing.hpp` header file. It provides a few auxiliary functions:
+```c++
+void PrintGreen(const std::string& text);
+void PrintRed(const std::string& text);
+void PrintBold(const std::string& text);
+void PrintError(double expected, double actual);
+double GetError(double expected, double actual);
+```
+The functions do exactly what their names suggest: `PrintGreen()` prints a string of text to the terminal in bright green, `PrintRed()` prints in red, and `PrintBold()` prints bold text. `PrintError()` prints out what the expected value was, what the actual value is, and what the relative error between the two is. Finally, `GetError()` performs a relative error calculation.
+
+The heart of the unit testing framework is the `UnitTests` class. There are three functions of interest:
+```c++
+UnitTests(const std::string& name);
+
+template<class ... Types>
+void RunTest(bool (*test)(Types...), std::string name, Types ... args);
+
+void PrintSummary();
+```
+
+The `UnitTests()` constructor takes a string which will be used as the name for this test suite. `PrintSummary()` should be called at the end in order to tell the user how many tests passed and which tests, if any, failed.
+
+The `RunTest()` function takes a little bit of explanation. This is a variadic template function, which makes it possible for `UnitTests` to run any test without needing to know the number of arguments beforehand. The function accepts the following parameters: a pointer to a test function with an arbitrary number of arguments that returns a `bool`, a name for the test, and then any arguments needed by the test function. Suppose we want to run the test `bool TestTemperatureFromEnergy(Real n, Real e, Real *Y)` from `testfunctions.hpp`. Then we would type the following:
+```c++
+tester.RunTest(&TestTemperatureFromEnergy, "Temperature from Energy Test", n, e, Y);
+```
+We have three arguments after the name of the test because `TestTemperatureFromEnergy()` needs three arguments.
+
+Alternatively, if we built a test that takes no arguments but confirmed that an object's constructor works as expected, we would do the following instead:
+```c++
+tester.RunTest(&TestConstructor, "Construction Test");
+```
+Note that because `TestConstructor()` takes no arguments, we call `RunTest()` with only two arguments.
+
+There is one noticeable limitation on test functions constructed this way: variadic templates don't work very well with references, so all parameters should be passed by value or by pointer.
+
+## Writing Unit Tests
+Good unit tests should test every non-trivial component of the code. For an `EOSPolicy`, this roughly translates to every EOS function, such as `TemperatureFromE`, `TemperatureFromP`, and so forth. Good tests will also test a variety of inputs, including both typical and extreme inputs, boundary cases, and outright wrong inputs. For example, the `PiecewisePolytrope` tests include densities at every specified polytrope, densities for an ideal gas component below the first polytrope, and continuity tests.
+
+In order to make this easier, there are some utility functions provided in `testfunctions.hpp` and `primitive_utility.hpp`:
+```c++
+// testfunctions.hpp
+bool TestTemperatureFromEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
+  Real n, Real T, Real *Y, const Real tol);
+
+bool TestTemperatureFromPressure(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
+  Real n, Real T, Real *Y, const Real tol);
+
+bool TestEnthalpy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
+  Real n, Real T, Real *Y, const Real tol);
+
+bool TestSpecificEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
+  Real n, Real T, Real *Y, const Real tol);
+
+bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, 
+  Real prim[NPRIM], Real cons[NCONS], Real bu[NMAG], 
+  Real gd[NMETRIC], Real gu[NMETRIC], const Real tol);
+```
+
+```c++
+// primitive_utility.hpp
+
+// Functions for modifying the metric.
+void MinkowskiMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
+
+void SchwarzschildMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
+
+void ScrewballMinkowskiMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]);
+
+// Functions for modifying the velocity.
+void ZeroVelocity(Real prim[NPRIM]);
+
+void StrongVelocity(Real prim[NPRIM]);
+
+// Functions for modifying the magnetic field.
+void ZeroField(Real bu[NMAG]);
+
+void StrongField(Real bu[NMAG]);
+
+// Functions for non-zero particle fractions.
+void ParticleFractions(Real prim[NPRIM], int s);
+```
+
+Generally speaking, all unit tests should consist of a single source file. Additional source files, if needed, can be put in `tests/src/` and `tests/include/`. Supposing we had an `EOSPolicy` called `SyngeGas`, we could write some tests for it as follows:
+```c++
+#include <eos.hpp>
+#include <ps_types.hpp>
+#include <synge_gas.hpp>
+#include <do_nothing.hpp>
+
+#include <testing.hpp>
+#include <testfunctions.hpp>
+
+using namespace Primitive;
+
+int main(int argc, char* argv[]) {
+  UnitTests tester{"Synge Gas EOS"};
+
+  EOS<SyngeGas, DoNothing> eos;
+  const Real tol = 1e-12; // error tolerance for floating-point arithmetic.
+  Real n = 1.345e2; // number density
+  Real T = 4.985e3; // temperature
+  Real *Y = nullptr; // empty, SyngeGas doesn't depend on particle fractions.
+
+  // Check that the temperature is self-consistent with the energy.
+  tester.RunTest(&TestTemperatureFromEnergy<SyngeGas, DoNothing>,
+                 "Temperature from Energy Test",
+                 &eos, n, T, Y, tol);
+
+  // Check that the temperature is self-consistent with the pressure.
+  tester.RunTest(&TestTemperatureFromPressure<SyngeGas, DoNothing>,
+                 "Temperature from Pressure Test",
+                 &eos, n, T, Y, tol);
+
+  tester.PrintSummary();
+
+  return 0;
+}
+
+```
+
+*Note*: It is _strongly_ recommended that any `EOSPolicy` class have tests both for the EOS itself and for its interactions with `PrimitiveSolver`.
