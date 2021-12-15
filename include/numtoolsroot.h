@@ -128,7 +128,8 @@ namespace NumTools{
   #endif
 
         // Return success if we're below the tolerance, otherwise report failure.
-        return fabs(ftest) <= tol;
+        //return fabs(ftest) <= tol;
+        return std::fabs((x-xold)/x) <= tol;
       }
       // }}}
       
@@ -175,7 +176,8 @@ namespace NumTools{
   #endif
 
         // Return success if we're below the tolerance, otherwise report failure.
-        return fabs(fx) <= tol;
+        //return fabs(fx) <= tol;
+        return fabs((xold-x)/x) <= tol;
       }
       // }}}
 
@@ -253,7 +255,8 @@ namespace NumTools{
    #endif
 
         // Return success if we're below the tolerance, otherwise report failure.
-        return fabs(fx) <= tol;
+        //return fabs(fx) <= tol;
+        return (fabs((xold-x)/x) <= tol);
       }
       // }}}
   };
