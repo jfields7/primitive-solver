@@ -20,12 +20,12 @@
 namespace NumTools{
   class Root {
     private:
-      Root() : iterations(30), count (0), tol(1e-15) {}
+      Root() : iterations(30), tol(1e-15) {}
     public:
       /// The number of iterations to permit during a root solve.
       unsigned int iterations;
       /// The iterations from the last call to the root solve.
-      unsigned int count;
+      //unsigned int count;
       /// The tolerance for a root solve.
       Real tol;
       /// The golden ratio, used by the ITP method
@@ -67,7 +67,7 @@ namespace NumTools{
       bool false_position(Real (*f)(Real, Types...), Real &lb, Real &ub, Real& x, Types ... args){
         int side = 0;
         Real ftest;
-        count = 0;
+        unsigned count = 0;
         // Get our initial bracket.
         Real flb = f(lb, args...);
         Real fub = f(ub, args...);
@@ -160,7 +160,7 @@ namespace NumTools{
         Real fx;
         Real dfx;
         Real xold;
-        count = 0;
+        unsigned count = 0;
         do{
           xold = x;
           // Calculate f and df at point x.
@@ -202,7 +202,7 @@ namespace NumTools{
         Real fx;
         Real dfx;
         Real xold;
-        count = 0;
+        unsigned count = 0;
         // We first need to ensure that the bracket is valid.
         Real fub, flb;
         f(flb, dfx, lb, args...);
