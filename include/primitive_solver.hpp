@@ -203,9 +203,9 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   const Real xsq = x*x;
   const Real musq = mu*mu;
   //const Real den = 1.0 + mu*bsq;
-  const Real mux = mu*x;
+  //const Real mux = mu*x;
   //const Real muxsq = mux/den;
-  const Real rbarsq = rsq*xsq + mux*(1.0 + x)*rbsq;
+  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
   //const Real rbarsq = xsq*(rsq + mu*(2.0 + mu*bsq)*rbsq);
   // An alternative calculation of rbarsq that may be more accurate.
   //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
@@ -244,9 +244,9 @@ Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real
   // Now we can get two different estimates for nu = h/W.
   Real nu_a = hhat*iWhat;
   Real ahat = Phat / ehat;
-  //Real nu_b = eoverD + Phat/D;
+  Real nu_b = eoverD + Phat/D;
   //Real nu_b = (1.0 + ahat)*eoverD;
-  Real nu_b = (1.0 + ahat)*eoverD;
+  //Real nu_b = (1.0 + ahat)*eoverD;
   Real nuhat = std::fmax(nu_a, nu_b);
 
   // Finally, we can get an estimate for muhat.
@@ -398,6 +398,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // Make sure that the magnetic field is physical.
   Error error = peos->DoMagnetizationResponse(bsqr, b_u);
   if (error == Error::MAG_TOO_BIG) {
+    HandleFailure(prim, cons, b, g3d);
     return Error::MAG_TOO_BIG;
   }
   else if (error == Error::CONS_ADJUSTED) {
