@@ -421,8 +421,6 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     Real mu = 0.0;
     // We don't need the bound to be that tight, so we reduce
     // the accuracy of the root solve for speed reasons.
-    root.tol = 1e-15;
-    root.iterations = 30;
     Real mulc = mul;
     Real mulh = muh;
     bool result = root.newton_safe(&UpperRoot, mulc, mulh, mu, bsqr, rsqr, rbsqr, min_h);
@@ -452,8 +450,6 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // Do the root solve.
   // TODO: This should be done with something like TOMS748 once it's
   // available.
-  root.tol = 1e-15;
-  root.iterations = 30;
   Real n, P, T, mu;
   bool result = root.false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   if (!result) {
