@@ -17,14 +17,14 @@ using namespace Primitive;
 bool TestConstruction() {
   EOS<IdealGas, ResetFloor> eos;
   Real n_atm = 1e-10;
-  /*Real T_atm = 1.0;
-  return (n_atm == eos.GetDensityFloor() && T_atm == eos.GetTemperatureFloor());*/
   Real p_atm = 1e-10;
-  return (n_atm == eos.GetDensityFloor() && p_atm == eos.GetPressureFloor());
+  Real n_threshold = 1.0;
+  return (n_atm == eos.GetDensityFloor() && p_atm == eos.GetPressureFloor() &&
+          n_threshold == eos.GetThreshold());
 }
 
 void PrintDetails(Real n, Real v[3], Real P, Real n_new, Real v_new[3], 
-                  Real P_new, Real n_atm, Real p_atm) {
+                  Real P_new, Real n_atm, Real p_atm, Real n_threshold) {
   std::cout << "  n = " << n << "\n";
   std::cout << "  v = (" << v[0] << "," << v[1] << "," << v[2] <<")\n";
   std::cout << "  P = " << P << "\n";
@@ -33,6 +33,7 @@ void PrintDetails(Real n, Real v[3], Real P, Real n_new, Real v_new[3],
   std::cout << "  P_new = " << P_new << "\n";
   std::cout << "  n_atm = " << n_atm << "\n";
   std::cout << "  p_atm = " << p_atm << "\n";
+  std::cout << "  n_threshold = " << n_threshold << "\n";
 }
 
 bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real P) {
@@ -47,10 +48,11 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
   Real n_atm = eos->GetDensityFloor();
   //Real t_atm = eos->GetTemperatureFloor();
   Real p_atm = eos->GetPressureFloor();
+  Real n_threshold = eos->GetThreshold();
 
   // Make sure that the test worked when it was supposed to.
   if (!result) {
-    if (n < n_atm) {
+    if (n < n_atm*n_threshold) {
       std::cout << "  Density was not floored as expected.\n";
       return false;
     }
@@ -60,14 +62,14 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
     }
   }
   else {
-    if (n >= n_atm && P >= p_atm) {
+    if (n >= n_atm*n_threshold && P >= p_atm) {
       std::cout << "  Floor was applied to valid variables.\n";
-      PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm);
+      PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm, n_threshold);
       return false;
     }
     // If the floor was applied to the density, make sure the variables
     // are all zeroed out the way they should be.
-    else if (n < n_atm) {
+    else if (n < n_atm*n_threshold) {
       if (n_new == n_atm && 
           v_new[0] == 0.0 && v_new[1] == 0.0 && v_new[2] == 0.0 && 
           p_new == p_atm) {
@@ -75,7 +77,7 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
       }
       else {
         std::cout << "  Density floor was not applied correctly.\n";
-        PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm);
+        PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm, n_threshold);
         return false;
       }
     }
@@ -87,7 +89,7 @@ bool TestPrimitiveFloor(EOS<IdealGas, ResetFloor>* eos, Real n, Real v[3], Real 
       }
       else {
         std::cout << "  Pressure floor was not applied correctly.\n";
-        PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm);
+        PrintDetails(n, v, P, n_new, v_new, p_new, n_atm, p_atm, n_threshold);
         return false;
       }
     }
@@ -212,6 +214,10 @@ int main(int argc, char *argv[]) {
   n = 0.0;
   P = 0.0;
   tester.RunTest(&TestPrimitiveFloor, "All Invalid Primitive Floor Test", &eos, n, v, P);
+  eos.SetThreshold(10.0);
+  n = eos.GetDensityFloor();
+  P = 1.0;
+  tester.RunTest(&TestPrimitiveFloor, "Sub-Threshold Primitive Floor Test", &eos, n, v, P);
 
   // Do some magnetization tests.
   eos.SetMaximumMagnetization(300.0);
