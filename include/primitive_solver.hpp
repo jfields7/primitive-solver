@@ -13,7 +13,7 @@
 // FIXME: Debug only!
 #include <iostream>
 
-#include <numtoolsroot.h>
+#include <numtoolsroot.hpp>
 
 #include <eos.hpp>
 #include <geom_math.hpp>
