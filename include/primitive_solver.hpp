@@ -137,6 +137,11 @@ class PrimitiveSolver {
       return peos;
     }
 
+    /// Get the root solver used by this PrimitiveSolver.
+    inline const NumTools::Root& GetRootSolver() const {
+      return root;
+    }
+
     //! \brief Do failure response and adjust conserved variables if necessary.
     //
     //  Note that in ConToPrim, the error policy dictates whether or not we

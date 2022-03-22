@@ -21,7 +21,7 @@ namespace NumTools{
   class Root {
     private:
     public:
-      Root() : iterations(30), tol(1e-15) {}
+      Root() : iterations(30), tol(1e-15), last_count(0) {}
       /// The number of iterations to permit during a root solve.
       unsigned int iterations;
       /// The iterations from the last call to the root solve.

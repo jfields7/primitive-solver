@@ -83,7 +83,7 @@ class Benchmark {
     template<typename EOSPolicy, typename ErrorPolicy>
     void RunBenchmark(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps) {
       // Traverse the grid of values using the mother of all nested loops.
-      NumTools::Root& root = NumTools::Root::get_instance();
+      const NumTools::Root& root = ps->GetRootSolver();
       for (unsigned int ibz = 0; ibz < nBz; ibz++) {
         for (unsigned int iby = 0; iby < nBy; iby++) {
           for (unsigned int ibx = 0; ibx < nBx; ibx++) {
@@ -143,7 +143,7 @@ class Benchmark {
 
 
                       // Get the number of iterations used by the primitive solver.
-                      iterations[idx] = (Real) root.count;
+                      iterations[idx] = (Real) root.last_count;
                     }
                   }
                 }
