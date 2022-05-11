@@ -1,11 +1,13 @@
 #ifndef TEST_FUNCTIONS_HPP
 #define TEST_FUNCTIONS_HPP
+#include <cmath>
 
 #include <eos.hpp>
 #include <primitive_solver.hpp>
 #include <ps_types.hpp>
 #include <ps_error.hpp>
 #include <testing.hpp>
+#include <geom_math.hpp>
 
 /// Check that the temperature and energy density equations are consistent.
 template<typename EOSPolicy, typename ErrorPolicy>
@@ -192,6 +194,15 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
       PrintError(Y_old[s], Y_new[s]);
       success = false;
     }
+  }
+
+  if (success == false) {
+    Real uu[3] = {Wvx_old, Wvy_old, Wvz_old};
+    Real W = std::sqrt(1.0 + Primitive::SquareVector(uu, gd));
+    Real bsq = Primitive::SquareVector(bu, gd)/(rho_old*W);
+    std::cout << "  Other information:\n";
+    std::cout << "  Lorentz factor: " << W << "\n";
+    std::cout << "  Magnetization: " << bsq << "\n";
   }
 
   // Reset the primitive variables to their old values.

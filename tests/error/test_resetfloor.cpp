@@ -193,6 +193,69 @@ bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
   return true;
 }
 
+bool TestConservedFloor(EOS<IdealGas,ResetFloor>* eos, Real D, Real Sd[3], Real tau) {
+  Real tau_floor = eos->GetTauFloor(nullptr);
+  Real D_floor = eos->GetDensityFloor()*eos->GetBaryonMass();
+
+  Real D_new = D;
+  Real Sd_new[3] = {Sd[0], Sd[1], Sd[2]};
+  Real tau_new = tau;
+
+  eos->ApplyConservedFloor(D_new, Sd_new, tau_new, nullptr);
+
+  // Check if D should have been floored.
+  if (D < D_floor) {
+    bool success = true;
+    if (std::fabs(D_new - D_floor) > 1e-15) {
+      std::cout << "  Relativistc density was not reset correctly!\n";
+      std::cout << "  Expected: " << D_floor << "\n";
+      std::cout << "  Actual: " << D_new << "\n";
+      success = false;
+    }
+    if (Sd_new[0] != 0.0 || Sd_new[1] != 0.0 || Sd_new[2] != 0.0) {
+      std::cout << "  Momentum density was not reset correctly!\n";
+      std::cout << "  Expected: (0, 0, 0)\n";
+      std::cout << "  Actual: " << Sd_new[0] << ", "
+                                << Sd_new[1] << ", "
+                                << Sd_new[2] << ")\n";
+      success = false;
+    }
+    if (tau_new != tau_floor) {
+      std::cout << "  Tau was not reset correctly!\n";
+      std::cout << "  Expected: " << tau_floor << "\n";
+      std::cout << "  Actual: " << tau_new << "\n";
+      success = false;
+    }
+    return success;
+  }
+  else if (tau < tau_floor) {
+    bool success = true;
+    if (tau_new != tau_floor) {
+      std::cout << "  Tau was not reset correctly!\n";
+      std::cout << "  Expected: " << tau_floor << "\n";
+      std::cout << "  Actual: " << tau_new << "\n";
+      success = false;
+    }
+    if (D_new != D) {
+      std::cout << "  Relativistic density was unexpectedly reset during tau floor!\n";
+      success = false;
+    }
+    if (Sd_new[0] != Sd[0] || Sd_new[1] != Sd[1] || Sd_new[2] != Sd[2]) {
+      std::cout << "  Momentum density was unexpectedly reset during tau floor!\n";
+      success = false;
+    }
+    return success;
+  }
+  else {
+    if (D != D_new || tau != tau_new || 
+        Sd_new[0] != Sd[0] || Sd_new[1] != Sd[1] || Sd_new[2] != Sd[2]) {
+      std::cout << "  Conserved variables unexpectedly reset despite being valid!\n";
+      return false;
+    }
+  }
+  return true;
+}
+
 int main(int argc, char *argv[]) {
   UnitTests tester("Reset Floor Error Policy");
 
@@ -218,6 +281,21 @@ int main(int argc, char *argv[]) {
   n = eos.GetDensityFloor();
   P = 1.0;
   tester.RunTest(&TestPrimitiveFloor, "Sub-Threshold Primitive Floor Test", &eos, n, v, P);
+
+  // Validate that the conserved variables get floored as expected.
+  eos.SetThreshold(1.0);
+  Real D = 1.0;
+  Real Sd[3] = {0.1, 0.1, 0.1};
+  Real tau = 1.0;
+  tester.RunTest(&TestConservedFloor, "Valid Conserved Floor Test", &eos, D, Sd, tau);
+  D = 0.0;
+  tester.RunTest(&TestConservedFloor, "Invalid Density Conserved Floor Test", &eos, D, Sd, tau);
+  D = 1.0;
+  tau = 0.0;
+  tester.RunTest(&TestConservedFloor, "Invalid Tau Conserved Floor Test", &eos, D, Sd, tau);
+  D = 0.0;
+  tau = 0.0;
+  tester.RunTest(&TestConservedFloor, "All Invalid Primitive Floor Test", &eos, D, Sd, tau);
 
   // Do some magnetization tests.
   eos.SetMaximumMagnetization(300.0);

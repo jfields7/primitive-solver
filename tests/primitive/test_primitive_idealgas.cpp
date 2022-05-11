@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
 
   
   // Now we can try the same thing for the Schwarzschild metric.
-  /*ZeroField(bu);
+  ZeroField(bu);
   ZeroVelocity(prim);
   ScrewballSchwarzschildMetric(gd, gu);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
   StrongVelocity(prim);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "Conserved to Primitive Test - Screwball Schwarzschild, Strong Flow and Field",
-                 &ps, prim, cons, bu, gd, gu, tol);*/
+                 &ps, prim, cons, bu, gd, gu, tol);
 
 
   // Baryon mass consistency tests.

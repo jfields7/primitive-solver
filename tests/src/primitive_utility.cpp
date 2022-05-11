@@ -2,6 +2,7 @@
 //  \brief Implementation file for primitive_utility.hpp
 
 #include <primitive_utility.hpp>
+#include <cmath>
 
 // MinkowskiMetric {{{
 void MinkowskiMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]) {
@@ -80,20 +81,32 @@ void ScrewballSchwarzschildMetric(Real gd[NSPMETRIC], Real gu[NSPMETRIC]) {
     gd[i] = 0.0;
     gu[i] = 0.0;
   }
-  Real R = 4.0;
+  Real r = 4.0;
   Real rs = 1.0;
-  Real cv = 1.0 - rs/R;
+  Real theta = 3.1415926/2.0;
+  Real phi = 1.0;
+  Real sinth = std::sin(theta);
   
-  // Eddington-Finkelstein coordinates
-  //gd[I00] = -cv;
-  //gd[S01] = 2.0;
-  gd[S22] = R*R;
-  gd[S33] = R*R;
+  // Some bizarre coordinates defined by
+  // u = (1 - rs/r),
+  // psi = r*theta,
+  // xsi = phi/r.
+  Real rsq = r*r;
+  Real rqu = rsq*rsq;
+  gd[S11] = rqu*(r + (r - rs)*(theta*theta + phi*phi*sinth*sinth))/((r - rs)*rs*rs);
+  gd[S12] = -rsq*theta/rs;
+  gd[S13] = phi*rqu*sinth*sinth/rs;
+  gd[S22] = 1.0;
+  gd[S33] = rqu*sinth*sinth;
 
   //gu[I01] = 0.5;
-  gu[S11] = cv/4.0;
-  gu[S22] = 1.0/(R*R);
-  gu[S33] = 1.0/(R*R);
+  Real rmrs = r - rs;
+  gu[S11] = rmrs*rs*rs/(rqu*r);
+  gu[S12] = rmrs*rs*theta/(rsq*r);
+  gu[S13] = -phi*rs*rmrs/(rqu*r);
+  gu[S22] = 1.0 + rmrs*theta*theta/r;
+  gu[S23] = -phi*rmrs*theta/(rsq*r);
+  gu[S33] = (phi*phi*rmrs + r/(sinth*sinth))/(rqu*r);
 }
 // }}}
 
