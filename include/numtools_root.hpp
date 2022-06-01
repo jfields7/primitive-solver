@@ -47,6 +47,7 @@ class Root {
       int side = 0;
       Real ftest;
       unsigned int count = 0;
+      last_count = 0;
       // Get our initial bracket.
       Real flb = f(lb, args...);
       Real fub = f(ub, args...);
@@ -125,6 +126,7 @@ class Root {
     template<class Functor, class ... Types>
     inline bool Chandrupatla(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
       unsigned int count = 0;
+      last_count = 0;
       // Get our initial bracket.
       Real flb = f(lb, args...);
       Real fub = f(ub, args...);
@@ -213,6 +215,7 @@ class Root {
       Real dfx;
       Real xold;
       unsigned int count = 0;
+      //last_count = 0;
       // We first need to ensure that the bracket is valid.
       Real fub, flb;
       f(flb, dfx, lb, args...);
@@ -256,7 +259,7 @@ class Root {
         count++;
       }
       while (std::fabs((xold-x)/x) > tol && count < iterations);
-      last_count = count;
+      //last_count = count;
 
       // Return success if we're below the tolerance, otherwise report failure.
       return std::fabs((x-xold)/x) <= tol;
