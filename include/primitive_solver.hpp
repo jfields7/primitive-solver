@@ -13,7 +13,7 @@
 // FIXME: Debug only!
 #include <iostream>
 
-#include <numtoolsroot.hpp>
+#include <numtools_root.hpp>
 
 #include <eos.hpp>
 #include <geom_math.hpp>
@@ -24,6 +24,134 @@ namespace Primitive {
 template<typename EOSPolicy, typename ErrorPolicy>
 class PrimitiveSolver {
   private:
+    // Inner classes defining functors
+    // UpperRootFunctor {{{
+    class UpperRootFunctor {
+      public:
+      //! \brief function for the upper bound of the root
+      //
+      //  The upper bound is the solution to the function
+      //  \f$\mu\sqrt{h_0^2 + \bar{r}^2(\mu)} - 1 = 0\f$
+      //
+      //  \param[out] f    The value of the root function at mu
+      //  \param[out] df   The derivative of the root function
+      //  \param[in   mu   The guess for the root
+      //  \param[in]  bsq  The square magnitude of the magnetic field
+      //  \param[in]  rsq  The square magnitude of the specific momentum S/D
+      //  \param[in]  rbsq The square of the product \f$r\cdot b\f$
+      //  \param[in]  h_min The minimum enthalpy
+      inline void operator()(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real min_h) {
+        const Real x = 1.0/(1.0 + mu*bsq);
+        const Real xsq = x*x;
+        const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+        const Real dis = std::sqrt(min_h*min_h + rbarsq);
+        const Real dx = -bsq*xsq;
+        //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
+        const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
+        f = mu*dis - 1.0;
+        df = dis + mu*drbarsq/(2.0*dis);
+      }
+    };
+    // }}}
+
+    // MuFromWFunctor {{{
+    class MuFromWFunctor {
+      public:
+      inline void operator()(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real W) {
+        const Real musq = mu*mu;
+        const Real x = 1.0/(1.0 + mu*bsq);
+        const Real xsq = x*x;
+        const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+        const Real vsq = musq*rbarsq;
+        const Real dx = -bsq*xsq;
+        //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
+        const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
+        //const Real drbarsq = 2.0*rsq*dx + x*(1.0 + x)*rbsq + mu*dx*(1.0 + 2.0*x)*rbsq;
+        const Real dvsq = 2.0*mu*rbarsq + musq*drbarsq;
+        f = vsq + 1.0/(W*W) - 1.0;
+        df = dvsq;
+      }
+    };
+    // }}}
+
+    // RootFunctor {{{
+    class RootFunctor {
+      public:
+      inline Real operator()(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
+          EOS<EOSPolicy, ErrorPolicy> *const peos, Real* n, Real* T, Real* P) {
+        // We need to get some utility quantities first.
+        const Real x = 1.0/(1.0 + mu*bsq);
+        const Real xsq = x*x;
+        const Real musq = mu*mu;
+        //const Real den = 1.0 + mu*bsq;
+        //const Real mux = mu*x;
+        //const Real muxsq = mux/den;
+        //const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
+        //const Real rbarsq = xsq*(rsq + mu*(2.0 + mu*bsq)*rbsq);
+        // An alternative calculation of rbarsq that may be more accurate.
+        //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
+        const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
+        const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
+        const Real mb = peos->GetBaryonMass();
+
+        // Now we can estimate the velocity.
+        //const Real v_max = peos->GetMaxVelocity();
+        const Real h_min = peos->GetMinimumEnthalpy()/mb;
+        const Real vsq_max = std::fmin(rsq/(h_min*h_min + rsq), 
+                                      peos->GetMaxVelocity()*peos->GetMaxVelocity());
+        const Real vhatsq = std::fmin(musq*rbarsq, vsq_max);
+
+        // Using the velocity estimate, predict the Lorentz factor.
+        //const Real What = 1.0/std::sqrt(1.0 - vhatsq);
+        const Real iWhat = std::sqrt(1.0 - vhatsq);
+
+        // Now estimate the number density.
+        Real rhohat = D*iWhat;
+        Real nhat = rhohat/mb;
+        peos->ApplyDensityLimits(nhat);
+
+        // Estimate the energy density.
+        Real eoverD = qbar - mu*rbarsq + 1.0;
+        Real ehat = D*eoverD;
+        //peos->ApplyEnergyLimits(ehat);
+        //eoverD = ehat/D;
+
+        // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
+        Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
+        peos->ApplyTemperatureLimits(That);
+        ehat = peos->GetEnergy(nhat, That, Y);
+        Real Phat = peos->GetPressure(nhat, That, Y);
+        Real hhat = peos->GetEnthalpy(nhat, That, Y)/mb;
+
+        // Now we can get two different estimates for nu = h/W.
+        Real nu_a = hhat*iWhat;
+        //Real ahat = Phat / ehat;
+        Real nu_b = eoverD + Phat/D;
+        //Real nu_b = (1.0 + ahat)*eoverD;
+        //Real nu_b = (1.0 + ahat)*eoverD;
+        Real nuhat = std::fmax(nu_a, nu_b);
+
+        // Finally, we can get an estimate for muhat.
+        Real muhat = 1.0/(nuhat + mu*rbarsq);
+
+        *n = nhat;
+        *T = That;
+        *P = Phat;
+
+        // FIXME: Debug only!
+        /*std::cout << "    D   = " << D << "\n";
+        std::cout << "    q   = " << q << "\n";
+        std::cout << "    bsq = " << bsq << "\n";
+        std::cout << "    rsq = " << rsq << "\n";
+        std::cout << "    rbsq = " << rbsq << "\n"*/
+
+        return mu - muhat;
+
+
+      }
+    };
+    // }}}
+  private:
     /// A constant pointer to the EOS.
     /// We make this constant because the
     /// possibility of changing the EOS
@@ -33,54 +161,10 @@ class PrimitiveSolver {
 
     /// The root solver.
     NumTools::Root root;
+    UpperRootFunctor UpperRoot;
+    MuFromWFunctor MuFromW;
+    RootFunctor RootFunction;
     
-    //! \brief function for the upper bound of the root
-    //
-    //  The upper bound is the solution to the function
-    //  \f$\mu\sqrt{h_0^2 + \bar{r}^2(\mu)} - 1 = 0\f$
-    //
-    //  \param[out] f    The value of the root function at mu
-    //  \param[out] df   The derivative of the root function
-    //  \param[in   mu   The guess for the root
-    //  \param[in]  bsq  The square magnitude of the magnetic field
-    //  \param[in]  rsq  The square magnitude of the specific momentum S/D
-    //  \param[in]  rbsq The square of the product \f$r\cdot b\f$
-    //  \param[in]  h_min The minimum enthalpy
-    static void UpperRoot(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real h_min);
-
-    //! \brief function for the upper bound of the root given
-    //         a specified Lorentz factor.
-    //
-    //  \param[out] f    The value of the root function at mu
-    //  \param[out] df   The derivative of the root function
-    //  \param[in]  mu   The guess for the root
-    //  \param[in]  bsq  The square magnitude of the magnetic field
-    //  \param[in]  rsq  The square magnitude of the specific momentum S/D
-    //  \param[in]  rbsq The square of the product /f$r\cdot b\f$
-    //  \param[in]  W    The Lorentz factor
-    static void MuFromW(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real W);
-
-    //! \brief master function for the root solve
-    //
-    //  The root solve is based on the master function
-    //  \f$ f(\mu) = \mu - \hat{mu}(\mu).
-    //
-    //  \param[in]  mu   The guess for the root
-    //  \param[in]  D    The relativistic density
-    //  \param[in]  q    The specific tau variable tau/D
-    //  \param[in]  bsq  The square magnitude of the magnetic field
-    //  \param[in]  rsq  The square magnitude of the specific momentum S/D
-    //  \param[in]  rbsq The square of the product \f$r\cdot b\f$
-    //  \param[in]  Y    The vector of particle fractions
-    //  \param[in]  peos The pointer to the EOS
-    //  \param[out] n    The resulting estimate for n
-    //  \param[out] T    The resulting estimate for T
-    //  \param[out] P    The resulting estimate for P
-    //  
-    //  \return f evaluated at mu for the given constants.
-    static Real RootFunction(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
-        EOS<EOSPolicy, ErrorPolicy> *const peos, Real* n, Real* T, Real* P);
-
     //! \brief Check and handle the corner case for rho being too small or large.
     //
     //  Using the minimum and maximum values of rho along with some physical
@@ -101,7 +185,7 @@ class PrimitiveSolver {
   public:
     /// Constructor
     PrimitiveSolver(EOS<EOSPolicy, ErrorPolicy> *eos) : peos(eos) {
-      root = NumTools::Root();
+      //root = NumTools::Root();
       root.tol = 1e-15;
       root.iterations = 30;
     }
@@ -172,112 +256,6 @@ class PrimitiveSolver {
     }
 };
 
-// UpperRoot {{{
-template<typename EOSPolicy, typename ErrorPolicy>
-void PrimitiveSolver<EOSPolicy, ErrorPolicy>::UpperRoot(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real min_h) {
-  const Real x = 1.0/(1.0 + mu*bsq);
-  const Real xsq = x*x;
-  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
-  const Real dis = std::sqrt(min_h*min_h + rbarsq);
-  const Real dx = -bsq*xsq;
-  //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
-  const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
-  f = mu*dis - 1.0;
-  df = dis + mu*drbarsq/(2.0*dis);
-}
-// }}}
-
-// MuFromW {{{
-template<typename EOSPolicy, typename ErrorPolicy>
-void PrimitiveSolver<EOSPolicy, ErrorPolicy>::MuFromW(Real &f, Real &df, Real mu, Real bsq, Real rsq, Real rbsq, Real W) {
-  const Real musq = mu*mu;
-  const Real x = 1.0/(1.0 + mu*bsq);
-  const Real xsq = x*x;
-  const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
-  const Real vsq = musq*rbarsq;
-  const Real dx = -bsq*xsq;
-  //const Real drbarsq = rbsq*x*(1.0 + x) + (mu*rbsq + 2.0*(mu*rbsq + rsq)*x)*dx;
-  const Real drbarsq = rbsq*xsq + mu*rbsq*dx + x*(rbsq + 2.0*(mu*rbsq + rsq)*dx);
-  //const Real drbarsq = 2.0*rsq*dx + x*(1.0 + x)*rbsq + mu*dx*(1.0 + 2.0*x)*rbsq;
-  const Real dvsq = 2.0*mu*rbarsq + musq*drbarsq;
-  f = vsq + 1.0/(W*W) - 1.0;
-  df = dvsq;
-}
-// }}}
-
-// RootFunction {{{
-template<typename EOSPolicy, typename ErrorPolicy>
-Real PrimitiveSolver<EOSPolicy, ErrorPolicy>::RootFunction(Real mu, Real D, Real q, Real bsq, Real rsq, Real rbsq, Real *Y,
-      EOS<EOSPolicy, ErrorPolicy> *const peos, Real* n, Real* T, Real* P) {
-  // We need to get some utility quantities first.
-  const Real x = 1.0/(1.0 + mu*bsq);
-  const Real xsq = x*x;
-  const Real musq = mu*mu;
-  //const Real den = 1.0 + mu*bsq;
-  //const Real mux = mu*x;
-  //const Real muxsq = mux/den;
-  //const Real rbarsq = rsq*xsq + mu*x*(1.0 + x)*rbsq;
-  //const Real rbarsq = xsq*(rsq + mu*(2.0 + mu*bsq)*rbsq);
-  // An alternative calculation of rbarsq that may be more accurate.
-  //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
-  const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
-  const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
-  const Real mb = peos->GetBaryonMass();
-
-  // Now we can estimate the velocity.
-  //const Real v_max = peos->GetMaxVelocity();
-  const Real h_min = peos->GetMinimumEnthalpy()/mb;
-  const Real vsq_max = std::fmin(rsq/(h_min*h_min + rsq), peos->GetMaxVelocity()*peos->GetMaxVelocity());
-  const Real vhatsq = std::fmin(musq*rbarsq, vsq_max);
-
-  // Using the velocity estimate, predict the Lorentz factor.
-  //const Real What = 1.0/std::sqrt(1.0 - vhatsq);
-  const Real iWhat = std::sqrt(1.0 - vhatsq);
-
-  // Now estimate the number density.
-  Real rhohat = D*iWhat;
-  Real nhat = rhohat/mb;
-  peos->ApplyDensityLimits(nhat);
-
-  // Estimate the energy density.
-  Real eoverD = qbar - mu*rbarsq + 1.0;
-  Real ehat = D*eoverD;
-  //peos->ApplyEnergyLimits(ehat);
-  //eoverD = ehat/D;
-
-  // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
-  Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
-  peos->ApplyTemperatureLimits(That);
-  ehat = peos->GetEnergy(nhat, That, Y);
-  Real Phat = peos->GetPressure(nhat, That, Y);
-  Real hhat = peos->GetEnthalpy(nhat, That, Y)/mb;
-
-  // Now we can get two different estimates for nu = h/W.
-  Real nu_a = hhat*iWhat;
-  //Real ahat = Phat / ehat;
-  Real nu_b = eoverD + Phat/D;
-  //Real nu_b = (1.0 + ahat)*eoverD;
-  //Real nu_b = (1.0 + ahat)*eoverD;
-  Real nuhat = std::fmax(nu_a, nu_b);
-
-  // Finally, we can get an estimate for muhat.
-  Real muhat = 1.0/(nuhat + mu*rbarsq);
-
-  *n = nhat;
-  *T = That;
-  *P = Phat;
-
-  // FIXME: Debug only!
-  /*std::cout << "    D   = " << D << "\n";
-  std::cout << "    q   = " << q << "\n";
-  std::cout << "    bsq = " << bsq << "\n";
-  std::cout << "    rsq = " << rsq << "\n";
-  std::cout << "    rbsq = " << rbsq << "\n"*/
-
-  return mu - muhat;
-}
-// }}}
-
 // CheckDensityValid {{{
 template<typename EOSPolicy, typename ErrorPolicy>
 Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real& muh, Real D, 
@@ -317,7 +295,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
         if (mu <= root.tol) {
           mu += root.tol;
         }
-        bool result = root.newton_safe(&MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
+        bool result = root.NewtonSafe(MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
         if (!result) {
           return Error::BRACKETING_FAILED;
         }
@@ -340,7 +318,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
         Real mulc = mul;
         Real muhc = muh;
         // We can tighten up the bounds for muh.
-        bool result = root.newton_safe(&MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
+        bool result = root.NewtonSafe(MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
         if (!result) {
           return Error::BRACKETING_FAILED;
         }
@@ -428,7 +406,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     // the accuracy of the root solve for speed reasons.
     Real mulc = mul;
     Real mulh = muh;
-    bool result = root.newton_safe(&UpperRoot, mulc, mulh, mu, bsqr, rsqr, rbsqr, min_h);
+    bool result = root.NewtonSafe(UpperRoot, mulc, mulh, mu, bsqr, rsqr, rbsqr, min_h);
     // Scream if the bracketing failed.
     if (!result) {
       HandleFailure(prim, cons, b, g3d);
@@ -456,7 +434,7 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // TODO: This should be done with something like TOMS748 once it's
   // available.
   Real n, P, T, mu;
-  bool result = root.false_position(&RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
+  bool result = root.FalsePosition(RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   if (!result) {
     HandleFailure(prim, cons, b, g3d);
     return Error::NO_SOLUTION;
