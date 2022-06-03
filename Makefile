@@ -1,7 +1,8 @@
 CXX    := g++
 LIB    := ar cr
-RFLAGS := -std=c++11 -g -Wall -Wpedantic
+RFLAGS := -std=c++11 -O3 -Wall -Wpedantic
 #RFLAGS := -std=c++11 -O3
+#RFlags := -std=c++11 -Og
 FLAGS  := 
 LDFLAGS :=
 #LDLIBS := -lNumTools
@@ -91,3 +92,7 @@ build_benchmark : $(LIBRARY)
 .PHONY: benchmark
 benchmark : $(LIBRARY)
 	cd $(BENCHMARK_DIR) && $(MAKE) run
+
+.PHONY: benchmark_stress
+benchmark_stress : $(LIBRARY)
+	cd $(BENCHMARK_DIR) && $(MAKE) stress

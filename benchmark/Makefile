@@ -33,4 +33,8 @@ clean:
 
 run: dirs benchmark
 	cd bin; \
-	./benchmark -i ../pars/basic.par
+	./benchmark -s -i ../pars/basic.par
+
+stress: dirs benchmark
+	cd bin; \
+	time ./benchmark -i ../pars/stress_test.par

@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
   // Parse command line arguments.
   CommandParser parser;
   parser.AddString("input", true, "", true);
+  parser.AddBoolean("save");
 
   // Tests
   CommandParser::Error error = parser.ParseArguments(argc, argv);
@@ -62,13 +63,19 @@ int main(int argc, char *argv[]) {
   PrimitiveSolver<IdealGas, DoNothing> ps{&eos};
 
   // Now we can construct and run the benchmark.
+  bool save = parser.GetBoolean("save");
   Benchmark benchmark{n_data, T_data, ux_data, uy_data, uz_data, 
-                      Bx_data, By_data, Bz_data, std::string("Basic")};
+                      Bx_data, By_data, Bz_data, std::string("Basic"), save};
   std::cout << "Running benchmark...\n";
-  benchmark.RunBenchmark(&ps);
-  std::cout << "Saving benchmark...\n";
-  benchmark.SaveBenchmark();
-  std::cout << "Benchmark saved!\n";
+  if (!save) {
+    benchmark.RunBenchmark(&ps, false);
+  }
+  else {
+    benchmark.RunBenchmark(&ps, true);
+    std::cout << "Saving benchmark...\n";
+    benchmark.SaveBenchmark();
+    std::cout << "Benchmark saved!\n";
+  }
 
   return 0;
 }

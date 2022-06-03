@@ -75,13 +75,13 @@ class Benchmark {
     Benchmark(DataRange& range_n, DataRange& range_T,
               DataRange& range_ux, DataRange& range_uy, DataRange& range_uz, 
               DataRange& range_Bx, DataRange& range_By, DataRange& range_Bz,
-              std::string benchmark_name);
+              std::string benchmark_name, bool save);
 
     ~Benchmark();
 
     // Run the benchmark for a given primitive solver.
-    template<typename EOSPolicy, typename ErrorPolicy>
-    void RunBenchmark(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps) {
+    template<typename EOSPolicy, typename ErrorPolicy, class Boolean>
+    void RunBenchmark(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, const Boolean save) {
       // Traverse the grid of values using the mother of all nested loops.
       const NumTools::Root& root = ps->GetRootSolver();
       for (unsigned int ibz = 0; ibz < nBz; ibz++) {
@@ -123,27 +123,29 @@ class Benchmark {
                       ps->ConToPrim(prim, cons, bu, gd, gu);
 
                       // Save the errors from this calculation.
-                      n_errors[idx] = GetError(primold[IDN], prim[IDN]);
-                      T_errors[idx] = GetError(primold[ITM], prim[ITM]);
-                      ux_errors[idx] = GetError(primold[IVX], prim[IVX]);
-                      uy_errors[idx] = GetError(primold[IVY], prim[IVY]);
-                      uz_errors[idx] = GetError(primold[IVZ], prim[IVZ]);
+                      if (save) {
+                        n_errors[idx] = GetError(primold[IDN], prim[IDN]);
+                        T_errors[idx] = GetError(primold[ITM], prim[ITM]);
+                        ux_errors[idx] = GetError(primold[IVX], prim[IVX]);
+                        uy_errors[idx] = GetError(primold[IVY], prim[IVY]);
+                        uz_errors[idx] = GetError(primold[IVZ], prim[IVZ]);
 
-                      // Write the auxiliary quantities
-                      // Calculate the thermal variable.
-                      thermal[idx] = primold[IPR]/(primold[IDN]*ps->GetEOS()->GetBaryonMass());
-                      // To get the magnetization, we first need to find B^2.
-                      // Extract the 3-metric from the full spacetime metric.
-                      Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
-                                                      gd[I22], gd[I23],
-                                                               gd[I33]};
-                      // Square the magnetic field.
-                      Real Bsq = Primitive::SquareVector(bu, g3d);
-                      magnetization[idx] = Bsq/cons[IDN];
+                        // Write the auxiliary quantities
+                        // Calculate the thermal variable.
+                        thermal[idx] = primold[IPR]/(primold[IDN]*ps->GetEOS()->GetBaryonMass());
+                        // To get the magnetization, we first need to find B^2.
+                        // Extract the 3-metric from the full spacetime metric.
+                        Real g3d[NSPMETRIC] = {gd[I11], gd[I12], gd[I13],
+                                                        gd[I22], gd[I23],
+                                                                 gd[I33]};
+                        // Square the magnetic field.
+                        Real Bsq = Primitive::SquareVector(bu, g3d);
+                        magnetization[idx] = Bsq/cons[IDN];
 
 
-                      // Get the number of iterations used by the primitive solver.
-                      iterations[idx] = (Real) root.last_count;
+                        // Get the number of iterations used by the primitive solver.
+                        iterations[idx] = (Real) root.last_count;
+                      }
                     }
                   }
                 }

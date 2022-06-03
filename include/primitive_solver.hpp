@@ -12,6 +12,7 @@
 #include <cmath>
 // FIXME: Debug only!
 #include <iostream>
+#include <algorithm>
 
 #include <numtools_root.hpp>
 
@@ -97,9 +98,9 @@ class PrimitiveSolver {
         // Now we can estimate the velocity.
         //const Real v_max = peos->GetMaxVelocity();
         const Real h_min = peos->GetMinimumEnthalpy()/mb;
-        const Real vsq_max = std::fmin(rsq/(h_min*h_min + rsq), 
+        const Real vsq_max = std::min(rsq/(h_min*h_min + rsq), 
                                       peos->GetMaxVelocity()*peos->GetMaxVelocity());
-        const Real vhatsq = std::fmin(musq*rbarsq, vsq_max);
+        const Real vhatsq = std::min(musq*rbarsq, vsq_max);
 
         // Using the velocity estimate, predict the Lorentz factor.
         //const Real What = 1.0/std::sqrt(1.0 - vhatsq);
@@ -129,7 +130,7 @@ class PrimitiveSolver {
         Real nu_b = eoverD + Phat/D;
         //Real nu_b = (1.0 + ahat)*eoverD;
         //Real nu_b = (1.0 + ahat)*eoverD;
-        Real nuhat = std::fmax(nu_a, nu_b);
+        Real nuhat = std::max(nu_a, nu_b);
 
         // Finally, we can get an estimate for muhat.
         Real muhat = 1.0/(nuhat + mu*rbarsq);

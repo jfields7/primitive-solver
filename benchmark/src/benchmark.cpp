@@ -10,7 +10,7 @@
 Benchmark::Benchmark(DataRange& range_n, DataRange& range_T,
                           DataRange& range_ux, DataRange& range_uy, DataRange& range_uz,
                           DataRange& range_Bx, DataRange& range_By, DataRange& range_Bz,
-                          std::string benchmark_name) {
+                          std::string benchmark_name, bool save=true) {
   // Initialize all the data ranges.
   n = InitializeFromDataRange(range_n);
   T = InitializeFromDataRange(range_T);
@@ -32,7 +32,13 @@ Benchmark::Benchmark(DataRange& range_n, DataRange& range_T,
   nBz = range_Bz.size;
 
   // Initialize the output fields.
-  unsigned int size = nn*nT*nux*nuy*nuz*nBx*nBy*nBz;
+  unsigned int size;
+  if (save) {
+    size = nn*nT*nux*nuy*nuz*nBx*nBy*nBz;
+  }
+  else {
+    size = 1;
+  }
   iterations = new Real[size];
   n_errors = new Real[size];
   T_errors = new Real[size];
