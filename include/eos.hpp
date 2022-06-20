@@ -233,7 +233,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in]     Y   An array of size n_species of the particle fractions.
     //
     //  \return true if the primitives were adjusted, false otherwise.
-    bool ApplyPrimitiveFloor(Real& n, Real Wvu[3], Real& p, Real& T, Real *Y) {
+    inline bool ApplyPrimitiveFloor(Real& n, Real Wvu[3], Real& p, Real& T, Real *Y) {
       bool result = PrimitiveFloor(n, Wvu, p);
       if (result) {
         T = TemperatureFromP(n, p, Y);
@@ -251,7 +251,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in]     Y   An array of size_species of the particle fractions.
     //
     //  \return true if the conserved variables were adjusted, false otherwise.
-    bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
+    inline bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
       return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(Y));
     }
 

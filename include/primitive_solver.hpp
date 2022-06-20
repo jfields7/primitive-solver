@@ -202,9 +202,9 @@ class PrimitiveSolver {
     //  \param[in]     g3d   The 3x3 spatial metric
     //  \param[in]     g3u   The 3x3 inverse spatial metric
     //
-    //  \return an error code
-    Error ConToPrim(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
-                   Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]);
+    //  \return information about the solve
+    SolverResult ConToPrim(Real prim[NPRIM], Real cons[NCONS], Real b[NMAG], 
+                           Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]);
 
     //! \brief Get the conserved variables from the primitive variables.
     //
@@ -259,7 +259,7 @@ class PrimitiveSolver {
 
 // CheckDensityValid {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real& muh, Real D, 
+inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real& muh, Real D, 
       Real bsq, Real rsq, Real rbsq, Real h_min) {
   // There are a few things considered:
   // 1. If D > rho_max, we need to make sure that W isn't too large.
@@ -333,8 +333,10 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mul, Real
 
 // ConToPrim {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real cons[NCONS],
-      Real b[NMAG], Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]) {
+inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], 
+      Real cons[NCONS], Real b[NMAG], Real g3d[NSPMETRIC], Real g3u[NSPMETRIC]) {
+
+  SolverResult solver_result{Error::SUCCESS, 0, false, false, false};
 
   // Extract the undensitized conserved variables.
   Real D = cons[IDN];
@@ -351,9 +353,11 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // Check the conserved variables for consistency and do whatever
   // the EOSPolicy wants us to.
   bool floored = peos->ApplyConservedFloor(D, S_d, tau, Y);
+  solver_result.cons_floor = floored;
   if (floored && peos->IsConservedFlooringFailure()) {
     HandleFailure(prim, cons, b, g3d);
-    return Error::CONS_FLOOR;
+    solver_result.error = Error::CONS_FLOOR;
+    return solver_result;
   }
 
   // Calculate some utility quantities.
@@ -372,25 +376,27 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   if (!std::isfinite(D) || !std::isfinite(rsqr) || !std::isfinite(q) ||
       !std::isfinite(rbsqr) || !std::isfinite(bsqr)) {
     HandleFailure(prim, cons, b, g3d);
-    return Error::NANS_IN_CONS;
+    solver_result.error = Error::NANS_IN_CONS;
+    return solver_result;
   }
   // We have to check the particle fractions separately.
   for (int s = 0; s < n_species; s++) {
     if (!std::isfinite(Y[s])) {
       HandleFailure(prim, cons, b, g3d);
-      return Error::NANS_IN_CONS;
+      solver_result.error = Error::NANS_IN_CONS;
+      return solver_result;
     }
   }
 
-  bool adjust_cons = false;
   // Make sure that the magnetic field is physical.
   Error error = peos->DoMagnetizationResponse(bsqr, b_u);
   if (error == Error::MAG_TOO_BIG) {
     HandleFailure(prim, cons, b, g3d);
-    return Error::MAG_TOO_BIG;
+    solver_result.error = Error::MAG_TOO_BIG;
+    return solver_result;
   }
   else if (error == Error::CONS_ADJUSTED) {
-    adjust_cons = true;
+    solver_result.cons_adjusted = true;
     // We need to recalculate rb if b_u is rescaled.
     rb = Contract(b_u, r_d);
     rbsqr = rb*rb;
@@ -411,7 +417,8 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
     // Scream if the bracketing failed.
     if (!result) {
       HandleFailure(prim, cons, b, g3d);
-      return Error::BRACKETING_FAILED;
+      solver_result.error = Error::BRACKETING_FAILED;
+      return solver_result;
     }
     else {
       // To avoid problems with the case where the root and the upper bound collide,
@@ -427,7 +434,8 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // TODO: This is probably something that should be handled by the ErrorPolicy.
   if (error != Error::SUCCESS) {
     HandleFailure(prim, cons, b, g3d);
-    return error;
+    solver_result.error = error;
+    return solver_result;
   }
 
   
@@ -436,9 +444,13 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // available.
   Real n, P, T, mu;
   bool result = root.FalsePosition(RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
+  // WARNING: the reported number of iterations is not thread-safe and should only be trusted
+  // on single-thread benchmarks.
+  solver_result.iterations = root.iterations;
   if (!result) {
     HandleFailure(prim, cons, b, g3d);
-    return Error::NO_SOLUTION;
+    solver_result.error = Error::NO_SOLUTION;
+    return solver_result;
   }
 
   // Retrieve the primitive variables.
@@ -457,11 +469,13 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   
   // Apply the flooring policy to the primitive variables.
   floored = peos->ApplyPrimitiveFloor(n, Wv_u, P, T, Y);
+  solver_result.prim_floor = floored;
   if (floored && peos->IsPrimitiveFlooringFailure()) {
     HandleFailure(prim, cons, b, g3d);
-    return Error::PRIM_FLOOR;
+    solver_result.error = Error::PRIM_FLOOR;
+    return solver_result;
   }
-  adjust_cons = adjust_cons || floored;
+  solver_result.cons_adjusted = solver_result.cons_adjusted || floored;
 
   prim[IDN] = n*peos->GetBaryonMass();
   prim[IPR] = P;
@@ -476,17 +490,20 @@ Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim[NPRIM], Real 
   // If we floored the primitive variables, we should check
   // if the EOS wants us to adjust the conserved variables back
   // in bounds. If that's the case, then we'll do it.
-  if (adjust_cons && peos->KeepPrimAndConConsistent()) {
+  if (solver_result.cons_adjusted && peos->KeepPrimAndConConsistent()) {
     PrimToCon(prim, cons, b, g3d);
   }
+  else {
+    solver_result.cons_adjusted = false;
+  }
 
-  return Error::SUCCESS;
+  return solver_result;
 }
 // }}}
 
 // PrimToCon {{{
 template<typename EOSPolicy, typename ErrorPolicy>
-Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
+inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
       Real bu[NMAG], Real g3d[NMETRIC]) {
   // Extract the primitive variables
   const Real &rho = prim[IDN]; // rest-mass density

@@ -94,11 +94,11 @@ bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, Real 
   }
 
   ps->PrimToCon(prim, cons, bu, gd);
-  Primitive::Error result = ps->ConToPrim(prim, cons, bu, gd, gu);
+  Primitive::SolverResult result = ps->ConToPrim(prim, cons, bu, gd, gu);
 
-  if(result != Primitive::Error::SUCCESS) {
+  if(result.error != Primitive::Error::SUCCESS) {
     std::cout << "An error occurred during the primitive solve.\n";
-    switch(result) {
+    switch(result.error) {
       case Primitive::Error::RHO_TOO_BIG:
         std::cout << "  Rho is too large.\n";
         break;
