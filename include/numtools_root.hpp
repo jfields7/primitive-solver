@@ -245,7 +245,7 @@ class Root {
         if (x > ub || x < lb) {
           // Revert to bisection if the root is not converging.
           x = 0.5*(ub + lb);
-          f(fx, dfx, x, args...);
+          //f(fx, dfx, x, args...);
         }
         // Correct the bounds.
         if (fx*flb > 0) {
