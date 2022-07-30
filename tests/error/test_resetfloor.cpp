@@ -194,7 +194,7 @@ bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
 }
 
 bool TestConservedFloor(EOS<IdealGas,ResetFloor>* eos, Real D, Real Sd[3], Real tau) {
-  Real tau_floor = eos->GetTauFloor(nullptr);
+  Real tau_floor = eos->GetTauFloor(D, nullptr);
   Real D_floor = eos->GetDensityFloor()*eos->GetBaryonMass();
 
   Real D_new = D;

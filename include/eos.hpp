@@ -252,7 +252,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return true if the conserved variables were adjusted, false otherwise.
     inline bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
-      return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(Y));
+      return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(D, Y));
     }
 
     //! \fn Real GetDensityFloor() const
@@ -278,8 +278,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //         on the current particle composition.
     //
     //  \param[in] Y A n_species-sized array of particle fractions.
-    inline Real GetTauFloor(Real *Y) {
-      return GetEnergy(n_atm, GetTemperatureFromP(n_atm, p_atm, Y), Y) - mb*n_atm;
+    inline Real GetTauFloor(Real D, Real *Y) {
+      return GetEnergy(D/mb, 0.0, Y) - D;
     }
 
     //! \fn void SetDensityFloor(Real floor)
