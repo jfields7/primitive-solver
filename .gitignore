@@ -6,6 +6,7 @@ benchmark/bin
 benchmark/obj
 debugger.nb
 debugger.ipynb
+.vscode
 
 *.obj
 *.swp

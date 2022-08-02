@@ -5,6 +5,8 @@
 //  \brief Defines a class that provides all the common class
 //         member variables needed by an EOSPolicy.
 
+#include <ps_types.hpp>
+
 namespace Primitive {
 
 class EOSPolicyInterface {

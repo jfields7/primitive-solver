@@ -46,7 +46,7 @@ $(LIBRARY) : $(OBJ_FILES)
 	$(LIB) $(LIBRARY) $(OBJ_FILES)
 
 $(OBJ_DIR)%.o : %.cpp
-	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
 
 .PHONY: clean
 clean :
