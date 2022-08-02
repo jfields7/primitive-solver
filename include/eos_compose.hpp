@@ -22,7 +22,7 @@ namespace Primitive {
 class EOSCompOSE : public EOSPolicyInterface {
   public:
     enum TableVariables {
-      ECLOGP  = 0,  //! log (pressure / 1 MeV fm^-3) 
+      ECLOGP  = 0,  //! log (pressure / 1 MeV fm^-3)
       ECENT   = 1,  //! entropy per baryon [kb]
       ECMUB   = 2,  //! baryon chemical potential [MeV]
       ECMUQ   = 3,  //! charge chemical potential [MeV]
@@ -60,7 +60,7 @@ class EOSCompOSE : public EOSPolicyInterface {
     /// Calculate the sound speed.
     Real SoundSpeed(Real n, Real T, Real *Y);
 
-    /// Calculate the energy per baryon (NOT energy per mass!)
+    /// Calculate the specific internal energy per unit mass
     Real SpecificEnergy(Real n, Real T, Real *Y);
 
     /// Get the minimum enthalpy per baryon.
@@ -69,6 +69,27 @@ class EOSCompOSE : public EOSPolicyInterface {
   public:
     /// Reads the table file.
     void ReadTableFromFile(std::string fname);
+
+    /// Get the raw number density
+    Real const * GetRawLogNumberDensity() const {
+      return m_log_nb;
+    }
+    Real const * GetRawYq() const {
+      return m_yq;
+    }
+    /// Get the raw number density
+    Real const * GetRawLogTemperature() const {
+      return m_log_t;
+    }
+    /// Get the raw table data
+    Real const * GetRawTable() const {
+      return m_table;
+    }
+
+    // Indexing used to access the data
+    inline ptrdiff_t index(int iv, int in, int iy, int it) const {
+      return it + m_nt*(iy + m_ny*(in + m_nn*iv));
+    }
 
     /// Check if the EOS has been initialized properly.
     inline bool IsInitialized() const {
@@ -82,9 +103,9 @@ class EOSCompOSE : public EOSPolicyInterface {
   private:
     /// Low level function, not intended for outside use
     Real temperature_from_var(int vi, Real var, Real n, Real Yq) const;
-    /// Low level evaluation function, not intended for outside use 
+    /// Low level evaluation function, not intended for outside use
     Real eval_at_nty(int vi, Real n, Real T, Real Yq) const;
-    /// Low level evaluation function, not intended for outside use 
+    /// Low level evaluation function, not intended for outside use
     Real eval_at_lnty(int vi, Real ln, Real lT, Real Yq) const;
 
     /// Evaluate interpolation weight for density
@@ -94,16 +115,11 @@ class EOSCompOSE : public EOSPolicyInterface {
     /// Evaluate interpolation weight for temperature
     void weight_idx_lt(Real *w0, Real *w1, int *it, Real log_t) const;
 
-    // Indexing used to access the data
-    inline ptrdiff_t index(int iv, int in, int iy, int it) const {
-      return it + m_nt*(iy + m_ny*(in + m_nn*iv));
-    }
-
   private:
     // Inverse of table spacing
     Real m_id_log_nb, m_id_log_t, m_id_yq;
     // Table size
-    int m_nn, m_nt, m_ny; 
+    int m_nn, m_nt, m_ny;
     // Minimum enthalpy per baryon
     Real m_min_h;
 

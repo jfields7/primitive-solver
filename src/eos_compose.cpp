@@ -25,7 +25,7 @@ using namespace std;
     throw runtime_error(ss.str().c_str()); \
   }
 
-EOSCompOSE::EOSCompOSE(): 
+EOSCompOSE::EOSCompOSE():
   m_id_log_nb(numeric_limits<Real>::quiet_NaN()),
   m_id_log_t(numeric_limits<Real>::quiet_NaN()),
   m_id_yq(numeric_limits<Real>::quiet_NaN()),
@@ -35,7 +35,7 @@ EOSCompOSE::EOSCompOSE():
   m_log_t(nullptr),
   m_yq(nullptr),
   m_table(nullptr),
-  m_initialized(false) { 
+  m_initialized(false) {
   n_species = 0;
 }
 
@@ -49,10 +49,12 @@ EOSCompOSE::~EOSCompOSE() {
 }
 
 Real EOSCompOSE::TemperatureFromE(Real n, Real e, Real *Y) {
+  assert (m_initialized);
   return temperature_from_var(ECLOGE, log(e), n, Y[0]);
 }
 
 Real EOSCompOSE::TemperatureFromP(Real n, Real p, Real *Y) {
+  assert (m_initialized);
   return temperature_from_var(ECLOGP, log(p), n, Y[0]);
 }
 
@@ -79,11 +81,12 @@ Real EOSCompOSE::Enthalpy(Real n, Real T, Real *Y) {
 }
 
 Real EOSCompOSE::SoundSpeed(Real n, Real T, Real *Y) {
+  assert (m_initialized);
   return eval_at_nty(ECCS, n, T, Y[0]);
 }
 
 Real EOSCompOSE::SpecificEnergy(Real n, Real T, Real *Y) {
-  return Energy(n, T, Y)/n;
+  return Energy(n, T, Y)/(mb*n) - 1;
 }
 
 Real EOSCompOSE::MinimumEnthalpy() {
@@ -106,7 +109,7 @@ void EOSCompOSE::ReadTableFromFile(std::string fname) {
     MYH5CHECK(ierr);
   ierr = H5LTget_dataset_info(file_id, "t", &st, NULL, NULL);
     MYH5CHECK(ierr);
-  ierr = H5LTget_dataset_info(file_id, "yp", &syq, NULL, NULL);
+  ierr = H5LTget_dataset_info(file_id, "yq", &syq, NULL, NULL);
     MYH5CHECK(ierr);
   m_nn = snb;
   m_nt = st;
@@ -209,7 +212,7 @@ void EOSCompOSE::ReadTableFromFile(std::string fname) {
     m_table[index(ECCS, in, iy, it)] = sqrt(scratch[index(0, in, iy, it)]);
   }}}
 
-  // Cleanup 
+  // Cleanup
   // -------------------------------------------------------------------------
   delete[] scratch;
   H5Fclose(file_id);
@@ -235,31 +238,46 @@ Real EOSCompOSE::temperature_from_var(int iv, Real var, Real n, Real Yq) const {
   weight_idx_ln(&wn0, &wn1, &in, log(n));
   weight_idx_yq(&wy0, &wy1, &iy, Yq);
 
-  auto f = [=](Real log_T){
-    int it;
-    Real wt0, wt1;
-    weight_idx_lt(&wt0, &wt1, &it, log_T);
-    
+  auto f = [=](int it){
     Real var_pt =
-      wn0 * wy0 * wt0 * m_table[index(iv, in+0, iy+0, it+0)] +
-      wn0 * wy0 * wt1 * m_table[index(iv, in+0, iy+0, it+1)] +
-      wn0 * wy1 * wt0 * m_table[index(iv, in+0, iy+1, it+0)] +
-      wn0 * wy1 * wt1 * m_table[index(iv, in+0, iy+1, it+1)] +
-      wn1 * wy0 * wt0 * m_table[index(iv, in+1, iy+0, it+0)] +
-      wn1 * wy0 * wt1 * m_table[index(iv, in+1, iy+0, it+1)] +
-      wn1 * wy1 * wt0 * m_table[index(iv, in+1, iy+1, it+0)] +
-      wn1 * wy1 * wt1 * m_table[index(iv, in+1, iy+1, it+1)];
-    
+      wn0 * wy0 * m_table[index(iv, in+0, iy+0, it)] +
+      wn0 * wy1 * m_table[index(iv, in+0, iy+1, it)] +
+      wn1 * wy0 * m_table[index(iv, in+1, iy+0, it)] +
+      wn1 * wy1 * m_table[index(iv, in+1, iy+1, it)];
+
     return var - var_pt;
   };
 
-  Real log_T;
-  NumTools::Root root;
-  bool success = root.FalsePosition(f, m_log_t[0], m_log_t[m_nt-1], log_T);
-  // TODO: a better way to deal with error here
-  assert (success);
+  int ilo = 0;
+  int ihi = m_nt-1;
+  Real flo = f(ilo);
+  Real fhi = f(ihi);
+  assert(flo*fhi <= 0);
+  while (ihi - ilo > 1) {
+    int ip = ilo + (ihi - ilo)/2;
+    Real fp = f(ip);
+    if (fp*flo <= 0) {
+      ihi = ip;
+      fhi = fp;
+    }
+    else {
+      ilo = ip;
+      flo = fp;
+    }
+  }
+  assert(ihi - ilo == 1);
+  Real lthi = m_log_t[ihi];
+  Real ltlo = m_log_t[ilo];
 
-  return exp(log_T);
+  if (flo == 0) {
+    return exp(ltlo);
+  }
+  if (fhi == 0) {
+    return exp(lthi);
+  }
+
+  Real lt = m_log_t[ilo] - flo*(lthi - ltlo)/(fhi - flo);
+  return exp(lt);
 }
 
 Real EOSCompOSE::eval_at_nty(int vi, Real n, Real T, Real Yq) const {
