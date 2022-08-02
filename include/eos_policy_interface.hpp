@@ -5,6 +5,8 @@
 //  \brief Defines a class that provides all the common class
 //         member variables needed by an EOSPolicy.
 
+#include <ps_types.hpp>
+
 namespace Primitive {
 
 class EOSPolicyInterface {
@@ -24,6 +26,10 @@ class EOSPolicyInterface {
     Real max_T;
     /// minimum temperature
     Real min_T;
+    /// maximum Y
+    Real min_Y[MAX_SPECIES];
+    /// minimum Y
+    Real max_Y[MAX_SPECIES];
 };
 
 } // namespace
