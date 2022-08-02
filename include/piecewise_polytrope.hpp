@@ -66,12 +66,6 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     /// Calculate the energy per baryon (NOT energy per mass!)
     Real SpecificEnergy(Real n, Real T, Real *Y);
 
-    /// Calculate the maximum allowed energy at a given density.
-    Real MaximumEnergyAtDensity(Real n);
-
-    /// Calculate the minimum allowed energy at a given density.
-    Real MinimumEnergyAtDensity(Real n);
-
   public:
     /// Load the EOS parameters from a file.
     bool ReadParametersFromFile(std::string fname);
