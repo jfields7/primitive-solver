@@ -28,7 +28,7 @@ bool TestSoundSpeed(EOS<IdealGas, DoNothing>* eos, Real n, Real *Y, Real tol) {
   Real gammam1 = gamma - 1.0;
   
   for (Real T = 0; T < 1000.0; T += 50.0) {
-    Real eps = eos->GetSpecificEnergy(n, T, Y);
+    Real eps = eos->GetSpecificInternalEnergy(n, T, Y);
     Real expected = sqrt(gammam1*eps/(eps + 1.0/gamma));
     Real cs = eos->GetSoundSpeed(n, T, Y);
     Real err = GetError(expected, cs);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
   // Check that the specific energy is consistent with a direct calculation
   // based on the energy density.
-  tester.RunTest(&TestSpecificEnergy<IdealGas, DoNothing>, "Specific Energy Test",
+  tester.RunTest(&TestSpecificInternalEnergy<IdealGas, DoNothing>, "Specific Energy Test",
                  &eos, n, T, Y, tol);
 
   // A few quantities in the ideal gas depend on the baryon mass. We need to make sure
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
                  &eos, n, T, Y, tol);
 
   // Specific Energy
-  tester.RunTest(&TestSpecificEnergy<IdealGas, DoNothing>,
+  tester.RunTest(&TestSpecificInternalEnergy<IdealGas, DoNothing>,
                  "Baryon Mass Consistency Test -- Specific Energy",
                  &eos, n, T, Y, tol);
 

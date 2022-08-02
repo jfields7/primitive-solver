@@ -63,8 +63,8 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     /// Calculate the sound speed for an ideal gas.
     Real SoundSpeed(Real n, Real T, Real *Y);
 
-    /// Calculate the energy per baryon (NOT energy per mass!)
-    Real SpecificEnergy(Real n, Real T, Real *Y);
+    /// Calculate the internal energy per mass.
+    Real SpecificInternalEnergy(Real n, Real T, Real *Y);
 
   public:
     /// Load the EOS parameters from a file.

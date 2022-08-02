@@ -30,7 +30,7 @@ Real GetPressure(Real n, Real T, Real *Y); // fluid pressure
 Real GetEntropy(Real n, Real T, Real *Y); // entropy per baryon
 Real GetEnthalpy(Real n, Real T, Real *Y); // enthalpy per baryon
 Real GetSoundSpeed(Real n, Real T, Real *Y); // speed of sound in the fluid
-Real GetSpecificEnergy(Real n, Real T, Real *Y); // specific energy
+Real GetSpecificInternalEnergy(Real n, Real T, Real *Y); // specific energy
 ```
 
 **Note that the specific entropy and enthalpy returned by `EOS` are per baryon, not per mass.** 
@@ -94,7 +94,7 @@ Real Pressure(Real n, Real T, Real *Y);          // Pressure from temperature
 Real Entropy(Real n, Real T, Real *Y);           // Entropy per baryon  (NOT per mass!)
 Real Enthalpy(Real n, Real T, Real *Y);          // Enthalpy per baryon (NOT per mass!)
 Real SoundSpeed(Real n, Real T, Real *Y);        // Sound speed from temperature
-Real SpecificEnergy(Real n, Real T, Real *Y);    // Specific energy from temperature
+Real SpecificInternalEnergy(Real n, Real T, Real *Y);    // Specific energy from temperature
 Real MinimumEnthalpy();                          // Global minimum enthalpy per baryon (NOT per mass!)
 ```
 It also expects the following member (protected) variables:
@@ -196,7 +196,7 @@ bool TestTemperatureFromPressure(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
 bool TestEnthalpy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
   Real n, Real T, Real *Y, const Real tol);
 
-bool TestSpecificEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
+bool TestSpecificInternalEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
   Real n, Real T, Real *Y, const Real tol);
 
 bool TestConToPrim(Primitive::PrimitiveSolver<EOSPolicy, ErrorPolicy>* ps, 

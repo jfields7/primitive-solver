@@ -15,7 +15,7 @@
 //    Real Enthalpy(Real n, Real T, Real *Y)
 //    Real MinimumEnthalpy()
 //    Real SoundSpeed(Real n, Real T, Real *Y)
-//    Real SpecificEnergy(Real n, Real T, Real *Y)
+//    Real SpecificInternalEnergy(Real n, Real T, Real *Y)
 //  And it must also have the following protected member variables
 //  (available via EOSPolicyInterface):
 //    const int n_species
@@ -59,7 +59,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::Entropy;
     using EOSPolicy::Enthalpy;
     using EOSPolicy::SoundSpeed;
-    using EOSPolicy::SpecificEnergy;
+    using EOSPolicy::SpecificInternalEnergy;
     using EOSPolicy::MinimumEnthalpy;
 
     // EOSPolicy member variables
@@ -199,7 +199,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return SoundSpeed(n, T, Y);
     }
 
-    //! \fn Real GetSpecificEnergy(Real n, Real T, Real *Y)
+    //! \fn Real GetSpecificInternalEnergy(Real n, Real T, Real *Y)
     //  \brief Get the energy per mass from the number density, temperature,
     //         and particle fractions.
     //
@@ -207,8 +207,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] T  The temperature
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The specific energy for the EOS.
-    inline Real GetSpecificEnergy(Real n, Real T, Real *Y) {
-      return SpecificEnergy(n, T, Y);
+    inline Real GetSpecificInternalEnergy(Real n, Real T, Real *Y) {
+      return SpecificInternalEnergy(n, T, Y);
     }
 
     //! \fn int Getn_species() const

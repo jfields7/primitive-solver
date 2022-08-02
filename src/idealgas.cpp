@@ -53,7 +53,7 @@ Real IdealGas::SoundSpeed(Real n, Real T, Real *Y) {
   return std::sqrt(gamma*gammam1*T/(gammam1*mb + gamma*T));
 }
 
-Real IdealGas::SpecificEnergy(Real n, Real T, Real *Y) {
+Real IdealGas::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   return T/(mb*gammam1);
 }
 

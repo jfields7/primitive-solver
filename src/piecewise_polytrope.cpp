@@ -127,7 +127,7 @@ Real PiecewisePolytrope::SoundSpeed(Real n, Real T, Real *Y) {
   return std::sqrt((csq_cold_w + csq_th_w)/(h_th + h_cold));
 }
 
-Real PiecewisePolytrope::SpecificEnergy(Real n, Real T, Real *Y) {
+Real PiecewisePolytrope::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
   Real eps_cold = GetColdEnergy(n, p)/(n*mb) - 1.0;
   return eps_cold + T/(mb*(gamma_thermal - 1.0));
