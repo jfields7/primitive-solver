@@ -36,7 +36,7 @@ EOSCompOSE::EOSCompOSE():
   m_yq(nullptr),
   m_table(nullptr),
   m_initialized(false) {
-  n_species = 0;
+  n_species = 1;
 }
 
 EOSCompOSE::~EOSCompOSE() {
@@ -145,6 +145,8 @@ void EOSCompOSE::ReadTableFromFile(std::string fname) {
 
   ierr = H5LTread_dataset_double(file_id, "yq", scratch);
     MYH5CHECK(ierr);
+  min_Y[0] = scratch[0];
+  max_Y[0] = scratch[m_ny-1];
   for (int iy = 0; iy < m_ny; ++iy) {
     m_yq[iy] = scratch[iy];
   }

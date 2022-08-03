@@ -285,7 +285,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \param[in] Y A n_species-sized array of particle fractions.
     inline Real GetTauFloor(Real D, Real *Y) {
-      return GetEnergy(D/mb, 0.0, Y) - D;
+      return GetEnergy(D/mb, min_T, Y) - D;
     }
 
     //! \fn void SetDensityFloor(Real floor)
