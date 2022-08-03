@@ -17,6 +17,7 @@ struct DataRange {
   unsigned int size;
   Real min;
   Real max;
+  bool log;
 };
 
 class Benchmark {

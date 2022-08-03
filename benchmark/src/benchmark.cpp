@@ -99,6 +99,12 @@ Real* Benchmark::InitializeFromDataRange(DataRange& range) {
     data[i] = range.min + i*dx;
   }
 
+  if (range.log) {
+    for (unsigned int i = 0; i < range.size; i++) {
+      data[i] = std::pow(10.0, data[i]);
+    }
+  }
+
   return data;
 }
 

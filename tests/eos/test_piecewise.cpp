@@ -175,7 +175,7 @@ void RunTestSuite(UnitTests& tester, EOS<PiecewisePolytrope, DoNothing>* peos,
   ss.str(std::string());
 
   ss << "Specific Energy Test - Polytrope " << polytrope;
-  tester.RunTest(&TestSpecificEnergy<PiecewisePolytrope, DoNothing>,
+  tester.RunTest(&TestSpecificInternalEnergy<PiecewisePolytrope, DoNothing>,
                  ss.str(),
                  peos, n, T, Y, tol);
   ss.str(std::string());

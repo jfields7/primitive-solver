@@ -25,6 +25,7 @@ class DoNothing : public ErrorPolicyInterface {
     Error MagnetizationResponse(Real& bsq, Real b_u[3]) {return Error::SUCCESS;}
     void DensityLimits(Real& n, Real n_min, Real n_max) {return;}
     void TemperatureLimits(Real& T, Real T_min, Real T_max) {return;}
+    void SpeciesLimits(Real *Y, Real *Y_min, Real *Y_max, int n_species) {return;}
     bool FailureResponse(Real prim[NPRIM]) {return false;}
 };
 

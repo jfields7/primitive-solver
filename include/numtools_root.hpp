@@ -73,7 +73,7 @@ class Root {
         // Calculate f at the prospective root.
         ftest = f(x,args...);
         if (std::fabs((x-xold)/x) <= tol) {
-          break;
+          return true;
         }
         // Check the sign of f. If f is on the same side as the lower bound, then we adjust
         // the lower bound. Similarly, if f is on the same side as the upper bound, we 

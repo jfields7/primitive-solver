@@ -15,7 +15,7 @@
 //    Real Enthalpy(Real n, Real T, Real *Y)
 //    Real MinimumEnthalpy()
 //    Real SoundSpeed(Real n, Real T, Real *Y)
-//    Real SpecificEnergy(Real n, Real T, Real *Y)
+//    Real SpecificInternalEnergy(Real n, Real T, Real *Y)
 //  And it must also have the following protected member variables
 //  (available via EOSPolicyInterface):
 //    const int n_species
@@ -41,6 +41,7 @@
 //    bool adjust_conserved
 
 #include <limits>
+#include <cassert>
 
 #include <ps_types.hpp>
 
@@ -59,7 +60,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::Entropy;
     using EOSPolicy::Enthalpy;
     using EOSPolicy::SoundSpeed;
-    using EOSPolicy::SpecificEnergy;
+    using EOSPolicy::SpecificInternalEnergy;
     using EOSPolicy::MinimumEnthalpy;
 
     // EOSPolicy member variables
@@ -75,6 +76,10 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::max_T;
     // Minimum temperature
     using EOSPolicy::min_T;
+    // Maximum Y
+    using EOSPolicy::max_Y;
+    // Minimum Y
+    using EOSPolicy::min_Y;
 
     // ErrorPolicy member functions
     using ErrorPolicy::PrimitiveFloor;
@@ -82,6 +87,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::MagnetizationResponse;
     using ErrorPolicy::DensityLimits;
     using ErrorPolicy::TemperatureLimits;
+    using ErrorPolicy::SpeciesLimits;
     using ErrorPolicy::FailureResponse;
 
     // ErrorPolicy member variables
@@ -199,7 +205,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return SoundSpeed(n, T, Y);
     }
 
-    //! \fn Real GetSpecificEnergy(Real n, Real T, Real *Y)
+    //! \fn Real GetSpecificInternalEnergy(Real n, Real T, Real *Y)
     //  \brief Get the energy per mass from the number density, temperature,
     //         and particle fractions.
     //
@@ -207,8 +213,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] T  The temperature
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The specific energy for the EOS.
-    inline Real GetSpecificEnergy(Real n, Real T, Real *Y) {
-      return SpecificEnergy(n, T, Y);
+    inline Real GetSpecificInternalEnergy(Real n, Real T, Real *Y) {
+      return SpecificInternalEnergy(n, T, Y);
     }
 
     //! \fn int Getn_species() const
@@ -252,7 +258,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return true if the conserved variables were adjusted, false otherwise.
     inline bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
-      return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(Y));
+      return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(D, Y));
     }
 
     //! \fn Real GetDensityFloor() const
@@ -278,8 +284,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //         on the current particle composition.
     //
     //  \param[in] Y A n_species-sized array of particle fractions.
-    inline Real GetTauFloor(Real *Y) {
-      return GetEnergy(n_atm, GetTemperatureFromP(n_atm, p_atm, Y), Y) - mb*n_atm;
+    inline Real GetTauFloor(Real D, Real *Y) {
+      return GetEnergy(D/mb, 0.0, Y) - D;
     }
 
     //! \fn void SetDensityFloor(Real floor)
@@ -337,6 +343,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return min_T;
     }
 
+    //! \brief Get the minimum fraction permitted by the EOS.
+    inline Real GetMinimumSpeciesFraction(int i) const {
+      return min_Y[i];
+    }
+
+    //! \brief Get the maximum fraction permitted by the EOS.
+    inline Real GetMaximumSpeciesFraction(int i) const {
+      return max_Y[i];
+    }
+
     //! \fn const bool IsConservedFlooringFailure() const
     //  \brief Find out if the EOSPolicy fails flooring the conserved variables.
     // 
@@ -387,6 +403,11 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //! \brief Limit the temperature to a physical range
     inline void ApplyTemperatureLimits(Real& T) {
       TemperatureLimits(T, min_T, max_T);
+    }
+
+    //! \brief Limit Y to a specified range
+    inline void ApplySpeciesLimits(Real *Y) {
+      SpeciesLimits(Y, min_Y, max_Y, n_species);
     }
 
     //! \brief Respond to a failed solve.

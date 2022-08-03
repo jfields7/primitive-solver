@@ -61,8 +61,9 @@ bool TestEnthalpy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, R
 
 /// Check that the specific energy is consistent with the energy density.
 template<typename EOSPolicy, typename ErrorPolicy>
-bool TestSpecificEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, Real *Y, const Real tol) {
-  Real eps = eos->GetSpecificEnergy(n, T, Y);
+bool TestSpecificInternalEnergy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos,
+                                Real n, Real T, Real *Y, const Real tol) {
+  Real eps = eos->GetSpecificInternalEnergy(n, T, Y);
   Real e = eos->GetEnergy(n, T, Y);
   Real mb = eos->GetBaryonMass();
 

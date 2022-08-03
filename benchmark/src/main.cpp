@@ -16,6 +16,12 @@ void ReadDataRange(ParamReader& params, DataRange& range, std::string section) {
   range.size = (unsigned int) params.readAsInt(section, "size");
   range.min = (Real) params.readAsDouble(section, "min");
   range.max = (Real) params.readAsDouble(section, "max");
+  if (params.hasParameter(section, "log")) {
+    range.log = (bool) params.readAsInt(section, "log");
+  }
+  else {
+    range.log = false;
+  }
 }
 
 int main(int argc, char *argv[]) {

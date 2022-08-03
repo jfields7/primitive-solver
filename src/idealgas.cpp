@@ -19,6 +19,10 @@ IdealGas::IdealGas() {
   min_T = 0.0;
   max_T = std::numeric_limits<Real>::max();
   n_species = 0;
+  for (int i = 0; i < MAX_SPECIES; i++) {
+    min_Y[i] = 0.0;
+    max_Y[i] = 1.0;
+  }
 }
 
 Real IdealGas::TemperatureFromE(Real n, Real e, Real *Y) {
@@ -53,7 +57,7 @@ Real IdealGas::SoundSpeed(Real n, Real T, Real *Y) {
   return std::sqrt(gamma*gammam1*T/(gammam1*mb + gamma*T));
 }
 
-Real IdealGas::SpecificEnergy(Real n, Real T, Real *Y) {
+Real IdealGas::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   return T/(mb*gammam1);
 }
 

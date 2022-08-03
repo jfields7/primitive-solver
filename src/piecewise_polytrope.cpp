@@ -16,6 +16,10 @@ PiecewisePolytrope::PiecewisePolytrope() {
   initialized = false;
   n_species = 0;
   gamma_thermal = 5.0/3.0;
+  for (int i = 0; i < MAX_SPECIES; i++) {
+    min_Y[i] = 0.0;
+    max_Y[i] = 1.0;
+  }
 }
 
 /// Destructor
@@ -127,7 +131,7 @@ Real PiecewisePolytrope::SoundSpeed(Real n, Real T, Real *Y) {
   return std::sqrt((csq_cold_w + csq_th_w)/(h_th + h_cold));
 }
 
-Real PiecewisePolytrope::SpecificEnergy(Real n, Real T, Real *Y) {
+Real PiecewisePolytrope::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   int p = FindPiece(n);
   Real eps_cold = GetColdEnergy(n, p)/(n*mb) - 1.0;
   return eps_cold + T/(mb*(gamma_thermal - 1.0));

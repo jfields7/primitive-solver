@@ -150,6 +150,39 @@ bool TestTemperatureLimits(EOS<IdealGas, ResetFloor>* eos, Real n, Real T) {
   return true;
 }
 
+bool TestSpeciesLimits(EOS<IdealGas, ResetFloor>* eos, Real *Y) {
+  Real Y_adjusted[MAX_SPECIES] = {0.0};
+  int n_species = eos->GetNSpecies();
+  for (int i = 0; i < n_species; i++) {
+    Y_adjusted[i] = Y[i];
+  }
+  eos->ApplySpeciesLimits(Y_adjusted);
+  for (int i = 0; i < n_species; i++) {
+    Real min_Y = eos->GetMinimumSpeciesFraction(i);
+    Real max_Y = eos->GetMaximumSpeciesFraction(i);
+    // Check that the bounds are correct.
+    if (Y[i] < min_Y && Y_adjusted[i] != min_Y) {
+      std::cout << "  Small species fraction was not rescaled properly.\n";
+      std::cout << "  Expected: " << min_Y << "\n";
+      std::cout << "  Actual: " << Y_adjusted[i] << "\n";
+      return false;
+    }
+    else if (Y[i] > max_Y && Y_adjusted[i] != max_Y) {
+      std::cout << "  Large species fraction was not rescaled properly.\n";
+      std::cout << "  Expected: " << max_Y << "\n";
+      std::cout << "  Actual: " << Y_adjusted[i] << "\n";
+      return false;
+    }
+    else if (Y[i] >= max_Y && Y[i] <= min_Y && Y[i] != Y_adjusted[i]) {
+      std::cout << "  Valid species fraction unexpectedly rescaled.\n";
+      std::cout << "  Expected: " << Y[i] << "\n";
+      std::cout << "  Actual: " << Y_adjusted[i] << "\n";
+      return false;
+    }
+  }
+  return true;
+}
+
 bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
   Real prim[NPRIM];
   bool result = eos->DoFailureResponse(prim);
@@ -194,7 +227,7 @@ bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
 }
 
 bool TestConservedFloor(EOS<IdealGas,ResetFloor>* eos, Real D, Real Sd[3], Real tau) {
-  Real tau_floor = eos->GetTauFloor(nullptr);
+  Real tau_floor = eos->GetTauFloor(D, nullptr);
   Real D_floor = eos->GetDensityFloor()*eos->GetBaryonMass();
 
   Real D_new = D;
@@ -324,6 +357,18 @@ int main(int argc, char *argv[]) {
   // Negative temperature 
   T = -1.0;
   tester.RunTest(&TestTemperatureLimits, "Negative Temperature Test", &eos, n, T);
+
+  // Make sure that species are rescaled properly.
+  eos.SetNSpecies(3);
+  Real Y[MAX_SPECIES] = {0.0};
+  Y[0] = -0.5;
+  Y[1] = 0.;
+  Y[2] = 0.;
+  // Too small species test
+  tester.RunTest(&TestSpeciesLimits, "Small Species Test", &eos, Y);
+  // Too large species test
+  Y[0] = 1.5;
+  tester.RunTest(&TestSpeciesLimits, "Large Species Test", &eos, Y);
 
   // Make sure the primitive variables are reset to floor after failure.
   tester.RunTest(&TestFailureResponse, "Failure Response Test", &eos);

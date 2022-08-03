@@ -43,8 +43,8 @@ class IdealGas : public EOSPolicyInterface {
     /// Calculate the sound speed for an ideal gas.
     Real SoundSpeed(Real n, Real T, Real *Y);
 
-    /// Calculate the energy per baryon (NOT energy per mass!)
-    Real SpecificEnergy(Real n, Real T, Real *Y);
+    /// Calculate the internal energy per mass
+    Real SpecificInternalEnergy(Real n, Real T, Real *Y);
 
   public:
     /// Set the adiabatic index for the ideal gas. 
