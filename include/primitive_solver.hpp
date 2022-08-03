@@ -349,6 +349,8 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   for (int s = 0; s < n_species; s++) {
     Y[s] = cons[IYD + s]/cons[IDN];
   }
+  // Apply limits to Y to ensure a physical state
+  peos->ApplySpeciesLimits(Y);
 
   // Check the conserved variables for consistency and do whatever
   // the EOSPolicy wants us to.
