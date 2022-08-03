@@ -30,6 +30,9 @@ $(OBJ_DIR):
 $(OBJ_DIR)%.o : %.cpp
 	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
 
+eos_eoscompose : $(OBJ_FILES)
+	$(call make_test,eos,test_eoscompose)
+
 eos_idealgas : $(OBJ_FILES)
 	$(call make_test,eos,test_idealgas)
 
@@ -48,7 +51,7 @@ primitive_piecewise : $(OBJ_FILE)
 unit_systems : $(OBJ_FILE)
 	$(call make_test,units,test_units)
 
-tests: dirs eos_idealgas eos_piecewise error_resetfloor primitive_idealgas primitive_piecewise unit_systems
+tests: dirs  eos_eoscompose eos_idealgas eos_piecewise error_resetfloor primitive_idealgas primitive_piecewise unit_systems
 
 clean:
 	rm -rf $(OBJ_DIR)*
@@ -56,9 +59,10 @@ clean:
 
 run: dirs tests
 	cd bin; \
+	./test_eoscompose; \
 	./test_idealgas; \
-  ./test_piecewise; \
+	./test_piecewise; \
 	./test_resetfloor; \
-  ./test_primitive_idealgas; \
-  ./test_primitive_piecewise; \
-  ./test_units
+	./test_primitive_idealgas; \
+	./test_primitive_piecewise; \
+	./test_units

@@ -1,12 +1,11 @@
-CXX    := g++
-LIB    := ar cr
-RFLAGS := -std=c++11 -O3 -Wall -Wpedantic
-#RFLAGS := -std=c++11 -O3
-#RFlags := -std=c++11 -Og
-FLAGS  := 
-LDFLAGS :=
-#LDLIBS := -lNumTools
-LDLIBS := 
+include config.mk
+
+CXX      := g++
+CPPFLAGS += $(HDF5_INCLUDE)
+LIB      := ar cr
+RFLAGS   := -std=c++11 -O0 -g -Wall -Wpedantic
+FLAGS    := 
+LDFLAGS  += $(HDF5_LIBS)
 
 INCLUDE = -I/usr/local/include
 LIBS    = -L/usr/local/lib
@@ -46,7 +45,7 @@ $(LIBRARY) : $(OBJ_FILES)
 	$(LIB) $(LIBRARY) $(OBJ_FILES)
 
 $(OBJ_DIR)%.o : %.cpp
-	$(CXX) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(RFLAGS) $(FLAGS) $(INCLUDE) -c $< -o $@
 
 .PHONY: clean
 clean :
