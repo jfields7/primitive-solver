@@ -87,6 +87,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::MagnetizationResponse;
     using ErrorPolicy::DensityLimits;
     using ErrorPolicy::TemperatureLimits;
+    using ErrorPolicy::SpeciesLimits;
     using ErrorPolicy::FailureResponse;
 
     // ErrorPolicy member variables
@@ -406,56 +407,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
 
     //! \brief Limit Y to a specified range
     inline void ApplySpeciesLimits(Real *Y) {
-      // Restrict all Y_i to the range [min_Y_i, max_Y_i].
-      bool can_rescale[MAX_SPECIES] = {true};
-      auto apply_limits = [&]() {
-        for (int i = 0; i < n_species; i++) {
-          if (Y[i] <= min_Y[i]) {
-            Y[i] = min_Y[i];
-            can_rescale[i] = false;
-          }
-          else if (Y[i] > max_Y[i]) {
-            Y[i] = max_Y[i];
-          }
-        }
-      };
-      apply_limits();
-      // Make sure that the sum does not exceed 1.
-      // If it does, rescale.
-      Real sum = 0.0;
-      for (int i = 0; i < n_species; i++) {
-        sum += Y[i];
-      }
-      while (sum > 1.0) {
-        Real max_others = 1.0;
-        // Subtract off unscaleable parts.
-        for (int i = 0; i < n_species; i++) {
-          if (!can_rescale[i]) {
-            max_others -= min_Y[i];
-            sum -= min_Y[i];
-          }
-        }
-        // Rescale the scaleable parts.
-        Real factor = max_others/sum;
-        bool rescaled = false;
-        for (int i = 0; i < n_species; i++) {
-          if (can_rescale[i]) {
-            Y[i] *= factor;
-            rescaled = true;
-          }
-        }
-        // If we failed to rescale, it means there's a problem with
-        // the limits.
-        assert(rescaled && 
-               "Rescaling particle fractions failed; this probably means that sum(min_Y) exceeds 1.");
-        apply_limits();
-        sum = 0.0;
-        for (int i = 0; i < n_species; i++) {
-          sum += Y[i];
-        }
-      }
-      // At this point, if the rescaled state is not valid, it means that
-      // sum_i(Y_min[i]) > 1. We'll assume that's not the case.
+      SpeciesLimits(Y, min_Y, max_Y, n_species);
     }
 
     //! \brief Respond to a failed solve.

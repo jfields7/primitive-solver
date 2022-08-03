@@ -36,6 +36,9 @@ class ResetFloor : public ErrorPolicyInterface {
     /// Policy for resetting energy
     void TemperatureLimits(Real& T, Real T_min, Real T_max);
 
+    /// Policy for resetting species fractions
+    void SpeciesLimits(Real* Y, Real* Y_min, Real* Y_max, int n_species);
+
     /// Policy for dealing with failed points
     bool FailureResponse(Real prim[NPRIM]);
 

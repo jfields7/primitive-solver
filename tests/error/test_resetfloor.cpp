@@ -156,22 +156,7 @@ bool TestSpeciesLimits(EOS<IdealGas, ResetFloor>* eos, Real *Y) {
   for (int i = 0; i < n_species; i++) {
     Y_adjusted[i] = Y[i];
   }
-  bool valid = true;
-  Real old_sum = 0.0;
-  // Check if the original state is valid.
-  for (int i = 0; i < n_species; i++) {
-    Real min_Y = eos->GetMinimumSpeciesFraction(i);
-    Real max_Y = eos->GetMaximumSpeciesFraction(i);
-    if (Y[i] < min_Y || Y[i] > max_Y) {
-      valid = false;
-    }
-    old_sum += Y[i];
-  }
-  if (old_sum > 1.0 || old_sum < 0.0) {
-    valid = false;
-  }
   eos->ApplySpeciesLimits(Y_adjusted);
-  Real sum = 0.;
   for (int i = 0; i < n_species; i++) {
     Real min_Y = eos->GetMinimumSpeciesFraction(i);
     Real max_Y = eos->GetMaximumSpeciesFraction(i);
@@ -188,17 +173,12 @@ bool TestSpeciesLimits(EOS<IdealGas, ResetFloor>* eos, Real *Y) {
       std::cout << "  Actual: " << Y_adjusted[i] << "\n";
       return false;
     }
-    else if (Y[i] >= max_Y && Y[i] <= min_Y && Y[i] != Y_adjusted[i] && valid) {
+    else if (Y[i] >= max_Y && Y[i] <= min_Y && Y[i] != Y_adjusted[i]) {
       std::cout << "  Valid species fraction unexpectedly rescaled.\n";
       std::cout << "  Expected: " << Y[i] << "\n";
       std::cout << "  Actual: " << Y_adjusted[i] << "\n";
       return false;
     }
-    sum += Y_adjusted[i];
-  }
-  if (sum > 1.0) {
-    std::cout << "  Sum of Y[i] = " << sum << " > 1.0\n";
-    return false;
   }
   return true;
 }
@@ -378,9 +358,6 @@ int main(int argc, char *argv[]) {
   T = -1.0;
   tester.RunTest(&TestTemperatureLimits, "Negative Temperature Test", &eos, n, T);
 
-  // Make sure the primitive variables are reset to floor after failure.
-  tester.RunTest(&TestFailureResponse, "Failure Response Test", &eos);
-
   // Make sure that species are rescaled properly.
   eos.SetNSpecies(3);
   Real Y[MAX_SPECIES] = {0.0};
@@ -392,16 +369,9 @@ int main(int argc, char *argv[]) {
   // Too large species test
   Y[0] = 1.5;
   tester.RunTest(&TestSpeciesLimits, "Large Species Test", &eos, Y);
-  // Excess sum test
-  Y[0] = 0.5;
-  Y[1] = 0.3;
-  Y[2] = 0.3;
-  tester.RunTest(&TestSpeciesLimits, "Excess Species Sum Test", &eos, Y);
-  // Excess sum #2 test
-  Y[0] = 0.6;
-  Y[1] = 0.6;
-  Y[2] = -0.1;
-  tester.RunTest(&TestSpeciesLimits, "Excess Species Sum Test #2", &eos, Y);
+
+  // Make sure the primitive variables are reset to floor after failure.
+  tester.RunTest(&TestFailureResponse, "Failure Response Test", &eos);
 
   tester.PrintSummary();
 }
