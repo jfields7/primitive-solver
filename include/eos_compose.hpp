@@ -61,7 +61,7 @@ class EOSCompOSE : public EOSPolicyInterface {
     Real SoundSpeed(Real n, Real T, Real *Y);
 
     /// Calculate the specific internal energy per unit mass
-    Real SpecificEnergy(Real n, Real T, Real *Y);
+    Real SpecificInternalEnergy(Real n, Real T, Real *Y);
 
     /// Get the minimum enthalpy per baryon.
     Real MinimumEnthalpy();

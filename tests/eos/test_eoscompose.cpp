@@ -100,7 +100,7 @@ void RunTestSuite(UnitTests& tester, EOS<EOSCompOSE, DoNothing>* peos,
   ss.str(std::string());
 
   ss << "Specific Energy Test";
-  tester.RunTest(&TestSpecificEnergy<EOSCompOSE, DoNothing>,
+  tester.RunTest(&TestSpecificInternalEnergy<EOSCompOSE, DoNothing>,
                  ss.str(),
                  peos, n, T, Y, tol);
   ss.str(std::string());
@@ -122,4 +122,8 @@ int main(int argc, char ** argv) {
     &eos, p_want, np, Tp, Yp, tol);
 
   RunTestSuite(tester, &eos, np, Tp, Yp, tol);
+
+  tester.PrintSummary();
+
+  return 0;
 }

@@ -85,7 +85,7 @@ Real EOSCompOSE::SoundSpeed(Real n, Real T, Real *Y) {
   return eval_at_nty(ECCS, n, T, Y[0]);
 }
 
-Real EOSCompOSE::SpecificEnergy(Real n, Real T, Real *Y) {
+Real EOSCompOSE::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   return Energy(n, T, Y)/(mb*n) - 1;
 }
 
