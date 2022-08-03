@@ -7,7 +7,10 @@
 
 #include <ps_types.hpp>
 
+
 namespace Primitive {
+
+struct UnitSystem;
 
 class EOSPolicyInterface {
   protected:
@@ -30,6 +33,10 @@ class EOSPolicyInterface {
     Real min_Y[MAX_SPECIES];
     /// minimum Y
     Real max_Y[MAX_SPECIES];
+    /// Code unit system
+    UnitSystem* code_units;
+    /// EOS unit system
+    UnitSystem* eos_units;
 };
 
 } // namespace

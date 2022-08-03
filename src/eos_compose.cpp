@@ -14,6 +14,7 @@
 
 #include <eos_compose.hpp>
 #include <numtools_root.hpp>
+#include <unit_system.hpp>
 
 using namespace Primitive;
 using namespace std;
@@ -37,6 +38,7 @@ EOSCompOSE::EOSCompOSE():
   m_table(nullptr),
   m_initialized(false) {
   n_species = 1;
+  eos_units = &Nuclear;
 }
 
 EOSCompOSE::~EOSCompOSE() {

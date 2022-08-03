@@ -13,6 +13,7 @@
 
 #include <ps_types.hpp>
 #include <eos_policy_interface.hpp>
+#include <unit_system.hpp>
 
 namespace Primitive {
 
@@ -118,6 +119,11 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     /// Set the number of species. Throw an exception if
     /// the number of species is invalid.
     void SetNSpecies(int n);
+
+    /// Set the EOS unit system
+    inline void SetEOSUnitSystem(UnitSystem* units) {
+      eos_units = units;
+    }
 };
 
 } // namespace

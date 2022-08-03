@@ -44,6 +44,7 @@
 #include <cassert>
 
 #include <ps_types.hpp>
+#include <unit_system.hpp>
 
 namespace Primitive {
 
@@ -80,6 +81,10 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::max_Y;
     // Minimum Y
     using EOSPolicy::min_Y;
+    // Code unit system
+    using EOSPolicy::code_units;
+    // EOS unit system
+    using EOSPolicy::eos_units;
 
     // ErrorPolicy member functions
     using ErrorPolicy::PrimitiveFloor;
@@ -112,6 +117,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       p_atm = 1e-10;
       v_max = 1.0 - 1e-15;
       max_bsq = std::numeric_limits<Real>::max();
+      code_units = eos_units;
     }
 
     //! \fn Real GetTemperatureFromE(Real n, Real e, Real *Y)
@@ -123,7 +129,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of particle fractions, expected to be of size n_species.
     //  \return The temperature according to the EOS.
     inline Real GetTemperatureFromE(Real n, Real e, Real *Y) {
-      return TemperatureFromE(n, e, Y);
+      return TemperatureFromE(n, e*code_units->PressureConversion(*eos_units), Y) *
+             eos_units->TemperatureConversion(*code_units);
     }
 
     //! \fn Real GetTemperatureFromP(Real n, Real p, Real *Y)
@@ -134,7 +141,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of particle fractions, expected to be of size n_species.
     //  \return The temperature according to the EOS.
     inline Real GetTemperatureFromP(Real n, Real p, Real *Y) {
-      return TemperatureFromP(n, p, Y);
+      return TemperatureFromP(n, p*code_units->PressureConversion(*eos_units), Y) *
+             eos_units->TemperatureConversion(*code_units);
     }
 
     //! \fn Real GetEnergy(Real n, Real T, Real *Y)
@@ -146,7 +154,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The energy density according to the EOS.
     inline Real GetEnergy(Real n, Real T, Real *Y) {
-      return Energy(n, T, Y);
+      return Energy(n, T*code_units->TemperatureConversion(*eos_units), Y) *
+             eos_units->PressureConversion(*code_units);
     }
 
     //! \fn Real GetPressure(Real n, Real T, Real *Y)
@@ -158,7 +167,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The pressure according to the EOS.
     inline Real GetPressure(Real n, Real T, Real *Y) {
-      return Pressure(n, T, Y);
+      return Pressure(n, T*code_units->TemperatureConversion(*eos_units), Y) *
+             eos_units->PressureConversion(*code_units);
     }
 
     //! \fn Real GetEntropy(Real n, Real T, Real *Y)
@@ -170,7 +180,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The entropy per baryon for this EOS.
     inline Real GetEntropy(Real n, Real T, Real *Y) {
-      return Entropy(n, T, Y);
+      return Entropy(n, T*code_units->TemperatureConversion(*eos_units), Y) *
+             eos_units->EntropyConversion(*code_units);
     }
 
     //! \fn Real GetEnthalpy(Real n, Real T, Real *Y)
@@ -182,7 +193,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The enthalpy per baryon for this EOS.
     inline Real GetEnthalpy(Real n, Real T, Real *Y) {
-      return Enthalpy(n, T, Y);
+      return Enthalpy(n, T*code_units->TemperatureConversion(*eos_units), Y) *
+             eos_units->EnergyConversion(*code_units);
     }
 
     //! \fn Real GetMinimumEnthalpy()
@@ -190,7 +202,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return the minimum enthalpy per baryon.
     inline Real GetMinimumEnthalpy() {
-      return MinimumEnthalpy();
+      return MinimumEnthalpy()*eos_units->EnergyConversion(*code_units);
     }
 
     //! \fn Real GetSoundSpeed(Real n, Real T, Real *Y)
@@ -202,7 +214,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The sound speed for this EOS.
     inline Real GetSoundSpeed(Real n, Real T, Real *Y) {
-      return SoundSpeed(n, T, Y);
+      return SoundSpeed(n, T*code_units->TemperatureConversion(*eos_units), Y) *
+             eos_units->VelocityConversion(*code_units);
     }
 
     //! \fn Real GetSpecificInternalEnergy(Real n, Real T, Real *Y)
@@ -214,7 +227,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The specific energy for the EOS.
     inline Real GetSpecificInternalEnergy(Real n, Real T, Real *Y) {
-      return SpecificInternalEnergy(n, T, Y);
+      return SpecificInternalEnergy(n, T*code_units->TemperatureConversion(*eos_units), Y) *
+             eos_units->EnergyConversion(*code_units)/eos_units->MassConversion(*code_units);
     }
 
     //! \fn int Getn_species() const
@@ -230,7 +244,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn bool ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
-    //  \brief Apply the floor to the primitive variables.
+    //  \brief Apply the floor to the primitive variables (in code units).
     //
     //  \param[in,out] n   The number density
     //  \param[in,out] Wvu The velocity vector (contravariant)
@@ -242,13 +256,14 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     inline bool ApplyPrimitiveFloor(Real& n, Real Wvu[3], Real& p, Real& T, Real *Y) {
       bool result = PrimitiveFloor(n, Wvu, p);
       if (result) {
-        T = TemperatureFromP(n, p, Y);
+        T = TemperatureFromP(n, p*code_units->PressureConversion(*eos_units), Y) *
+            eos_units->TemperatureConversion(*code_units);
       }
       return result;
     }
 
     //! \fn bool ApplyConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
-    //  \brief Apply the floor to the conserved variables.
+    //  \brief Apply the floor to the conserved variables (in code units).
     //
     //  \param[in,out] D   The relativistic number density
     //  \param[in,out] Sd  The momentum density vector (covariant)
@@ -285,7 +300,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \param[in] Y A n_species-sized array of particle fractions.
     inline Real GetTauFloor(Real D, Real *Y) {
-      return GetEnergy(D/mb, min_T, Y) - D;
+      return GetEnergy(D/mb, min_T, Y)*eos_units->PressureConversion(*code_units) - D;
     }
 
     //! \fn void SetDensityFloor(Real floor)
@@ -296,7 +311,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn void SetPressureFloor(Real floor)
-    //  \brief Set the pressure floor used by the EOS ErrorPolicy.
+    //  \brief Set the pressure floor (in code units) used by the EOS ErrorPolicy.
     inline void SetPressureFloor(Real floor) {
       p_atm = (floor >= 0.0) ? floor : 0.0;
     }
@@ -323,22 +338,22 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       v_max = (v >= 0) ? ((v <= 1.0-1e-15) ? v : 1.0e-15) : 0.0;
     }
 
-    //! \brief Get the maximum number density permitted by the EOS.
+    //! \brief Get the maximum number density (in EOS units) permitted by the EOS.
     inline Real GetMaximumDensity() const {
       return max_n;
     }
 
-    //! \brief Get the minimum number density permitted by the EOS.
+    //! \brief Get the minimum number density (in EOS units) permitted by the EOS.
     inline Real GetMinimumDensity() const {
       return min_n;
     }
 
-    //! \brief Get the maximum temperature permitted by the EOS.
+    //! \brief Get the maximum temperature  (in EOS units) permitted by the EOS.
     inline Real GetMaximumTemperature() const {
       return max_T;
     }
 
-    //! \brief Get the minimum temperature permitted by the EOS.
+    //! \brief Get the minimum temperature (in EOS units) permitted by the EOS.
     inline Real GetMinimumTemperature() const {
       return min_T;
     }
@@ -402,7 +417,9 @@ class EOS : public EOSPolicy, public ErrorPolicy {
 
     //! \brief Limit the temperature to a physical range
     inline void ApplyTemperatureLimits(Real& T) {
-      TemperatureLimits(T, min_T, max_T);
+      Real T_eos = T*code_units->TemperatureConversion(*eos_units);
+      TemperatureLimits(T_eos, min_T, max_T);
+      T = T_eos*eos_units->TemperatureConversion(*code_units);
     }
 
     //! \brief Limit Y to a specified range
@@ -415,9 +432,19 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       bool result = FailureResponse(prim);
       if (result) {
         // Adjust the temperature to be consistent with the new primitive variables.
-        prim[ITM] = TemperatureFromP(prim[IDN], prim[IPR], &prim[IYF]);
+        prim[ITM] = TemperatureFromP(prim[IDN], 
+                    prim[IPR]*code_units->PressureConversion(*eos_units), &prim[IYF]) * 
+                    eos_units->TemperatureConversion(*code_units);
       }
       return result;
+    }
+
+    inline void SetCodeUnitSystem(UnitSystem* units) {
+      UnitSystem* old_units = code_units;
+      code_units = units;
+      // We also need the baryon mass to perform the conversion from eos units to
+      // code units for converting from n to rho and vice versa.
+      mb *= old_units->MassConversion(&code_units);
     }
 };
 

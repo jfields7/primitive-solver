@@ -7,6 +7,7 @@
 #include <limits>
 
 #include <piecewise_polytrope.hpp>
+#include <unit_system.hpp>
 
 using namespace Primitive;
 
@@ -20,6 +21,7 @@ PiecewisePolytrope::PiecewisePolytrope() {
     min_Y[i] = 0.0;
     max_Y[i] = 1.0;
   }
+  eos_units = &Nuclear;
 }
 
 /// Destructor

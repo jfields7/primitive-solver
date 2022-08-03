@@ -1,4 +1,5 @@
 #include <idealgas.hpp>
+#include <unit_system.hpp>
 #include <cmath>
 #include <stdexcept>
 #include <limits>
@@ -23,6 +24,8 @@ IdealGas::IdealGas() {
     min_Y[i] = 0.0;
     max_Y[i] = 1.0;
   }
+
+  eos_units = &Nuclear;
 }
 
 Real IdealGas::TemperatureFromE(Real n, Real e, Real *Y) {

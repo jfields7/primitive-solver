@@ -58,6 +58,10 @@ struct UnitSystem {
     return b.energy/energy;
   }
 
+  inline constexpr Real EntropyConversion(UnitSystem& b) const {
+    return b.kb/kb;
+  }
+
   inline constexpr Real PressureConversion(UnitSystem& b) const {
     return b.pressure/pressure;
   }
