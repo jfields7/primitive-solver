@@ -479,7 +479,7 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   }
   solver_result.cons_adjusted = solver_result.cons_adjusted || floored;
 
-  prim[IDN] = n*peos->GetBaryonMass();
+  prim[IDN] = n;
   prim[IPR] = P;
   prim[ITM] = T;
   prim[IVX] = Wv_u[0];
@@ -508,7 +508,7 @@ template<typename EOSPolicy, typename ErrorPolicy>
 inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM], Real cons[NCONS],
       Real bu[NMAG], Real g3d[NMETRIC]) {
   // Extract the primitive variables
-  const Real &rho = prim[IDN]; // rest-mass density
+  const Real &n = prim[IDN]; // number density
   const Real Wv_u[3] = {prim[IVX], prim[IVY], prim[IVZ]};
   const Real &p   = prim[IPR]; // pressure
   const Real &t   = prim[ITM]; // temperature
@@ -548,9 +548,9 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM]
 
   // Set the conserved quantities.
   // Total enthalpy density
-  Real H = rho*peos->GetEnthalpy(rho/mb, t, Y)/mb;
+  Real H = n*peos->GetEnthalpy(n, t, Y);
   Real HWsq = H*Wsq;
-  D = rho*W;
+  D = n*mb*W;
   for (int s = 0; s < n_species; s++) {
     cons[IYD + s]= D*Y[s];
   }
