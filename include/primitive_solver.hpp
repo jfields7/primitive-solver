@@ -92,7 +92,8 @@ class PrimitiveSolver {
         // An alternative calculation of rbarsq that may be more accurate.
         //const Real rbarsq = rsq*xsq + (mux + muxsq)*rbsq;
         const Real rbarsq = x*(rsq*x + mu*(x + 1.0)*rbsq);
-        const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
+        //const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*(bsq*rsq - rbsq);
+        const Real qbar = q - 0.5*bsq - 0.5*musq*xsq*std::fma(bsq, rsq, -rbsq);
         const Real mb = peos->GetBaryonMass();
 
         // Now we can estimate the velocity.
@@ -103,6 +104,8 @@ class PrimitiveSolver {
         const Real vhatsq = std::min(musq*rbarsq, vsq_max);
 
         // Using the velocity estimate, predict the Lorentz factor.
+        // NOTE: for extreme velocities, this alternative form of W may be more accurate:
+        // Wsq = 1/(eps*(2 - eps)) = 1/(eps*(1 + v)), where eps = 1 - v.
         //const Real What = 1.0/std::sqrt(1.0 - vhatsq);
         const Real iWhat = std::sqrt(1.0 - vhatsq);
 
