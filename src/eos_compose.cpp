@@ -95,6 +95,22 @@ Real EOSCompOSE::MinimumEnthalpy() {
   return m_min_h;
 }
 
+Real EOSCompOSE::MinimumPressure(Real n, Real *Y) {
+  return Pressure(n, min_T, Y);
+}
+
+Real EOSCompOSE::MaximumPressure(Real n, Real *Y) {
+  return Pressure(n, max_T, Y);
+}
+
+Real EOSCompOSE::MinimumEnergy(Real n, Real *Y) {
+  return Energy(n, min_T, Y);
+}
+
+Real EOSCompOSE::MaximumEnergy(Real n, Real *Y) {
+  return Energy(n, max_T, Y);
+}
+
 void EOSCompOSE::ReadTableFromFile(std::string fname) {
   herr_t ierr;
   hid_t file_id;

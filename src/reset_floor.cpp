@@ -70,9 +70,19 @@ void ResetFloor::DensityLimits(Real& n, Real n_min, Real n_max) {
   n = std::fmax(n_min, std::fmin(n_max, n));
 }
 
-/// Apply energy limiter
+/// Apply temperature limiter
 void ResetFloor::TemperatureLimits(Real& T, Real T_min, Real T_max) {
   T = std::fmax(T_min, std::fmin(T_max, T));
+}
+
+/// Apply pressure limiter
+void ResetFloor::PressureLimits(Real& P, Real P_min, Real P_max) {
+  P = std::fmax(P_min, std::fmin(P_max, P));
+}
+
+/// Apply energy density limiter
+void ResetFloor::EnergyLimits(Real& e, Real e_min, Real e_max) {
+  e = std::fmax(e_min, std::fmin(e_max, e));
 }
 
 /// Apply species limits

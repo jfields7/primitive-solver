@@ -27,10 +27,9 @@ bool TestConstruction() {
 
 // InitializeVariables {{{
 void InitializeVariables(EOS<IdealGas, DoNothing>& eos, Real prim[NPRIM]) {
-  Real mb = eos.GetBaryonMass();
   prim[IDN] = 10.0;
   prim[ITM] = 5.0;
-  prim[IPR] = eos.GetPressure(prim[IDN]/mb, prim[ITM], nullptr);
+  prim[IPR] = eos.GetPressure(prim[IDN], prim[ITM], nullptr);
 }
 // }}}
 

@@ -64,6 +64,10 @@ Real IdealGas::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   return T/(mb*gammam1);
 }
 
+Real IdealGas::MinimumEnergy(Real n, Real *Y) {
+  return n*mb;
+}
+
 void IdealGas::SetNSpecies(int n) {
   if (n > MAX_SPECIES || n < 0) {
     throw std::out_of_range("IdealGas::SetNSpecies - n cannot exceed MAX_SPECIES.");

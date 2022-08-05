@@ -16,6 +16,10 @@
 //    Real MinimumEnthalpy()
 //    Real SoundSpeed(Real n, Real T, Real *Y)
 //    Real SpecificInternalEnergy(Real n, Real T, Real *Y)
+//    Real MinimumPressure(Real n, Real *Y)
+//    Real MaximumPressure(Real n, Real *Y)
+//    Real MinimumEnergy(Real n, Real *Y)
+//    Real MaximumEnergy(Real n, Real *Y)
 //  And it must also have the following protected member variables
 //  (available via EOSPolicyInterface):
 //    const int n_species
@@ -29,6 +33,9 @@
 //    bool ConservedFloor(Real& D, Real& Sd[3], Real& tau, Real& Bu[3])
 //    void DensityLimits(Real& n, Real n_min, Real n_max);
 //    void TemperatureLimits(Real& T, Real T_min, Real T_max);
+//    void SpeciesLimits(Real* Y, Real* Y_min, Real* Y_max, int n_species);
+//    void PressureLimits(Real& P, Real P_min, Real P_max);
+//    void EnergyLimits(Real& e, Real e_min, Real e_max);
 //    void FailureResponse(Real prim[NPRIM])
 //  And the following protected variables (available via
 //  ErrorPolicyInterface):
@@ -63,6 +70,10 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::SoundSpeed;
     using EOSPolicy::SpecificInternalEnergy;
     using EOSPolicy::MinimumEnthalpy;
+    using EOSPolicy::MinimumPressure;
+    using EOSPolicy::MaximumPressure;
+    using EOSPolicy::MinimumEnergy;
+    using EOSPolicy::MaximumEnergy;
 
     // EOSPolicy member variables
     // The number of particle species used by the EOS.
@@ -93,6 +104,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::DensityLimits;
     using ErrorPolicy::TemperatureLimits;
     using ErrorPolicy::SpeciesLimits;
+    using ErrorPolicy::PressureLimits;
+    using ErrorPolicy::EnergyLimits;
     using ErrorPolicy::FailureResponse;
 
     // ErrorPolicy member variables
@@ -238,9 +251,10 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn Real GetBaryonMass() const
-    //  \brief Get the baryon mass used by this EOS.
+    //  \brief Get the baryon mass used by this EOS. Note that
+    //         this factor also converts the density.
     inline Real GetBaryonMass() const {
-      return mb;
+      return mb*eos_units->MassConversion(*code_units)/eos_units->DensityConversion(*code_units);
     }
 
     //! \fn bool ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
@@ -427,6 +441,20 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       SpeciesLimits(Y, min_Y, max_Y, n_species);
     }
 
+    //! \brief Limit the pressure to a specified range at a given density and composition
+    inline void ApplyPressureLimits(Real& P, Real n, Real* Y) {
+      Real P_eos = P*code_units->PressureConversion(*eos_units);
+      PressureLimits(P_eos, MinimumPressure(n, Y), MaximumPressure(n, Y));
+      P = P_eos*eos_units->PressureConversion(*code_units);
+    }
+
+    //! \brief Limit the energy density to a specified range at a given density and composition
+    inline void ApplyEnergyLimits(Real& e, Real n, Real* Y) {
+      Real e_eos = e*code_units->PressureConversion(*eos_units);
+      EnergyLimits(e_eos, MinimumEnergy(n, Y), MaximumEnergy(n, Y));
+      e = e_eos*eos_units->PressureConversion(*code_units);
+    }
+
     //! \brief Respond to a failed solve.
     inline bool DoFailureResponse(Real prim[NPRIM]) {
       bool result = FailureResponse(prim);
@@ -440,11 +468,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     inline void SetCodeUnitSystem(UnitSystem* units) {
-      UnitSystem* old_units = code_units;
       code_units = units;
-      // We also need the baryon mass to perform the conversion from eos units to
-      // code units for converting from n to rho and vice versa.
-      mb *= old_units->MassConversion(&code_units);
     }
 };
 

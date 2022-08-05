@@ -67,6 +67,18 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     /// Calculate the internal energy per mass.
     Real SpecificInternalEnergy(Real n, Real T, Real *Y);
 
+    /// Calculate the minimum pressure at a given density and composition
+    Real MinimumPressure(Real n, Real *Y);
+
+    /// Calculate the maximum pressure at a given density and composition
+    Real MaximumPressure(Real n, Real *Y);
+
+    /// Calculate the minimum energy at a given density and composition
+    Real MinimumEnergy(Real n, Real *Y);
+
+    /// Calculate the maximum energy at a given density and composition
+    Real MaximumEnergy(Real n, Real *Y);
+
   public:
     /// Load the EOS parameters from a file.
     bool ReadParametersFromFile(std::string fname);

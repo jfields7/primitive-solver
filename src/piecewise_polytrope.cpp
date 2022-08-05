@@ -139,6 +139,25 @@ Real PiecewisePolytrope::SpecificInternalEnergy(Real n, Real T, Real *Y) {
   return eps_cold + T/(mb*(gamma_thermal - 1.0));
 }
 
+Real PiecewisePolytrope::MinimumPressure(Real n, Real *Y) {
+  int p = FindPiece(n);
+  return GetColdPressure(n, p);
+}
+
+Real PiecewisePolytrope::MaximumPressure(Real n, Real *Y) {
+  return std::numeric_limits<Real>::max();
+}
+
+Real PiecewisePolytrope::MinimumEnergy(Real n, Real *Y) {
+  int p = FindPiece(n);
+
+  return GetColdEnergy(n, p);
+}
+
+Real PiecewisePolytrope::MaximumEnergy(Real n, Real *Y) {
+  return std::numeric_limits<Real>::max();
+}
+
 bool PiecewisePolytrope::ReadParametersFromFile(std::string fname) {
   return false;
 }

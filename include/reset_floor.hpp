@@ -33,11 +33,17 @@ class ResetFloor : public ErrorPolicyInterface {
     /// Policy for resetting density
     void DensityLimits(Real& n, Real n_min, Real n_max);
 
-    /// Policy for resetting energy
+    /// Policy for resetting temperature
     void TemperatureLimits(Real& T, Real T_min, Real T_max);
 
     /// Policy for resetting species fractions
     void SpeciesLimits(Real* Y, Real* Y_min, Real* Y_max, int n_species);
+
+    /// Policy for resetting pressure
+    void PressureLimits(Real& P, Real P_min, Real P_max);
+
+    /// Policy for resetting energy density
+    void EnergyLimits(Real& e, Real e_min, Real e_max);
 
     /// Policy for dealing with failed points
     bool FailureResponse(Real prim[NPRIM]);

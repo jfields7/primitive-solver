@@ -114,7 +114,7 @@ class PrimitiveSolver {
         // Estimate the energy density.
         Real eoverD = qbar - mu*rbarsq + 1.0;
         Real ehat = D*eoverD;
-        //peos->ApplyEnergyLimits(ehat);
+        peos->ApplyEnergyLimits(ehat, nhat, Y);
         //eoverD = ehat/D;
 
         // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.

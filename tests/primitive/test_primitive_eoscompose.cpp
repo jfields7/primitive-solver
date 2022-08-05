@@ -67,6 +67,55 @@ int main(int argc, char* argv[]) {
                  "Conserved to Primitive Test - Flat, Fieldless, Static",
                  &ps, prim, cons, bu, gd, gu, tol);
 
+  // Test a strong field at zero velocity and curvature.
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Flat, Static, Strong Field",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Test a strongly relativistic flow with no field or curvature.
+  ZeroField(bu);
+  StrongVelocity(prim);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Flat, Fieldless, Relativistic Flow",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Test static flow with no field but strong gravity.
+  ZeroVelocity(prim);
+  SchwarzschildMetric(gd, gu);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Fieldless, Static, Strong Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+  
+  // Test a strongly relativistic flow with a strong field but no curvature.
+  StrongField(bu);
+  StrongVelocity(prim);
+  MinkowskiMetric(gd, gu);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Flat, Strong Field and Flow",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Test a strongly relativistic flow with strong gravity but no magnetic field.
+  ZeroField(bu);
+  SchwarzschildMetric(gd, gu);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Fieldless, Strong Flow and Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Test a static fluid with strong gravity and a strong magnetic field.
+  ZeroVelocity(prim);
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Static, Strong Field and Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Test a strongly relativistic flow with strong gravity and a strong magnetic field.
+  StrongVelocity(prim);
+  tester.RunTest(&TestConToPrim<EOSCompOSE, ResetFloor>,
+                 "Conserved to Primitive Test - Strong Flow, Field, and Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+
   tester.PrintSummary();
 
   return 0;

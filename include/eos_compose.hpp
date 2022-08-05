@@ -66,6 +66,18 @@ class EOSCompOSE : public EOSPolicyInterface {
     /// Get the minimum enthalpy per baryon.
     Real MinimumEnthalpy();
 
+    /// Get the minimum pressure at a given density and composition
+    Real MinimumPressure(Real n, Real *Y);
+
+    /// Get the maximum pressure at a given density and composition
+    Real MaximumPressure(Real n, Real *Y);
+
+    /// Get the minimum energy at a given density and composition
+    Real MinimumEnergy(Real n, Real *Y);
+
+    /// Get the maximum energy at a given density and composition
+    Real MaximumEnergy(Real n, Real *Y);
+
   public:
     /// Reads the table file.
     void ReadTableFromFile(std::string fname);
