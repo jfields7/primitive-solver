@@ -260,10 +260,10 @@ Real EOSCompOSE::temperature_from_var(int iv, Real var, Real n, Real Yq) const {
 
   auto f = [=](int it){
     Real var_pt =
-      wn0 * wy0 * m_table[index(iv, in+0, iy+0, it)] +
-      wn0 * wy1 * m_table[index(iv, in+0, iy+1, it)] +
-      wn1 * wy0 * m_table[index(iv, in+1, iy+0, it)] +
-      wn1 * wy1 * m_table[index(iv, in+1, iy+1, it)];
+      wn0 * (wy0 * m_table[index(iv, in+0, iy+0, it)]  +
+             wy1 * m_table[index(iv, in+0, iy+1, it)]) +
+      wn1 * (wy0 * m_table[index(iv, in+1, iy+0, it)]  +
+             wy1 * m_table[index(iv, in+1, iy+1, it)]);
 
     return var - var_pt;
   };
@@ -331,12 +331,12 @@ Real EOSCompOSE::eval_at_lnty(int iv, Real log_n, Real log_t, Real yq) const {
   weight_idx_lt(&wt0, &wt1, &it, log_t);
 
   return
-    wn0 * wy0 * wt0 * m_table[index(iv, in+0, iy+0, it+0)] +
-    wn0 * wy0 * wt1 * m_table[index(iv, in+0, iy+0, it+1)] +
-    wn0 * wy1 * wt0 * m_table[index(iv, in+0, iy+1, it+0)] +
-    wn0 * wy1 * wt1 * m_table[index(iv, in+0, iy+1, it+1)] +
-    wn1 * wy0 * wt0 * m_table[index(iv, in+1, iy+0, it+0)] +
-    wn1 * wy0 * wt1 * m_table[index(iv, in+1, iy+0, it+1)] +
-    wn1 * wy1 * wt0 * m_table[index(iv, in+1, iy+1, it+0)] +
-    wn1 * wy1 * wt1 * m_table[index(iv, in+1, iy+1, it+1)];
+    wn0 * (wy0 * (wt0 * m_table[index(iv, in+0, iy+0, it+0)]   +
+                  wt1 * m_table[index(iv, in+0, iy+0, it+1)])  +
+           wy1 * (wt0 * m_table[index(iv, in+0, iy+1, it+0)]   +
+                  wt1 * m_table[index(iv, in+0, iy+1, it+1)])) +
+    wn1 * (wy0 * (wt0 * m_table[index(iv, in+1, iy+0, it+0)]   +
+                  wt1 * m_table[index(iv, in+1, iy+0, it+1)])  +
+           wy1 * (wt0 * m_table[index(iv, in+1, iy+1, it+0)]   +
+                  wt1 * m_table[index(iv, in+1, iy+1, it+1)]));
 }
