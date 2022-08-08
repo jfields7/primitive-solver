@@ -123,12 +123,14 @@ bool TestSoundSpeed(EOS<PiecewisePolytrope, DoNothing>* peos, Real n,
   // Test a range of temperatures
   int p = peos->FindPiece(n);
   Real rho = n*peos->GetBaryonMass();
-  Real P_cold = peos->GetColdPressure(n, p);
-  Real e_cold = peos->GetColdEnergy(n, p);
+  Real P_cold = peos->GetColdPressure(n, p) *
+                peos->GetEOSUnitSystem()->PressureConversion(*peos->GetCodeUnitSystem());
+  Real e_cold = peos->GetColdEnergy(n, p) *
+                peos->GetEOSUnitSystem()->PressureConversion(*peos->GetCodeUnitSystem());
   Real h_cold = (e_cold + P_cold)/rho;
   Real csq_cold = peos->GetGamma(n)*P_cold/(e_cold + P_cold);
   for (Real T = 0; T < 1000.0; T += 50.0) {
-    Real h = peos->GetEnthalpy(n, T, Y)/peos->GetBaryonMass();
+    Real h = peos->GetEnthalpy(n, T, Y);
     Real P_th = peos->GetPressure(n, T, Y) - P_cold;
     Real e_th = peos->GetEnergy(n, T, Y) - e_cold;
     Real h_th = h - h_cold;

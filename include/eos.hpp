@@ -185,7 +185,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn Real GetEntropy(Real n, Real T, Real *Y)
-    //  \brief Get the entropy per baryon from the number density, temperature,
+    //  \brief Get the entropy per mass from the number density, temperature,
     //         and particle fractions.
     //
     //  \param[in] n  The number density
@@ -193,8 +193,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The entropy per baryon for this EOS.
     inline Real GetEntropy(Real n, Real T, Real *Y) {
-      return Entropy(n, T*code_units->TemperatureConversion(*eos_units), Y) *
-             eos_units->EntropyConversion(*code_units);
+      return Entropy(n, T*code_units->TemperatureConversion(*eos_units), Y)/mb *
+             eos_units->EntropyConversion(*code_units)/eos_units->MassConversion(*code_units);
     }
 
     //! \fn Real GetEnthalpy(Real n, Real T, Real *Y)
@@ -211,7 +211,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn Real GetMinimumEnthalpy()
-    //  \brief Get the global minimum for enthalpy per baryon from the EOS.
+    //  \brief Get the global minimum for enthalpy per mass from the EOS.
     //
     //  \return the minimum enthalpy per baryon.
     inline Real GetMinimumEnthalpy() {
