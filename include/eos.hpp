@@ -198,7 +198,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \fn Real GetEnthalpy(Real n, Real T, Real *Y)
-    //  \brief Get the enthalpy per baryon from the number density, temperature,
+    //  \brief Get the enthalpy per mass from the number density, temperature,
     //         and particle fractions.
     //
     //  \param[in] n  The number density
@@ -206,8 +206,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \param[in] Y  An array of size n_species of the particle fractions.
     //  \return The enthalpy per baryon for this EOS.
     inline Real GetEnthalpy(Real n, Real T, Real *Y) {
-      return Enthalpy(n, T*code_units->TemperatureConversion(*eos_units), Y) *
-             eos_units->EnergyConversion(*code_units);
+      return Enthalpy(n, T*code_units->TemperatureConversion(*eos_units), Y)/mb *
+             (eos_units->EnergyConversion(*code_units)/eos_units->MassConversion(*code_units));
     }
 
     //! \fn Real GetMinimumEnthalpy()
@@ -215,7 +215,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return the minimum enthalpy per baryon.
     inline Real GetMinimumEnthalpy() {
-      return MinimumEnthalpy()*eos_units->EnergyConversion(*code_units);
+      return MinimumEnthalpy()/mb *
+             eos_units->EnergyConversion(*code_units)/eos_units->MassConversion(*code_units);
     }
 
     //! \fn Real GetSoundSpeed(Real n, Real T, Real *Y)
@@ -254,7 +255,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \brief Get the baryon mass used by this EOS. Note that
     //         this factor also converts the density.
     inline Real GetBaryonMass() const {
-      return mb*eos_units->MassConversion(*code_units)/eos_units->DensityConversion(*code_units);
+      return mb*eos_units->MassConversion(*code_units)*eos_units->DensityConversion(*code_units);
     }
 
     //! \fn bool ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
@@ -469,6 +470,14 @@ class EOS : public EOSPolicy, public ErrorPolicy {
 
     inline void SetCodeUnitSystem(UnitSystem* units) {
       code_units = units;
+    }
+
+    inline UnitSystem* GetCodeUnitSystem() const {
+      return code_units;
+    }
+
+    inline UnitSystem* GetEOSUnitSystem() const {
+      return eos_units;
     }
 };
 

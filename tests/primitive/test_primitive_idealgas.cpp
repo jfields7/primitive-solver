@@ -9,6 +9,7 @@
 #include <idealgas.hpp>
 #include <do_nothing.hpp>
 #include <primitive_solver.hpp>
+#include <unit_system.hpp>
 
 #include <testing.hpp>
 #include <testfunctions.hpp>
@@ -28,8 +29,10 @@ bool TestConstruction() {
 // InitializeVariables {{{
 void InitializeVariables(EOS<IdealGas, DoNothing>& eos, Real prim[NPRIM]) {
   prim[IDN] = 10.0;
-  prim[ITM] = 5.0;
-  prim[IPR] = eos.GetPressure(prim[IDN], prim[ITM], nullptr);
+  //prim[ITM] = 5.0;
+  //prim[IPR] = eos.GetPressure(prim[IDN], prim[ITM], nullptr);
+  prim[IPR] = 50.0;
+  prim[ITM] = eos.GetTemperatureFromP(prim[IDN], prim[IPR], nullptr);
 }
 // }}}
 
@@ -250,6 +253,37 @@ int main(int argc, char *argv[]) {
   StrongField(bu);
   tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
                  "One Species Test - Strong Flow, Field, and Gravity",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // ALTERNATIVE UNIT SYSTEM TESTS
+  // Flat, fieldless, static
+  eos.SetNSpecies(0);
+  eos.SetCodeUnitSystem(&GeometricSolar);
+  InitializeVariables(eos, prim);
+  ZeroField(bu);
+  ZeroVelocity(prim);
+  MinkowskiMetric(gd, gu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Alternative Units Test - Flat, Fieldless, Static",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Flat, static, strong field
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Alternative Units Test - Flat, Static, Strong Field",
+                 &ps, prim, cons, bu, gd, gu, tol);
+  
+  // Flat, no field, relativistic flow
+  ZeroField(bu);
+  StrongVelocity(prim);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Alternative Units Test - Flat, Fieldless, Relativistic Flow",
+                 &ps, prim, cons, bu, gd, gu, tol);
+
+  // Flat, strong field, strong flow
+  StrongField(bu);
+  tester.RunTest(&TestConToPrim<IdealGas, DoNothing>,
+                 "Alternative Units Test - Flat, Strong Flow and Field",
                  &ps, prim, cons, bu, gd, gu, tol);
 
   tester.PrintSummary();

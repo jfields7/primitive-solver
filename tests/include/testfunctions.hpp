@@ -49,7 +49,7 @@ bool TestEnthalpy(Primitive::EOS<EOSPolicy, ErrorPolicy>* eos, Real n, Real T, R
   Real p = eos->GetPressure(n, T, Y);
   Real e = eos->GetEnergy(n, T, Y);
 
-  Real expected = (e + p)/n;
+  Real expected = (e + p)/(n*eos->GetBaryonMass());
   Real err = GetError(expected, h);
   if (err > tol) {
     PrintError(expected, h);

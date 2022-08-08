@@ -98,7 +98,7 @@ class PrimitiveSolver {
 
         // Now we can estimate the velocity.
         //const Real v_max = peos->GetMaxVelocity();
-        const Real h_min = peos->GetMinimumEnthalpy()/mb;
+        const Real h_min = peos->GetMinimumEnthalpy();
         const Real vsq_max = std::min(rsq/(h_min*h_min + rsq), 
                                       peos->GetMaxVelocity()*peos->GetMaxVelocity());
         const Real vhatsq = std::min(musq*rbarsq, vsq_max);
@@ -123,9 +123,9 @@ class PrimitiveSolver {
         // Now we can get an estimate of the temperature, and from that, the pressure and enthalpy.
         Real That = peos->GetTemperatureFromE(nhat, ehat, Y);
         peos->ApplyTemperatureLimits(That);
-        ehat = peos->GetEnergy(nhat, That, Y);
+        //ehat = peos->GetEnergy(nhat, That, Y);
         Real Phat = peos->GetPressure(nhat, That, Y);
-        Real hhat = peos->GetEnthalpy(nhat, That, Y)/mb;
+        Real hhat = peos->GetEnthalpy(nhat, That, Y);
 
         // Now we can get two different estimates for nu = h/W.
         Real nu_a = hhat*iWhat;
@@ -408,7 +408,7 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   }
   
   // Bracket the root.
-  Real min_h = peos->GetMinimumEnthalpy()/peos->GetBaryonMass();
+  Real min_h = peos->GetMinimumEnthalpy();
   Real mul = 0.0;
   Real muh = 1.0/min_h;
   // Check if a tighter upper bound exists.
@@ -551,7 +551,7 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::PrimToCon(Real prim[NPRIM]
 
   // Set the conserved quantities.
   // Total enthalpy density
-  Real H = n*peos->GetEnthalpy(n, t, Y);
+  Real H = n*peos->GetEnthalpy(n, t, Y)*mb;
   Real HWsq = H*Wsq;
   D = n*mb*W;
   for (int s = 0; s < n_species; s++) {
