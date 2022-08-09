@@ -112,6 +112,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::n_atm;
     using ErrorPolicy::n_threshold;
     using ErrorPolicy::p_atm;
+    using ErrorPolicy::Y_atm;
     using ErrorPolicy::v_max;
     using ErrorPolicy::fail_conserved_floor;
     using ErrorPolicy::fail_primitive_floor;
@@ -131,6 +132,9 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       v_max = 1.0 - 1e-15;
       max_bsq = std::numeric_limits<Real>::max();
       code_units = eos_units;
+      for (int i = 0; i < MAX_SPECIES; i++) {
+        Y_atm[i] = 0.0;
+      }
     }
 
     //! \fn Real GetTemperatureFromE(Real n, Real e, Real *Y)
@@ -269,7 +273,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return true if the primitives were adjusted, false otherwise.
     inline bool ApplyPrimitiveFloor(Real& n, Real Wvu[3], Real& p, Real& T, Real *Y) {
-      bool result = PrimitiveFloor(n, Wvu, p);
+      bool result = PrimitiveFloor(n, Wvu, p, Y, n_species);
       if (result) {
         T = TemperatureFromP(n, p*code_units->PressureConversion(*eos_units), Y) *
             eos_units->TemperatureConversion(*code_units);
@@ -288,7 +292,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \return true if the conserved variables were adjusted, false otherwise.
     inline bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y) {
-      return ConservedFloor(D, Sd, tau, n_atm*mb, GetTauFloor(D, Y));
+      return ConservedFloor(D, Sd, tau, Y, n_atm*GetBaryonMass(), GetTauFloor(D, Y), n_species);
     }
 
     //! \fn Real GetDensityFloor() const
@@ -315,8 +319,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \param[in] Y A n_species-sized array of particle fractions.
     inline Real GetTauFloor(Real D, Real *Y) {
-      return GetEnergy(D*code_units->MassConversion(*eos_units)*
-                         code_units->DensityConversion(*eos_units)/mb, min_T, Y) * 
+      return GetEnergy(D/GetBaryonMass(), min_T, Y) * 
              eos_units->PressureConversion(*code_units) - D;
     }
 
