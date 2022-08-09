@@ -49,6 +49,7 @@
 
 #include <limits>
 #include <cassert>
+#include <cmath>
 
 #include <ps_types.hpp>
 #include <unit_system.hpp>
@@ -307,6 +308,13 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return p_atm;
     }
 
+    //! \fn Real GetSpeciesAtmosphere(int i) const
+    //  \brief Get the atmosphere abundance used by the EOS ErrorPolicy for species i.
+    inline Real GetSpeciesAtmosphere(int i) const {
+      assert((i < n_species) && "Not enough species");
+      return Y_atm[i];
+    }
+
     //! \fn Real GetThreshold() const
     //  \brief Get the threshold factor used by the EOS ErrorPolicy.
     inline Real GetThreshold() const {
@@ -334,6 +342,13 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \brief Set the pressure floor (in code units) used by the EOS ErrorPolicy.
     inline void SetPressureFloor(Real floor) {
       p_atm = (floor >= 0.0) ? floor : 0.0;
+    }
+
+    //! \fn void SetSpeciesAtmospher(Real atmo, int i)
+    //  \brief Set the atmosphere abundance used by the EOS ErrorPolicy for species i.
+    inline void SetSpeciesAtmosphere(Real atmo, int i) {
+      assert((i < n_species) && "Not enough species");
+      Y_atm[i] = std::min(1.0, std::max(0.0, atmo));
     }
 
     //! \fn void SetThreshold(Real threshold)
