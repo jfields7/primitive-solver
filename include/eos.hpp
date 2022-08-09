@@ -315,7 +315,9 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //
     //  \param[in] Y A n_species-sized array of particle fractions.
     inline Real GetTauFloor(Real D, Real *Y) {
-      return GetEnergy(D/mb, min_T, Y)*eos_units->PressureConversion(*code_units) - D;
+      return GetEnergy(D*code_units->MassConversion(*eos_units)*
+                         code_units->DensityConversion(*eos_units)/mb, min_T, Y) * 
+             eos_units->PressureConversion(*code_units) - D;
     }
 
     //! \fn void SetDensityFloor(Real floor)
