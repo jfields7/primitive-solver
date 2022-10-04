@@ -88,9 +88,9 @@ There is some redunancy in these units (defining density when length and mass ar
 
 Four unit systems are provided with the code as static objects in `unit_system.hpp`:
 * `UnitSystem CGS`: standard CGS units.
-* `UnitSystem GeometricKilometer`: geometrized units ($c=G=k_b=1$) with the kilometer fixed to 1.
-* `UnitSystem GeometricSolar`: geometrized units ($c=G=k_b=1$) with the solar mass fixed to 1 (aka "Cactus units").
-* `UnitSystem Nuclear`: units following standard nuclear conventions ($c=1$, $k_b=1$, $MeV=1$).
+* `UnitSystem GeometricKilometer`: geometrized units ( $c=G=k_b=1$ ) with the kilometer fixed to 1.
+* `UnitSystem GeometricSolar`: geometrized units ( $c=G=k_b=1$ ) with the solar mass fixed to 1 (aka "Cactus units").
+* `UnitSystem Nuclear`: units following standard nuclear conventions ( $c=1$, $k_b=1$, $MeV=1$ ).
 
 The `EOSPolicy` class should have two unit systems: `code_units` and `eos_units`. The former will be defined by the user, the latter by the specific `EOSPolicy`. `EOS` will automatically perform the conversion for all quantities from code to EOS units _except_ the number density $n$. Due to an early design decision, the number density must always be passed into `EOS` calls in EOS units; to ensure this, `GetBaryonMass()` actually returns the baryon mass multiplied by a conversion factor that will ensure that $\rho=n m_b$ is in code units and $n=\rho/m_b$ is in EOS units.
 
