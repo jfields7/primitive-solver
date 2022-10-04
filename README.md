@@ -46,13 +46,53 @@ Additionally, `EOS` also provides functions to access to two member variables:
 Real GetNSpecies(); // Number of particle species
 Real GetBaryonMass(); // Mass of a baryon as used by the EOS
 ```
-Both the number of particle fractions and baryon mass are frequently fixed by the specific EOS, so `EOS` does not provide functionality to change them. Specific EOSes may provide this functionality, but it should be neither expected nor required in the general case.
+Both the number of particle fractions and baryon mass are frequently fixed by the specific EOS, so `EOS` does not provide functionality to change them. Specific EOSes may provide this functionality, but it should be neither expected nor required in the general case. (Also note that there is a conversion factor attached to the mass returned by `GetBaryonMass()`; see the "Unit Systems" section for more information.)
 
 There is one more function provided by `EOS` that is used specifically by the primitive solver:
 ```c++
 Real GetMinimumEnthalpy();
 ```
 This function, which should be a constant-time operation, returns the global minimum of the enthalpy per baryon.
+
+## Unit Systems
+The `UnitSystem` struct provides a set of methods for converting from one unit system to another:
+```c++
+inline constexpr Real LengthConversion(UnitSystem& b) const;
+inline constexpr Real TimeConversion(UnitSystem& b) const;
+inline constexpr Real VelocityConversion(UnitSystem& b) const;
+inline constexpr Real DensityConversion(UnitSystem& b) const;
+inline constexpr Real MassConversion(UnitSystem& b) const;
+inline constexpr Real EnergyConversion(UnitSystem& b) const;
+inline constexpr Real EntropyConversion(UnitSystem& b) const;
+inline constexpr Real PressureConversion(UnitSystem& b) const;
+inline constexpr Real TemperatureConversion(UnitSystem& b) const;
+```
+
+Each `UnitSystem` defines five constants in code units and seven conversions from CGS:
+```c++
+const Real c;      // Speed of light
+const Real G;      // Gravitational constant
+const Real kb;     // Boltzmann constant
+const Real Msun;   // Solar mass
+const Real MeV;    // 10^6 electronvolt
+
+const Real length;      // cm in code units
+const Real time;        // s in code units
+const Real density;     // g cm^-3 in code units
+const Real mass;        // g in code units
+const Real energy;      // erg in code units
+const Real pressure;    // erg/cm^3 in code units
+const Real temperature; // K in code units
+```
+There is some redunancy in these units (defining density when length and mass are already available, for example), and it is likely that will be refactored at some point.
+
+Four unit systems are provided with the code as static objects in `unit_system.hpp`:
+* `UnitSystem CGS`: standard CGS units.
+* `UnitSystem GeometricKilometer`: geometrized units ($c=G=k_b=1$) with the kilometer fixed to 1.
+* `UnitSystem GeometricSolar`: geometrized units ($c=G=k_b=1$) with the solar mass fixed to 1 (aka "Cactus units").
+* `UnitSystem Nuclear`: units following standard nuclear conventions ($c=1$, $k_b=1$, $MeV=1$).
+
+The `EOSPolicy` class should have two unit systems: `code_units` and `eos_units`. The former will be defined by the user, the latter by the specific `EOSPolicy`. `EOS` will automatically perform the conversion for all quantities from code to EOS units _except_ the number density $n$. Due to an early design decision, the number density must always be passed into `EOS` calls in EOS units; to ensure this, `GetBaryonMass()` actually returns the baryon mass multiplied by a conversion factor that will ensure that $\rho=n m_b$ is in code units and $n=\rho/m_b$ is in EOS units.
 
 ## Using the Primitive Solver
 The primitive solver is embedded in a class called `PrimitiveSolver`. Because it must store a pointer to the `EOS` object, it is also a template class:
@@ -105,6 +145,10 @@ Real max_n;     // Maximum number density, should be fixed by the EOS
 Real min_n;     // Minimum number density, should be fixed by the EOS
 Real max_T;     // Maximum temperature, should be fixed by the EOS
 Real min_T;     // Minimum temperature, should be fixed by the EOS
+Real min_Y[];   // Minimum range for a particular species, should be fixed by the EOS
+Real min_Y[];   // Maximum range for a particular species, should be fixed by the EOS
+UnitSystem code_units; // Unit system used by the code, set by the user
+UnitSystem eos_units;  // Unit system used by the EOS, should be fixed by the EOS
 ```
 
 The protected variables are all provided by the `EOSPolicyInterface` class, so the easiest way to make a new EOS policy is to inherit from it:

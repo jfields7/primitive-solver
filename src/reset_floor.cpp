@@ -108,7 +108,7 @@ bool ResetFloor::FailureResponse(Real prim[NPRIM]) {
   prim[IVZ] = 0.0;
   prim[IPR] = p_atm;
   for (int i = 0; i < MAX_SPECIES; i++) {
-    prim[IYF + i] = 0.0;
+    prim[IYF + i] = Y_atm[i];
   }
   return true;
 }
