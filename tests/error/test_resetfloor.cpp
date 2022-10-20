@@ -227,20 +227,20 @@ bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
 }
 
 bool TestConservedFloor(EOS<IdealGas,ResetFloor>* eos, Real D, Real Sd[3], Real tau) {
-  Real tau_floor = eos->GetTauFloor(D, nullptr);
+  Real tau_floor = eos->GetTauFloor(D, nullptr, 0.0);
   Real D_floor = eos->GetDensityFloor()*eos->GetBaryonMass();
 
   Real D_new = D;
   Real Sd_new[3] = {Sd[0], Sd[1], Sd[2]};
   Real tau_new = tau;
 
-  eos->ApplyConservedFloor(D_new, Sd_new, tau_new, nullptr);
+  eos->ApplyConservedFloor(D_new, Sd_new, tau_new, nullptr, 0.0);
 
   // Check if D should have been floored.
   if (D < D_floor) {
     bool success = true;
     if (std::fabs(D_new - D_floor) > 1e-15) {
-      std::cout << "  Relativistc density was not reset correctly!\n";
+      std::cout << "  Relativistic density was not reset correctly!\n";
       std::cout << "  Expected: " << D_floor << "\n";
       std::cout << "  Actual: " << D_new << "\n";
       success = false;
