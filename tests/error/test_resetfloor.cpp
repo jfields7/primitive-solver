@@ -229,6 +229,7 @@ bool TestFailureResponse(EOS<IdealGas, ResetFloor>* eos) {
 bool TestConservedFloor(EOS<IdealGas,ResetFloor>* eos, Real D, Real Sd[3], Real tau) {
   Real tau_floor = eos->GetTauFloor(D, nullptr, 0.0);
   Real D_floor = eos->GetDensityFloor()*eos->GetBaryonMass();
+  Real tau_floor_2 = eos->GetTauFloor(D_floor, nullptr, 0.0);
 
   Real D_new = D;
   Real Sd_new[3] = {Sd[0], Sd[1], Sd[2]};
@@ -253,9 +254,9 @@ bool TestConservedFloor(EOS<IdealGas,ResetFloor>* eos, Real D, Real Sd[3], Real 
                                 << Sd_new[2] << ")\n";
       success = false;
     }
-    if (tau_new != tau_floor) {
+    if (tau_new != tau_floor_2) {
       std::cout << "  Tau was not reset correctly!\n";
-      std::cout << "  Expected: " << tau_floor << "\n";
+      std::cout << "  Expected: " << tau_floor_2 << "\n";
       std::cout << "  Actual: " << tau_new << "\n";
       success = false;
     }
@@ -328,7 +329,7 @@ int main(int argc, char *argv[]) {
   tester.RunTest(&TestConservedFloor, "Invalid Tau Conserved Floor Test", &eos, D, Sd, tau);
   D = 0.0;
   tau = 0.0;
-  tester.RunTest(&TestConservedFloor, "All Invalid Primitive Floor Test", &eos, D, Sd, tau);
+  tester.RunTest(&TestConservedFloor, "All Invalid Conserved Floor Test", &eos, D, Sd, tau);
 
   // Do some magnetization tests.
   eos.SetMaximumMagnetization(300.0);
