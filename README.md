@@ -92,7 +92,7 @@ Four unit systems are provided with the code as static objects in `unit_system.h
 * `UnitSystem GeometricSolar`: geometrized units ( $c=G=k_b=1$ ) with the solar mass fixed to 1 (aka "Cactus units").
 * `UnitSystem Nuclear`: units following standard nuclear conventions ( $c=1$, $k_b=1$, $MeV=1$ ).
 
-The `EOSPolicy` class should have two unit systems: `code_units` and `eos_units`. The former will be defined by the user, the latter by the specific `EOSPolicy`. `EOS` will automatically perform the conversion for all quantities from code to EOS units _except_ the number density $n$. Due to an early design decision, the number density must always be passed into `EOS` calls in EOS units; to ensure this, `GetBaryonMass()` actually returns the baryon mass multiplied by a conversion factor that will ensure that $\rho=n m_b$ is in code units and $n=\rho/m_b$ is in EOS units.
+The `EOSPolicy` class should have two unit systems: `code_units` and `eos_units`. The former will be defined by the user, the latter by the specific `EOSPolicy`. The `EOSPolicy` should expect all calculations to be performed in EOS units; `EOS` will automatically perform the conversion for all quantities from code to EOS units _except_ the number density $n$. Due to an early design decision, the number density must always be passed into `EOS` calls in EOS units; to ensure this, `GetBaryonMass()` actually returns the baryon mass multiplied by a conversion factor that will ensure that $\rho=n m_b$ is in code units and $n=\rho/m_b$ is in EOS units.
 
 ## Using the Primitive Solver
 The primitive solver is embedded in a class called `PrimitiveSolver`. Because it must store a pointer to the `EOS` object, it is also a template class:
@@ -161,6 +161,41 @@ class NewEOSPolicy : public EOSPolicyInterface {
     /// Any additional methods specific to the EOS, such as an adiabatic index, should be made available here.
 };
 ```
+
+# Error Policies
+In addition to supporting various custom equations of state, PrimitiveSolver also has a flexible interface for error responses in the event of solver failure, flooring, etc. This is passed to `EOS` as the `ErrorPolicy` template parameter. Any `ErrorPolicy` template requires the following protected methods:
+```c++
+bool PrimitiveFloor(Real& n, Real v[3], Real& p, Real *Y, int n_species);
+bool ConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y, Real D_floor, Real tau_floor, Real tau_abs_floor, int n_species);
+Error MagnetizationResponse(Real& bsq, Real b_u[3]); // Check for and rescale unphysical magnetic fields
+void DensityLimits(Real& n, Real n_min, Real n_max);
+void TemperatureLimits(Real& T, Real T_min, Real T_max);
+void SpeciesLimits(Real* Y, Real* Y_min, Real* Y_max, int n_species);
+void PressureLimits(Real& P, Real P_min, Real P_max);
+void EnergyLimits(Real& e, Real e_min, Real e_max);
+bool FailureResponse(Real prim[NPRIM]);
+```
+The `...Floor` functions are used to implement artificial atmospheres. Please note that though `PrimitiveFloor` expects quantities in EOS units, `ConservedFloor` expects them in code units. Additionally, the `...Limits` functions are *not* used for the atmosphere, but rather for rescaling primitive quantities that exceed what is permitted by the equation of state (for example, if the calculated temperature exceeds what is inside an EOS table). The `FailureResponse` function describes what to do with the primitive variables if the solver fails or encounters an unphysical state. The `HandleFailure` function in `PrimitiveSolver` will automatically adjust the conserved variables to be consistent during failure.
+
+It also expects the following protected variables, all of which are provided by the `ErrorPolicyInterface` class:
+```c++
+Real n_atm;                 // Atmosphere for number density (1e-10 by default)
+Real n_threshold;           // Thresholding parameter for floor calculations (1.0 by default)
+Real p_atm;                 // Atmosphere for pressure (1e-10 by default)
+Real Y_atm[MAX_SPECIES];    // Atmosphere for particle fractions (0.0 by default)
+Real v_max;                 // Maximum allowed velocity in PrimitiveSolver (1 - 1e-15 by default)
+Real max_bsq;               // Maximum allowed magnetization (B^2/D, maximum floating-point by default)
+bool fail_conserved_floor;  // Whether or not applying the conserved floor is failure
+bool fail_primitive_floor;  // Whether or not applying the primitive floor is failure
+bool adjust_conserved;      // Call PrimToCon at the end of ConToPrim if adjustments were made
+```
+
+## Included Error Policies
+PrimitiveSolver includes two error policies by default: `DoNothing` and `ResetFloor`.
+
+`DoNothing` is self-explanatory. It applies no floors, it has a null failure response, and performs no rescaling for unphysical states. It is valuable for testing an equation of state in isolation, but it isn't particularly useful for simulations (unless you plan to handle errors outside of PrimitiveSolver).
+
+`ResetFloor` is a simple thresholded atmosphere. All variables are set to atmosphere if `n < n_threshold*n_atm`, and pressure is floored if `p < p_atm`. Primitive variable limiters floor or cap variables based on `_min` and `_max` variables. Magnetic fields are capped at `max_bsq`, and individual components are rescaled by `sqrt(max_bsq/bsq)`. By default it does not treat flooring as a failure mode, and it will adjust the conserved variables. These can be adjusted with `SetConservedFloorFailure(bool)`, `SetPrimitiveFloorFailure(bool)`, and `SetAdjustConserved(bool)`.
 
 # Unit Tests
 It is strongly recommended that any new `EOSPolicy` or `ErrorPolicy` classes have unit tests to go with them. There is a basic unit testing framework included in the repository under the `tests` folder. There are folders for three kinds of tests: `error` includes tests for the `ErrorPolicy`, `eos` contains tests for a specific `EOSPolicy`, and `primitive` contains tests for running `PrimitiveSolver` with a specific `EOSPolicy`.
