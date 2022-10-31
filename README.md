@@ -84,7 +84,7 @@ const Real energy;      // erg in code units
 const Real pressure;    // erg/cm^3 in code units
 const Real temperature; // K in code units
 ```
-There is some redunancy in these units (defining density when length and mass are already available, for example), and it is likely that will be refactored at some point.
+There is some redundancy in these units (defining density when length and mass are already available, for example), and it is likely that will be refactored at some point.
 
 Four unit systems are provided with the code as static objects in `unit_system.hpp`:
 * `UnitSystem CGS`: standard CGS units.
