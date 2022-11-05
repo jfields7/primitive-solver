@@ -28,12 +28,12 @@ In order to align with most EOS tables for neutron stars, an `EOS` object revolv
 Real GetEnergy(Real n, Real T, Real *Y); // total fluid energy density
 Real GetPressure(Real n, Real T, Real *Y); // fluid pressure
 Real GetEntropy(Real n, Real T, Real *Y); // entropy per baryon
-Real GetEnthalpy(Real n, Real T, Real *Y); // enthalpy per baryon
+Real GetEnthalpy(Real n, Real T, Real *Y); // enthalpy per mass
 Real GetSoundSpeed(Real n, Real T, Real *Y); // speed of sound in the fluid
 Real GetSpecificInternalEnergy(Real n, Real T, Real *Y); // specific energy
 ```
 
-**Note that the specific entropy and enthalpy returned by `EOS` are per baryon, not per mass.** 
+**Note that the specific entropy returned by `EOS` are per baryon, not per mass.** 
 
 Because the Valencia formulation typically used in GRMHD is based on pressure instead of temperature, two utility functions are provided to calculate the temperature:
 ```c++
