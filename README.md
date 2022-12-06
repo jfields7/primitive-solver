@@ -33,7 +33,7 @@ Real GetSoundSpeed(Real n, Real T, Real *Y); // speed of sound in the fluid
 Real GetSpecificInternalEnergy(Real n, Real T, Real *Y); // specific energy
 ```
 
-**Note that the specific entropy returned by `EOS` are per baryon, not per mass.** 
+**Note that the specific entropy returned by `EOS` is per baryon, not per mass.** 
 
 Because the Valencia formulation typically used in GRMHD is based on pressure instead of temperature, two utility functions are provided to calculate the temperature:
 ```c++

@@ -296,9 +296,9 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mu
         Real muhc = muh;
         // We can tighten up the bounds for mul.
         // The derivative is zero at mu = 0, so we perturb it slightly.
-        if (mu <= root.tol) {
+        /*if (mu <= root.tol) {
           mu += root.tol;
-        }
+        }*/
         bool result = root.NewtonSafe(MuFromW, mulc, muhc, mu, bsq, rsq, rbsq, W);
         if (!result) {
           return Error::BRACKETING_FAILED;
@@ -402,9 +402,16 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   }
   else if (error == Error::CONS_ADJUSTED) {
     solver_result.cons_adjusted = true;
+    // If b_u is rescaled, we also need to adjust D, which means we'll
+    // have to adjust all our other rescalings, too.
+    Real Bsq = SquareVector(B_u, g3d);
+    D = Bsq/bsqr;
+    r_d[0] = S_d[0]/D; r_d[1] = S_d[1]/D; r_d[2] = S_d[2]/D;
+    RaiseForm(r_u, r_d, g3d);
     // We need to recalculate rb if b_u is rescaled.
     rb = Contract(b_u, r_d);
     rbsqr = rb*rb;
+    q = tau/D;
   }
   
   // Bracket the root.
