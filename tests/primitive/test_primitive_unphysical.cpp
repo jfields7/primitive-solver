@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
   // sound speed.
   cons[IDN] = prim[IDN] = 1.0;
   cons[IEN] = -0.5;
-  prim[IPR] = cons[IEN]/(1. - eos.GetGamma());
+  prim[IPR] = cons[IEN]*(1. - eos.GetGamma());
   prim[ITM] = eos.GetTemperatureFromP(prim[IDN], prim[IPR], &prim[IYF]);
   tester.RunTest(&TestUnphysical<IdealGas, DoNothing>,
                  "Unphysical State Test - Negative Tau",
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 
   // Set up a state with tau < 0 and S^2 = 0 which violates the dominant energy condition.
   cons[IEN] = -2.0;
-  prim[IPR] = cons[IEN]/(1. - eos.GetGamma());
+  prim[IPR] = cons[IEN]*(1. - eos.GetGamma());
   prim[ITM] = eos.GetTemperatureFromP(prim[IDN], prim[IPR], &prim[IYF]);
   tester.RunTest(&TestUnphysical<IdealGas, DoNothing>,
                  "Unphysical State Test - Negative Tau, DEC Violation",
