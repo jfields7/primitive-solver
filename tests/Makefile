@@ -51,10 +51,13 @@ primitive_piecewise : $(OBJ_FILE)
 primitive_eoscompose : $(OBJ_FILE)
 	$(call make_test,primitive,test_primitive_eoscompose)
 
+primitive_unphysical : $(OBJ_FILE)
+	$(call make_test,primitive,test_primitive_unphysical)
+
 unit_systems : $(OBJ_FILE)
 	$(call make_test,units,test_units)
 
-tests: dirs  eos_eoscompose eos_idealgas eos_piecewise error_resetfloor primitive_idealgas primitive_piecewise primitive_eoscompose unit_systems
+tests: dirs  eos_eoscompose eos_idealgas eos_piecewise error_resetfloor primitive_idealgas primitive_piecewise primitive_eoscompose primitive_unphysical unit_systems
 
 clean:
 	rm -rf $(OBJ_DIR)*
@@ -69,4 +72,5 @@ run: dirs tests
 	./test_primitive_idealgas; \
 	./test_primitive_piecewise; \
 	./test_primitive_eoscompose; \
+	./test_primitive_unphysical; \
 	./test_units
