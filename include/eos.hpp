@@ -294,7 +294,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \return true if the conserved variables were adjusted, false otherwise.
     inline bool ApplyConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y, Real Bsq) {
       return ConservedFloor(D, Sd, tau, Y, n_atm*GetBaryonMass(), 
-                            GetTauFloor(D, Y, Bsq),
+                            GetTauFloor(std::max(D,min_n*GetBaryonMass()), Y, Bsq),
                             GetTauFloor(n_atm*GetBaryonMass(), Y_atm, Bsq), n_species);
     }
 
