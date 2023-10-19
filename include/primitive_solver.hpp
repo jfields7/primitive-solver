@@ -412,6 +412,7 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
     rb = Contract(b_u, r_d);
     rbsqr = rb*rb;
     q = tau/D;
+    rsqr = Contract(r_d, r_u);
   }
   
   // Bracket the root.
@@ -458,7 +459,7 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   bool result = root.FalsePosition(RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   // WARNING: the reported number of iterations is not thread-safe and should only be trusted
   // on single-thread benchmarks.
-  solver_result.iterations = root.iterations;
+  solver_result.iterations = root.last_count;
   if (!result) {
     HandleFailure(prim, cons, b, g3d);
     solver_result.error = Error::NO_SOLUTION;
