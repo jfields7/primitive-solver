@@ -272,13 +272,13 @@ bool RunWithEOSAndError(ParamReader& params) {
   }
   // Print out the errors
   std::cout << "Errors (relative unless it should be zero):\n"
-            << "  D   = " << err[IDN] << "\n"
-            << "  Sx  = " << err[IM1] << "\n"
-            << "  Sy  = " << err[IM2] << "\n"
-            << "  Sz  = " << err[IM3] << "\n"
-            << "  tau = " << err[IEN] << "\n";
+            << "  D:   " << err[IDN] << "\n"
+            << "  Sx:  " << err[IM1] << "\n"
+            << "  Sy:  " << err[IM2] << "\n"
+            << "  Sz:  " << err[IM3] << "\n"
+            << "  tau: " << err[IEN] << "\n";
   for (int i = 0; i < eos.GetNSpecies(); i++) {
-    std::cout << "  Dy" << i << " = " << err[IYD+i] << "\n";
+    std::cout << "  Dy" << i << ": " << err[IYD+i] << "\n";
   }
   std::cout << "\n";
 
