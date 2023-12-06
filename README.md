@@ -31,6 +31,9 @@ Real GetEntropy(Real n, Real T, Real *Y); // entropy per baryon
 Real GetEnthalpy(Real n, Real T, Real *Y); // enthalpy per mass
 Real GetSoundSpeed(Real n, Real T, Real *Y); // speed of sound in the fluid
 Real GetSpecificInternalEnergy(Real n, Real T, Real *Y); // specific energy
+Real GetBaryonChemicalPotential(Real n, Real T, Real *Y); // baryon chemical potential
+Real GetChargeChemicalPotential(Real n, Real T, Real *Y); // charge chemical potential
+Real GetElectronLeptonChemicalPotential(Real n, Real T, Real *Y); // electron-lepton chemical potential
 ```
 
 **Note that the specific entropy returned by `EOS` is per baryon, not per mass.** 
@@ -66,9 +69,10 @@ inline constexpr Real EnergyConversion(UnitSystem& b) const;
 inline constexpr Real EntropyConversion(UnitSystem& b) const;
 inline constexpr Real PressureConversion(UnitSystem& b) const;
 inline constexpr Real TemperatureConversion(UnitSystem& b) const;
+inline constexpr Real ChemicalPotentialConversion(UnitSystem& b) const;
 ```
 
-Each `UnitSystem` defines five constants in code units and seven conversions from CGS:
+Each `UnitSystem` defines five constants in code units and eight conversions from CGS:
 ```c++
 const Real c;      // Speed of light
 const Real G;      // Gravitational constant
@@ -83,6 +87,7 @@ const Real mass;        // g in code units
 const Real energy;      // erg in code units
 const Real pressure;    // erg/cm^3 in code units
 const Real temperature; // K in code units
+const Real chemicalPotential; // erg in code units
 ```
 There is some redundancy in these units (defining density when length and mass are already available, for example), and it is likely that will be refactored at some point.
 
@@ -135,6 +140,9 @@ Real Entropy(Real n, Real T, Real *Y);           // Entropy per baryon  (NOT per
 Real Enthalpy(Real n, Real T, Real *Y);          // Enthalpy per baryon (NOT per mass!)
 Real SoundSpeed(Real n, Real T, Real *Y);        // Sound speed from temperature
 Real SpecificInternalEnergy(Real n, Real T, Real *Y);    // Specific energy from temperature
+Real BaryonChemicalPotential(Real n, Real T, Real *Y);         // Baryon chemical potential
+Real ChargeChemicalPotential(Real n, Real T, Real *Y);         // Charge chemical potential
+Real ElectronLeptonChemicalPotential(Real n, Real T, Real *Y); // Electron-lepton chemical potential
 Real MinimumEnthalpy();                          // Global minimum enthalpy per baryon (NOT per mass!)
 ```
 It also expects the following member (protected) variables:
