@@ -225,12 +225,12 @@ bool RunWithEOSAndError(ParamReader& params) {
   Real g3u[NSPMETRIC];
   // Construct the inverse.
   Real idetg = 1.0/detg;
-  g3d[S11] = (g3d[S22]*g3d[S33] - g3d[S23]*g3d[S23])*idetg;
-  g3d[S12] = (g3d[S13]*g3d[S23] - g3d[S12]*g3d[S33])*idetg;
-  g3d[S13] = (g3d[S12]*g3d[S23] - g3d[S13]*g3d[S22])*idetg;
-  g3d[S22] = (g3d[S11]*g3d[S33] - g3d[S13]*g3d[S13])*idetg;
-  g3d[S23] = (g3d[S12]*g3d[S13] - g3d[S11]*g3d[S23])*idetg;
-  g3d[S33] = (g3d[S11]*g3d[S22] - g3d[S12]*g3d[S12])*idetg;
+  g3u[S11] = (g3d[S22]*g3d[S33] - g3d[S23]*g3d[S23])*idetg;
+  g3u[S12] = (g3d[S13]*g3d[S23] - g3d[S12]*g3d[S33])*idetg;
+  g3u[S13] = (g3d[S12]*g3d[S23] - g3d[S13]*g3d[S22])*idetg;
+  g3u[S22] = (g3d[S11]*g3d[S33] - g3d[S13]*g3d[S13])*idetg;
+  g3u[S23] = (g3d[S12]*g3d[S13] - g3d[S11]*g3d[S23])*idetg;
+  g3u[S33] = (g3d[S11]*g3d[S22] - g3d[S12]*g3d[S12])*idetg;
 
   Real prim[NPRIM];
   Primitive::SolverResult result = ps.ConToPrim(prim, cons, bu, g3d, g3u);

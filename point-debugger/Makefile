@@ -29,4 +29,4 @@ debugger: $(OBJ_FILES)
 
 clean:
 	rm -rf $(OBJ_DIR)*
-	rm -rf $(BIN_DIR)*
+	rm -rf $(BIN_DIR)/point-debugger
