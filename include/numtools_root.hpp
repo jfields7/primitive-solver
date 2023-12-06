@@ -18,8 +18,13 @@ class Root {
     unsigned int iterations;
     /// Solver tolerance
     Real tol;
-    /// Only used for benchmarking, not thread-safe.
-    int last_count;
+
+    struct RootResult {
+      bool success;
+      Real tolerance;
+      Real flast;
+      unsigned int iterations;
+    };
 
     Root() : iterations(30), tol(1e-15) {}
 
@@ -43,11 +48,11 @@ class Root {
     // \param[in]  args  Additional arguments required by f.
 
     template<class Functor, class ... Types>
-    inline bool FalsePosition(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
+    inline RootResult FalsePosition(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
+      RootResult result{true, tol, 0., 0};
       int side = 0;
       Real ftest;
       unsigned int count = 0;
-      last_count = 0;
       // Get our initial bracket.
       Real flb = f(lb, args...);
       Real fub = f(ub, args...);
@@ -56,14 +61,17 @@ class Root {
       // If one of the bounds is already within tolerance of the root, we can skip all of this.
       if (std::fabs(flb) <= tol) {
         x = lb;
-        return true;
+        result.flast = flb;
+        return result;
       }
       else if (std::fabs(fub) <= tol) {
         x = ub;
-        return true;
+        result.flast = fub;
+        return result;
       }
       if (flb*fub > 0) {
-        return false;
+        result.success = false;
+        return result;
       }
       do {
         xold = x;
@@ -73,8 +81,9 @@ class Root {
         // Calculate f at the prospective root.
         ftest = f(x,args...);
         if (std::fabs((x-xold)/x) <= tol) {
-          last_count = count;
-          return true;
+          result.iterations = count;
+          result.flast = ftest;
+          return result;
         }
         // Check the sign of f. If f is on the same side as the lower bound, then we adjust
         // the lower bound. Similarly, if f is on the same side as the upper bound, we 
@@ -99,10 +108,12 @@ class Root {
         }
       }
       while (count < iterations);
-      last_count = count;
+      result.iterations = count;
+      result.flast = ftest;
 
       // Return success if we're below the tolerance, otherwise report failure.
-      return fabs((x-xold)/x) <= tol;
+      result.success = fabs((x-xold)/x) <= tol;
+      return result;
     }
     
     // }}}
@@ -127,7 +138,7 @@ class Root {
     template<class Functor, class ... Types>
     inline bool Chandrupatla(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
       unsigned int count = 0;
-      last_count = 0;
+      //last_count = 0;
       // Get our initial bracket.
       Real flb = f(lb, args...);
       Real fub = f(ub, args...);
@@ -189,7 +200,7 @@ class Root {
         }
       }
       while (count < iterations);
-      last_count = count;
+      //last_count = count;
 
       // Return success if we're below the tolerance, otherwise report failure.
       return fabs((x-x1)/x) <= tol;

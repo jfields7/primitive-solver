@@ -226,7 +226,7 @@ class PrimitiveSolver {
     }
 
     /// Get the root solver used by this PrimitiveSolver.
-    inline const NumTools::Root& GetRootSolver() const {
+    inline NumTools::Root& GetRootSolver() {
       return root;
     }
 
@@ -456,11 +456,9 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   // TODO: This should be done with something like TOMS748 once it's
   // available.
   Real n, P, T, mu;
-  bool result = root.FalsePosition(RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
-  // WARNING: the reported number of iterations is not thread-safe and should only be trusted
-  // on single-thread benchmarks.
-  solver_result.iterations = root.last_count;
-  if (!result) {
+  NumTools::Root::RootResult result = root.FalsePosition(RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
+  solver_result.iterations = result.iterations;
+  if (!result.success) {
     HandleFailure(prim, cons, b, g3d);
     solver_result.error = Error::NO_SOLUTION;
     return solver_result;

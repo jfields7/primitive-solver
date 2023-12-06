@@ -21,6 +21,7 @@ SRC_DIRS := $(dir $(SRC_FILES))
 VPATH := $(SRC_DIRS)
 TEST_DIR := tests/
 BENCHMARK_DIR := benchmark/
+POINT_DIR := point-debugger/
 INSTALL_DIR := /usr/local
 
 LIBRARY_NAME := libPrimitiveSolver.a
@@ -53,6 +54,7 @@ clean :
 	rm -rf $(LIBRARY)
 	cd $(TEST_DIR) && $(MAKE) clean
 	cd $(BENCHMARK_DIR) && $(MAKE) clean
+	cd $(POINT_DIR) && $(MAKE) clean
 
 .PHONY: install
 install:
@@ -95,3 +97,7 @@ benchmark : $(LIBRARY)
 .PHONY: benchmark_stress
 benchmark_stress : $(LIBRARY)
 	cd $(BENCHMARK_DIR) && $(MAKE) stress
+
+.PHONY: build_debugger
+build_debugger : $(LIBRARY)
+	$(MAKE) -C $(POINT_DIR)
