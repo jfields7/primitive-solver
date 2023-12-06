@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <type_traits>
+#include <cmath>
 
 // PrimitiveSolver headers
 #include <primitive_solver.hpp>
@@ -255,6 +256,31 @@ bool RunWithEOSAndError(ParamReader& params) {
     }
     std::cout << "\n";
   }
+
+  // For a sanity check, convert the primitive variables back to conserved variables.
+  Real cons_new[NCONS];
+  ps.PrimToCon(prim, cons_new, bu, g3d);
+  Real err[NCONS];
+  int nhyd = NHYDRO - MAX_SPECIES + eos.GetNSpecies();
+  for (int i = 0; i < nhyd; i++) {
+    if (std::fabs(cons[i]) > 0) {
+      err[i] = std::fabs((cons_new[i] - cons[i])/cons[i]);
+    }
+    else {
+      err[i] = std::fabs(cons_new[i] - cons[i]);
+    }
+  }
+  // Print out the errors
+  std::cout << "Errors (relative unless it should be zero):\n"
+            << "  D   = " << err[IDN] << "\n"
+            << "  Sx  = " << err[IM1] << "\n"
+            << "  Sy  = " << err[IM2] << "\n"
+            << "  Sz  = " << err[IM3] << "\n"
+            << "  tau = " << err[IEN] << "\n";
+  for (int i = 0; i < eos.GetNSpecies(); i++) {
+    std::cout << "  Dy" << i << " = " << err[IYD+i] << "\n";
+  }
+  std::cout << "\n";
 
   return true;
 }
