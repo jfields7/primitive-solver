@@ -77,6 +77,39 @@ bool TestPressure(EOS<EOSCompOSE, DoNothing>* peos,
   return true;
 }
 
+bool TestChemicalPotentials(EOS<EOSCompOSE, DoNothing>* peos,
+    Real mub_want, Real muq_want, Real mul_want, Real n, Real T, Real* Y, Real tol) {
+
+  Real mub = peos->GetBaryonChemicalPotential(n, T, Y);
+  Real muq = peos->GetChargeChemicalPotential(n, T, Y);
+  Real mul = peos->GetElectronLeptonChemicalPotential(n, T, Y);
+  
+  bool success = true;
+
+  Real err = GetError(mub_want, mub);
+  if (err > tol) {
+    std::cout << "  Baryon chemical potential not interpolated correctly" << std::endl;
+    PrintError(mub_want, mub);
+    success = false;
+  }
+
+  err = GetError(muq_want, muq);
+  if (err > tol) {
+    std::cout << "  Charge chemical potential not interpolated correctly" << std::endl;
+    PrintError(muq_want, muq);
+    success = false;
+  }
+
+  err = GetError(mul_want, mul);
+  if (err > tol) {
+    std::cout << "  Electron-lepton chemical potential not interpolated correctly" << std::endl;
+    PrintError(mul_want, mul);
+    success = false;
+  }
+
+  return success;
+}
+
 void RunTestSuite(UnitTests& tester, EOS<EOSCompOSE, DoNothing>* peos,
       Real n, Real T, Real* Y, Real tol) {
   std::stringstream ss;
@@ -118,8 +151,14 @@ int main(int argc, char ** argv) {
   Real Tp = 10.0;
   Real Yp[] = {0.3};
   Real p_want = 1.039487191089063e02;
+  Real mub_want = 1490.8075594908983;
+  Real muq_want = -97.4389607494398;
+  Real mul_want = 247.24747752185698;
+
   tester.RunTest(&TestPressure, "Evaluate Pressure",
     &eos, p_want, np, Tp, Yp, tol);
+  tester.RunTest(&TestChemicalPotentials, "Evaluate Chemical Potentials",
+    &eos, mub_want, muq_want, mul_want, np, Tp, Yp, tol);
 
   RunTestSuite(tester, &eos, np, Tp, Yp, tol);
 
