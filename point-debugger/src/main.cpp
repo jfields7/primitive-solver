@@ -141,10 +141,10 @@ bool RunWithEOSAndError(ParamReader& params) {
   } else {
     std::cout << "Error: Unknown unit system: " << units << "\n";
     std::cout << "  Permitted options are:\n"
-                 "    CGS\n"
-                 "    GeometricKilometer\n"
-                 "    GeometricSolar\n"
-                 "    Nuclear\n";
+              << "    CGS\n"
+              << "    GeometricKilometer\n"
+              << "    GeometricSolar\n"
+              << "    Nuclear\n";
     return false;
   }
   Real dfloor = params.readAsDouble("Error", "dfloor");
@@ -196,18 +196,19 @@ bool RunWithEOSAndError(ParamReader& params) {
 
   // Load conserved variables
   Real cons[NCONS] = {0.0};
+  Real cons_old[NCONS] = {0.0};
   Real bu[NMAG] = {0.0};
   Real g3d[NSPMETRIC] = {0.0};
 
-  cons[IDN] = params.readAsDouble("State", "D");
-  cons[IM1] = params.readAsDouble("State", "Sx");
-  cons[IM2] = params.readAsDouble("State", "Sy");
-  cons[IM3] = params.readAsDouble("State", "Sz");
-  cons[IEN] = params.readAsDouble("State", "tau");
+  cons[IDN] = cons_old[IDN] = params.readAsDouble("State", "D");
+  cons[IM1] = cons_old[IM1] = params.readAsDouble("State", "Sx");
+  cons[IM2] = cons_old[IM2] = params.readAsDouble("State", "Sy");
+  cons[IM3] = cons_old[IM3] = params.readAsDouble("State", "Sz");
+  cons[IEN] = cons_old[IEN] = params.readAsDouble("State", "tau");
   for (int i = 0; i < eos.GetNSpecies(); i++) {
     std::stringstream ss;
     ss << "Dy" << (i+1);
-    cons[IYD+i] = params.readAsDouble("State", ss.str());
+    cons[IYD+i] = cons_old[IYD+i] = params.readAsDouble("State", ss.str());
   }
 
   bu[IB1] = params.readAsDouble("State", "Bx");
@@ -263,11 +264,11 @@ bool RunWithEOSAndError(ParamReader& params) {
   Real err[NCONS];
   int nhyd = NHYDRO - MAX_SPECIES + eos.GetNSpecies();
   for (int i = 0; i < nhyd; i++) {
-    if (std::fabs(cons[i]) > 0) {
-      err[i] = std::fabs((cons_new[i] - cons[i])/cons[i]);
+    if (std::fabs(cons_old[i]) > 0) {
+      err[i] = std::fabs((cons_new[i] - cons_old[i])/cons_old[i]);
     }
     else {
-      err[i] = std::fabs(cons_new[i] - cons[i]);
+      err[i] = std::fabs(cons_new[i] - cons_old[i]);
     }
   }
   // Print out the errors
