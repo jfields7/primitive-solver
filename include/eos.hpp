@@ -308,7 +308,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //! \fn Real GetRawBaryonMass() const
     //  \brief Get the baryon mass used by this EOS. Note that
     //         this factor does not convert density.
-    inline Real GetBaryonMass() const {
+    inline Real GetRawBaryonMass() const {
       return mb*eos_units->MassConversion(*code_units);
     }
 
