@@ -23,6 +23,7 @@ class Root {
       bool success;
       Real tolerance;
       Real flast;
+      Real err;
       unsigned int iterations;
     };
 
@@ -49,7 +50,7 @@ class Root {
 
     template<class Functor, class ... Types>
     inline RootResult FalsePosition(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
-      RootResult result{true, tol, 0., 0};
+      RootResult result{true, tol, 0., 1e10, 0};
       int side = 0;
       Real ftest;
       unsigned int count = 0;
@@ -62,24 +63,34 @@ class Root {
       if (std::fabs(flb) <= tol) {
         x = lb;
         result.flast = flb;
+        result.err = std::fabs(flb);
         return result;
       }
       else if (std::fabs(fub) <= tol) {
         x = ub;
         result.flast = fub;
+        result.err = std::fabs(fub);
         return result;
       }
       if (flb*fub > 0) {
         result.success = false;
         return result;
       }
+      unsigned int iter_exp = std::log2(std::fabs(ub - lb)/(2.*tol));
+      bool too_curved = false;
       do {
         xold = x;
         // Calculate the new root position.
-        x = (fub*lb - flb*ub)/(fub - flb);
+        if (count >= iter_exp || too_curved) {
+          // If we're converging too slowly, we revert to bisection.
+          x = 0.5*(lb + ub);
+        } else {
+          x = (fub*lb - flb*ub)/(fub - flb);
+        }
         count++;
         // Calculate f at the prospective root.
         ftest = f(x,args...);
+        result.err = std::fabs((x-xold/x) <= tol);
         if (std::fabs((x-xold)/x) <= tol) {
           result.iterations = count;
           result.flast = ftest;
@@ -110,12 +121,78 @@ class Root {
       while (count < iterations);
       result.iterations = count;
       result.flast = ftest;
+      result.err = fabs((x-xold)/x);
 
       // Return success if we're below the tolerance, otherwise report failure.
-      result.success = fabs((x-xold)/x) <= tol;
+      result.success = result.err <= tol;
       return result;
     }
     
+    // }}}
+
+    // Hybrid {{{
+
+    //! \brief Find the root of a functor f using a hybrid bracketing method
+    //
+    // Find the root of a generic functor taking at least one argument. The first
+    // argument is assumed to be the quantity of interest. All other arguments are
+    // assumed to be constant parameters for the function. The root-finding method
+    // is a hybrid method of false position and bisection. Bisection is guaranteed
+    // to converge in n = log2 |ub - lb|/(2*tol) iterations. So, we can estimate the
+    // expected convergence and switch to bisection if it's not good enough.
+    //
+    // \param[in]  f  The functor to find a root for. Its root fucntion must take at
+    //                least one argument.
+    // \param[in,out]  lb  The lower bound for the root.
+    // \param[in,out]  ub  The upper bound for the root.
+    // \param[out]  x  The location of the root.
+    // \param[in]  args  Additional arguments required by f.
+
+    /*template<class Functor, class ... Types>
+    inline RootResult Hybrid(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
+      RootResult result{true, tol, 0., 1e10, 0};
+      int side = 0;
+      Real ftest;
+      unsigned int count = 0;
+      // Get our initial bracket.
+      Real flb = f(lb, args...);
+      Real fub = f(ub, args...);
+      Real dist = std::fabs(ub - lb);
+      Real xold;
+      x = lb;
+      // If one of the bounds is already within tolerance of the root, we can skip all of this.
+      if (std::fabs(flb) <= tol) {
+        x = lb;
+        result.flast = flb;
+        result.err = std::fabs(flb);
+        return result;
+      }
+      else if (std::fabs(fub) <= tol) {
+        x = ub;
+        result.flast = fub;
+        result.err = std::fabs(fub);
+        return result;
+      }
+      if (flb*fub > 0) {
+        result.success = false;
+        return result;
+      }
+      do {
+        xold = x;
+        // Calculate the new root position.
+        x = (fub*lb - flb*ub)/(fub - flb);
+        count++;
+        // To determine if we should do bisection or false position, estimate the
+        // convergence for bisection at this point.
+        Real err = std::abs((x - xold)/x);
+        Real err_bs = dist/(2 << (count + 1));
+        // If convergence is too slow, switch to bisection.
+        if (err > err_bs) {
+          x = 0.5*(lb + ub);
+        }
+      } while (count < iterations)
+    }*/
+
     // }}}
 
     // Chandrupatla {{{
