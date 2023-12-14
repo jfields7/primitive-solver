@@ -16,6 +16,7 @@ enum struct Error {
   CONS_FLOOR,
   PRIM_FLOOR,
   CONS_ADJUSTED,
+  SLOW_CONVERGENCE
 };
 
 struct SolverResult {

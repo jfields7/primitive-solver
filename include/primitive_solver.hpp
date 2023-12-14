@@ -459,9 +459,17 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   NumTools::Root::RootResult result = root.FalsePosition(RootFunction, mul, muh, mu, D, q, bsqr, rsqr, rbsqr, Y, peos, &n, &T, &P);
   solver_result.iterations = result.iterations;
   if (!result.success) {
-    HandleFailure(prim, cons, b, g3d);
-    solver_result.error = Error::NO_SOLUTION;
-    return solver_result;
+    // It may be the case that the result isn't great, but it's still valid. In this case,
+    // we just warn the user about convergence being poor.
+    if (result.iterations == root.iterations && 
+        result.err < peos->GetFailureTolerance()) {
+      solver_result.error = Error::SLOW_CONVERGENCE;
+    }
+    else {
+      HandleFailure(prim, cons, b, g3d);
+      solver_result.error = Error::NO_SOLUTION;
+      return solver_result;
+    }
   }
 
   // Retrieve the primitive variables.

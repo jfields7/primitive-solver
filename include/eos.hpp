@@ -122,6 +122,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using ErrorPolicy::fail_primitive_floor;
     using ErrorPolicy::adjust_conserved;
     using ErrorPolicy::max_bsq;
+    using ErrorPolicy::fail_tol;
 
   public:
     //! \fn EOS()
@@ -134,6 +135,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       n_threshold = 1.0;
       T_atm = 1e-10;
       v_max = 1.0 - 1e-15;
+      fail_tol = 1e-10;
       max_bsq = std::numeric_limits<Real>::max();
       code_units = eos_units;
       for (int i = 0; i < MAX_SPECIES; i++) {
@@ -516,6 +518,18 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       Real e_eos = e*code_units->PressureConversion(*eos_units);
       EnergyLimits(e_eos, MinimumEnergy(n, Y), MaximumEnergy(n, Y));
       e = e_eos*eos_units->PressureConversion(*code_units);
+    }
+
+    //! \brief Set the tolerance for failed points. Anything between the solver
+    //!        tolerance and the error tolerance will be reported as slow convergence
+    //!        rather than complete failure.
+    inline void SetFailureTolerance(Real tol) {
+      fail_tol = std::max(tol, 0.0);
+    }
+
+    //! \brief Get the failure tolerance.
+    inline Real GetFailureTolerance() const {
+      return fail_tol;
     }
 
     //! \brief Respond to a failed solve.

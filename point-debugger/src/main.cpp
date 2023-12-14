@@ -62,6 +62,8 @@ std::string CodeToString(Primitive::Error error) {
       return "PRIM_FLOOR";
     case Primitive::Error::CONS_ADJUSTED:
       return "CONS_ADJUSTED";
+    case Primitive::Error::SLOW_CONVERGENCE:
+      return "SLOW_CONVERGENCE";
   }
   return "UNKNOWN";
 }
@@ -172,6 +174,11 @@ bool RunWithEOSAndError(ParamReader& params) {
     bsqmax = 1e6;
   }
   eos.SetMaximumMagnetization(bsqmax);
+  Real fail_tol = params.readAsDouble("Error", "fail_tol");
+  if (fail_tol <= 0.) {
+    fail_tol = 1e-5;
+  }
+  eos.SetFailureTolerance(fail_tol);
   for (int i = 0; i < eos.GetNSpecies(); i++) {
     std::stringstream ss;
     ss << "y" << (i+1) << "floor";
