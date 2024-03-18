@@ -199,7 +199,7 @@ bool RunWithEOSAndError(ParamReader& params) {
   if (tol <= 0) {
     tol = 1e-15;
   }
-  ps.GetRootSolver().tol = tol;
+  ps.tol = tol;
 
   // Load conserved variables
   Real cons[NCONS] = {0.0};
@@ -251,6 +251,22 @@ bool RunWithEOSAndError(ParamReader& params) {
             << "  cons floor applied: " << result.cons_floor << "\n"
             << "  prim floor applied: " << result.prim_floor << "\n"
             << "  cons adjusted: " << result.cons_adjusted << "\n\n";
+  std::cout << "Input conserved: \n"
+            << "  D   = " << cons_old[IDN] << "\n"
+            << "  Sx  = " << cons_old[IM1] << "\n"
+            << "  Sy  = " << cons_old[IM2] << "\n"
+            << "  Sz  = " << cons_old[IM3] << "\n"
+            << "  tau = " << cons_old[IEN] << "\n"
+            << "  Bx  = " << bu[IB1] << "\n"
+            << "  By  = " << bu[IB2] << "\n"
+            << "  Bz  = " << bu[IB3] << "\n\n";
+  std::cout << "Input metric: \n"
+            << "  gxx = " << g3d[S11] << "\n"
+            << "  gxy = " << g3d[S12] << "\n"
+            << "  gxz = " << g3d[S13] << "\n"
+            << "  gyy = " << g3d[S22] << "\n"
+            << "  gyz = " << g3d[S23] << "\n"
+            << "  gzz = " << g3d[S33] << "\n\n";
   if (result.error == Primitive::Error::SUCCESS) {
     std::cout << "Calculated primitives: \n"
               << "  n  = " << prim[IDN] << "\n"

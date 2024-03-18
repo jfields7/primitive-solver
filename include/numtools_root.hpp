@@ -6,8 +6,10 @@
 //
 //  \brief Declares some functions for root-finding.
 
+#include <iostream>
 #include <ps_types.hpp>
 #include <cmath>
+#include <limits>
 
 namespace NumTools {
 
@@ -16,8 +18,6 @@ class Root {
   public:
     /// Maximum number of iterations
     unsigned int iterations;
-    /// Solver tolerance
-    Real tol;
 
     struct RootResult {
       bool success;
@@ -25,9 +25,10 @@ class Root {
       Real flast;
       Real err;
       unsigned int iterations;
+      bool bracketed;
     };
 
-    Root() : iterations(30), tol(1e-15) {}
+    Root() : iterations(30) {}
 
     Root(Root const&) = delete;
     void operator=(Root const&) = delete;
@@ -49,15 +50,16 @@ class Root {
     // \param[in]  args  Additional arguments required by f.
 
     template<class Functor, class ... Types>
-    inline RootResult FalsePosition(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
-      RootResult result{true, tol, 0., 1e10, 0};
+    inline RootResult FalsePosition(Functor&& f, Real &lb, Real &ub, Real& x, Real tol,
+                                    Types ... args) {
+      RootResult result{true, tol, 0., 1e10, 0, true};
       int side = 0;
       Real ftest;
       unsigned int count = 0;
       // Get our initial bracket.
       Real flb = f(lb, args...);
       Real fub = f(ub, args...);
-      Real xold;
+      Real xold, dist;
       x = lb;
       // If one of the bounds is already within tolerance of the root, we can skip all of this.
       if (std::fabs(flb) <= tol) {
@@ -74,24 +76,34 @@ class Root {
       }
       if (flb*fub > 0) {
         result.success = false;
+        result.bracketed = false;
         return result;
       }
+      Real eps = 0.0;
       unsigned int iter_exp = std::log2(std::fabs(ub - lb)/(2.*tol));
-      bool too_curved = false;
       do {
         xold = x;
+        dist = ub - lb;
         // Calculate the new root position.
-        if (count >= iter_exp || too_curved) {
+        if (count >= iter_exp) {
           // If we're converging too slowly, we revert to bisection.
           x = 0.5*(lb + ub);
         } else {
           x = (fub*lb - flb*ub)/(fub - flb);
+          // Check that we're not stuck against one of the boundaries
+          if ((ub - x)/dist < eps) {
+            flb *= 0.5;
+            x = (fub*lb - flb*ub)/(fub - flb);
+          } else if ((x - lb)/dist < eps) {
+            fub *= 0.5;
+            x = (fub*lb - flb*ub)/(fub - flb);
+          }
         }
         count++;
         // Calculate f at the prospective root.
         ftest = f(x,args...);
-        result.err = std::fabs((x-xold/x) <= tol);
-        if (std::fabs((x-xold)/x) <= tol) {
+        result.err = std::fabs((x-xold)/x);
+        if (result.err <= tol) {
           result.iterations = count;
           result.flast = ftest;
           return result;
@@ -102,19 +114,19 @@ class Root {
         // the sides to force the new root to fall on the other side. This allows us to
         // whittle down both sides at once and get better average convergence.
         if (ftest*flb >= 0) {
-          flb = ftest;
-          lb = x;
           if (side == 1) {
             fub /= 2.0;
           }
+          flb = ftest;
+          lb = x;
           side = 1;
         }
         else {
-          fub = ftest;
-          ub = x;
           if (side == -1) {
             flb /= 2.0;
           }
+          fub = ftest;
+          ub = x;
           side = -1;
         }
       }
@@ -132,32 +144,30 @@ class Root {
 
     // Hybrid {{{
 
-    //! \brief Find the root of a functor f using a hybrid bracketing method
+    //! \brief Find the root of a functor f using a hybrid false position/bisection
     //
     // Find the root of a generic functor taking at least one argument. The first
     // argument is assumed to be the quantity of interest. All other arguments are
-    // assumed to be constant parameters for the function. The root-finding method
-    // is a hybrid method of false position and bisection. Bisection is guaranteed
-    // to converge in n = log2 |ub - lb|/(2*tol) iterations. So, we can estimate the
-    // expected convergence and switch to bisection if it's not good enough.
+    // assumed to be constant parameters for the function. The root-finding method is
+    // the ITP method, which is an enhancement of false position designed to guarantee
+    // results no worse than bisection.
     //
-    // \param[in]  f  The functor to find a root for. Its root fucntion must take at
+    // \param[in]  f  The functor to find a root for. Its root function must take at
     //                least one argument.
     // \param[in,out]  lb  The lower bound for the root.
     // \param[in,out]  ub  The upper bound for the root.
     // \param[out]  x  The location of the root.
     // \param[in]  args  Additional arguments required by f.
 
-    /*template<class Functor, class ... Types>
-    inline RootResult Hybrid(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
-      RootResult result{true, tol, 0., 1e10, 0};
-      int side = 0;
+    template<class Functor, class ... Types>
+    inline RootResult ITP(Functor&& f, Real &lb, Real &ub, Real& x, Real tol,
+                          Types ... args) {
+      RootResult result{true, tol, 0., 1e10, 0, true};
       Real ftest;
       unsigned int count = 0;
       // Get our initial bracket.
       Real flb = f(lb, args...);
       Real fub = f(ub, args...);
-      Real dist = std::fabs(ub - lb);
       Real xold;
       x = lb;
       // If one of the bounds is already within tolerance of the root, we can skip all of this.
@@ -175,23 +185,194 @@ class Root {
       }
       if (flb*fub > 0) {
         result.success = false;
+        result.bracketed = false;
         return result;
       }
+      // Hyperparameters
+      Real k1 = 0.2*std::fabs(ub - lb);
+      Real k2 = 2.0;
+      Real n0 = 1.0;
+
+      // Preprocessing
+      Real nhalf = std::ceil(std::log2((ub - lb)/(2.0*tol)));
+      int nmax = (int)(nhalf + n0);
+      Real xhalf, xf, r, delta, dx, sigma, xt;
+      do {
+        // Updating parameters
+        xold = x;
+        xhalf = 0.5*(ub + lb);
+        dx = ub - lb;
+        r = tol*std::exp2(nmax - count) - 0.5*dx;
+        delta = k1*std::pow(dx,k2);
+
+        // Interpolation
+        xf = (fub*lb - flb*ub)/(fub - flb);
+
+        // Truncation
+        Real diff = xhalf - xf;
+        sigma = (0. < diff) - (diff < 0.);
+        if (delta <= std::fabs(xhalf - xf)) {
+          xt = xf + sigma*delta;
+        } else {
+          xt = xhalf;
+        }
+
+        // Projection
+        if (std::fabs(xt - xhalf) <= r) {
+          x = xt;
+        } else {
+          x = xhalf - sigma*r;
+        }
+        count++;
+
+        // Terminate if we're within tolerance
+        if (std::fabs((x - xold)/x) <= tol) {
+          break;
+        }
+
+        // Updating interval
+        ftest = f(x, args...);
+        if (ftest*fub > 0) {
+          ub = x;
+          fub = ftest;
+        } else {
+          lb = x;
+          flb = ftest;
+        }
+      }
+      while (count < iterations);
+      result.iterations = count;
+      result.flast = ftest;
+      result.err = fabs((x-xold)/x);
+
+      // Return success if we're below the tolerance, otherwise report failure.
+      result.success = result.err <= tol;
+      return result;
+    }
+    
+    // }}}
+
+
+    // Brent {{{
+
+    //! \brief Find the root of a functor f using Brent's method.
+    //
+    // Find the root of a generic functor taking at least one argument. The first
+    // argument is assumed to be the quantity of interest. All other arguments are
+    // assumed to be constant parameters for the function. The root-finding method
+    // is Brent's method, which is a hybrid method that attempts to switch to provide
+    // at least linear convergence.
+    //
+    // \param[in]  f  The functor to find a root for. Its root fucntion must take at
+    //                least one argument.
+    // \param[in,out]  lb  The lower bound for the root.
+    // \param[in,out]  ub  The upper bound for the root.
+    // \param[out]  x  The location of the root.
+    // \param[in]  args  Additional arguments required by f.
+
+    template<class Functor, class ... Types>
+    inline RootResult Brent(Functor&& f, Real &lb, Real &ub, Real& x, Real tol,
+                            Types ... args) {
+      RootResult result{true, tol, 0., 1e10, 0, true};
+      unsigned int count = 0;
+      Real flb = f(lb, args...);
+      Real fub = f(ub, args...);
+      Real ftest;
+      Real xold;
+      x = lb;
+      ftest = flb;
+      // If one of the bounds is already within tolerance of the root, we can skip the
+      // rest of the root solve.
+      if (std::fabs(flb) <= tol) {
+        x = lb;
+        result.flast = flb;
+        result.err = std::fabs(flb);
+        return result;
+      }
+      else if (std::fabs(fub) <= tol) {
+        x = ub;
+        result.flast = fub;
+        result.err = std::fabs(fub);
+        return result;
+      }
+      if (flb*fub > 0) {
+        result.success = false;
+        result.bracketed = false;
+        return result;
+      }
+      unsigned int iter_exp = std::log2(std::fabs(ub - lb)/(2.*tol));
+      Real R, S, T, P, Q;
+      Real c = lb, fc = flb;
+      Real b = x, fb = flb;
+      Real a = ub, fa = fub;
       do {
         xold = x;
-        // Calculate the new root position.
-        x = (fub*lb - flb*ub)/(fub - flb);
-        count++;
-        // To determine if we should do bisection or false position, estimate the
-        // convergence for bisection at this point.
-        Real err = std::abs((x - xold)/x);
-        Real err_bs = dist/(2 << (count + 1));
-        // If convergence is too slow, switch to bisection.
-        if (err > err_bs) {
+        // Estimate the convergence rate
+        Real conv = std::fabs((a - c)/(b - a));
+        // Calculate the new root position
+        if (count >= iter_exp || conv < 2.) {
+          // If we're converging too slowly, we revert to bisection.
           x = 0.5*(lb + ub);
+        } else {
+          // Find the new root using interpolation.
+          if (fb == fa) {
+            // Use the secant method to start because we have colliding points.
+            x = b + fb*(b - c)/(fb - fc);
+          }
+          else if (fb == fc) {
+            // Use the secant method to start because we have colliding points.
+            x = b + fb*(b - a)/(fb - fa);
+          }
+          else {
+            // Find the new root with inverse quadratic interpolation.
+            R = fb/fc;
+            S = fb/fa;
+            T = fa/fb;
+            P = S*(T*(R - T)*(c - b) - (1. - R)*(b - a));
+            Q = (T - 1.)*(R - 1.)*(S - 1.);
+            x = b + P/Q;
+          }
+          // If x is outside the bounds, use bisection instead.
+          if (x > ub || x < lb || !std::isfinite(x)) {
+            x = 0.5*(lb + ub);
+          }
+          else {
+            std::cout << "Didn't need bisection!\n";
+          }
         }
-      } while (count < iterations)
-    }*/
+        count++;
+        // Calculate f at the prospective root.
+        ftest = f(x,args...);
+        result.err = std::fabs((x-b)/x);
+        if (result.err <= tol) {
+          result.iterations = count;
+          result.flast = ftest;
+          return result;
+        }
+        // Update the bounds
+        if (ftest*flb >= 0.0) {
+          flb = ftest;
+          lb = x;
+        } else {
+          fub = ftest;
+          ub = x;
+        }
+        // Cycle the points.
+        c = a;
+        a = b;
+        b = x;
+        fc = fa;
+        fa = fb;
+        fb = ftest;
+      } while (count < iterations);
+      result.iterations = count;
+      result.flast = ftest;
+      result.err = std::fabs((x-xold)/x);
+
+      // Return success if we're below the tolerance, otherwise report failure.
+      result.success = result.err <= tol;
+      return result;
+    }
 
     // }}}
 
@@ -213,7 +394,8 @@ class Root {
     // \param[in]  args  Additional arguments required by f.
 
     template<class Functor, class ... Types>
-    inline bool Chandrupatla(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
+    inline bool Chandrupatla(Functor&& f, Real &lb, Real &ub, Real& x, Real tol,
+                             Types ... args) {
       unsigned int count = 0;
       //last_count = 0;
       // Get our initial bracket.
@@ -299,7 +481,8 @@ class Root {
      * \param[in]     args  Additional arguments required by f.
      */
     template<class Functor, class ... Types>
-    inline bool NewtonSafe(Functor&& f, Real &lb, Real &ub, Real& x, Types ... args) {
+    inline bool NewtonSafe(Functor&& f, Real &lb, Real &ub, Real& x, Real tol,
+                           Types ... args) {
       Real fx;
       Real dfx;
       Real xold;
@@ -329,13 +512,6 @@ class Root {
         xold = x;
         // Calculate f and df at point x.
         f(fx, dfx, x, args...);
-        x = x - fx/dfx;
-        // Check that the root is bounded properly.
-        if (x > ub || x < lb) {
-          // Revert to bisection if the root is not converging.
-          x = 0.5*(ub + lb);
-          //f(fx, dfx, x, args...);
-        }
         // Correct the bounds.
         if (fx*flb > 0) {
           flb = fx;
@@ -344,6 +520,13 @@ class Root {
         else if (fx*fub > 0) {
           fub = fx;
           ub = xold;
+        }
+        x = x - fx/dfx;
+        // Check that the root is bounded properly.
+        if (x > ub || x < lb) {
+          // Revert to bisection if the root is not converging.
+          x = 0.5*(ub + lb);
+          //f(fx, dfx, x, args...);
         }
         count++;
       }

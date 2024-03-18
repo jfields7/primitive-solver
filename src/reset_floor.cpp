@@ -39,7 +39,7 @@ bool ResetFloor::PrimitiveFloor(Real& n, Real v[3], Real& T, Real *Y, int n_spec
 /// NOTE: The tau floor is calculated without D being floored in mind!
 bool ResetFloor::ConservedFloor(Real& D, Real Sd[3], Real& tau, Real *Y, Real D_floor, 
       Real tau_floor, Real tau_abs_floor, int n_species) {
-  if (D < D_floor) {
+  if (D < D_floor*n_threshold) {
     D = D_floor;
     Sd[0] = 0.0;
     Sd[1] = 0.0;
