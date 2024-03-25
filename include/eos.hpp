@@ -305,6 +305,14 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return mb*eos_units->MassConversion(*code_units)*eos_units->DensityConversion(*code_units);
     }
 
+    //! \fn Real GetRawBaryonMass() const
+    //  \brief Get the baryon mass used by this EOS. Note that
+    //         this factor does not convert density.
+    inline Real GetRawBaryonMass() const {
+      return mb*eos_units->MassConversion(*code_units);
+    }
+
+
     //! \fn bool ApplyPrimitiveFloor(Real& n, Real& vu[3], Real& p, Real& T)
     //  \brief Apply the floor to the primitive variables (in code units).
     //
