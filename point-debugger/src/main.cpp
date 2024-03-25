@@ -62,6 +62,8 @@ std::string CodeToString(Primitive::Error error) {
       return "PRIM_FLOOR";
     case Primitive::Error::CONS_ADJUSTED:
       return "CONS_ADJUSTED";
+    case Primitive::Error::SLOW_CONVERGENCE:
+      return "SLOW_CONVERGENCE";
   }
   return "UNKNOWN";
 }
@@ -141,10 +143,10 @@ bool RunWithEOSAndError(ParamReader& params) {
   } else {
     std::cout << "Error: Unknown unit system: " << units << "\n";
     std::cout << "  Permitted options are:\n"
-                 "    CGS\n"
-                 "    GeometricKilometer\n"
-                 "    GeometricSolar\n"
-                 "    Nuclear\n";
+              << "    CGS\n"
+              << "    GeometricKilometer\n"
+              << "    GeometricSolar\n"
+              << "    Nuclear\n";
     return false;
   }
   Real dfloor = params.readAsDouble("Error", "dfloor");
@@ -172,6 +174,11 @@ bool RunWithEOSAndError(ParamReader& params) {
     bsqmax = 1e6;
   }
   eos.SetMaximumMagnetization(bsqmax);
+  Real fail_tol = params.readAsDouble("Error", "fail_tol");
+  if (fail_tol <= 0.) {
+    fail_tol = 1e-5;
+  }
+  eos.SetFailureTolerance(fail_tol);
   for (int i = 0; i < eos.GetNSpecies(); i++) {
     std::stringstream ss;
     ss << "y" << (i+1) << "floor";
@@ -192,22 +199,23 @@ bool RunWithEOSAndError(ParamReader& params) {
   if (tol <= 0) {
     tol = 1e-15;
   }
-  ps.GetRootSolver().tol = tol;
+  ps.tol = tol;
 
   // Load conserved variables
   Real cons[NCONS] = {0.0};
+  Real cons_old[NCONS] = {0.0};
   Real bu[NMAG] = {0.0};
   Real g3d[NSPMETRIC] = {0.0};
 
-  cons[IDN] = params.readAsDouble("State", "D");
-  cons[IM1] = params.readAsDouble("State", "Sx");
-  cons[IM2] = params.readAsDouble("State", "Sy");
-  cons[IM3] = params.readAsDouble("State", "Sz");
-  cons[IEN] = params.readAsDouble("State", "tau");
+  cons[IDN] = cons_old[IDN] = params.readAsDouble("State", "D");
+  cons[IM1] = cons_old[IM1] = params.readAsDouble("State", "Sx");
+  cons[IM2] = cons_old[IM2] = params.readAsDouble("State", "Sy");
+  cons[IM3] = cons_old[IM3] = params.readAsDouble("State", "Sz");
+  cons[IEN] = cons_old[IEN] = params.readAsDouble("State", "tau");
   for (int i = 0; i < eos.GetNSpecies(); i++) {
     std::stringstream ss;
     ss << "Dy" << (i+1);
-    cons[IYD+i] = params.readAsDouble("State", ss.str());
+    cons[IYD+i] = cons_old[IYD+i] = params.readAsDouble("State", ss.str());
   }
 
   bu[IB1] = params.readAsDouble("State", "Bx");
@@ -243,6 +251,22 @@ bool RunWithEOSAndError(ParamReader& params) {
             << "  cons floor applied: " << result.cons_floor << "\n"
             << "  prim floor applied: " << result.prim_floor << "\n"
             << "  cons adjusted: " << result.cons_adjusted << "\n\n";
+  std::cout << "Input conserved: \n"
+            << "  D   = " << cons_old[IDN] << "\n"
+            << "  Sx  = " << cons_old[IM1] << "\n"
+            << "  Sy  = " << cons_old[IM2] << "\n"
+            << "  Sz  = " << cons_old[IM3] << "\n"
+            << "  tau = " << cons_old[IEN] << "\n"
+            << "  Bx  = " << bu[IB1] << "\n"
+            << "  By  = " << bu[IB2] << "\n"
+            << "  Bz  = " << bu[IB3] << "\n\n";
+  std::cout << "Input metric: \n"
+            << "  gxx = " << g3d[S11] << "\n"
+            << "  gxy = " << g3d[S12] << "\n"
+            << "  gxz = " << g3d[S13] << "\n"
+            << "  gyy = " << g3d[S22] << "\n"
+            << "  gyz = " << g3d[S23] << "\n"
+            << "  gzz = " << g3d[S33] << "\n\n";
   if (result.error == Primitive::Error::SUCCESS) {
     std::cout << "Calculated primitives: \n"
               << "  n  = " << prim[IDN] << "\n"
@@ -263,11 +287,11 @@ bool RunWithEOSAndError(ParamReader& params) {
   Real err[NCONS];
   int nhyd = NHYDRO - MAX_SPECIES + eos.GetNSpecies();
   for (int i = 0; i < nhyd; i++) {
-    if (std::fabs(cons[i]) > 0) {
-      err[i] = std::fabs((cons_new[i] - cons[i])/cons[i]);
+    if (std::fabs(cons_old[i]) > 0) {
+      err[i] = std::fabs((cons_new[i] - cons_old[i])/cons_old[i]);
     }
     else {
-      err[i] = std::fabs(cons_new[i] - cons[i]);
+      err[i] = std::fabs(cons_new[i] - cons_old[i]);
     }
   }
   // Print out the errors

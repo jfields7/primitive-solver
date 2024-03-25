@@ -23,6 +23,7 @@ class ErrorPolicyInterface {
     Real Y_atm[MAX_SPECIES];
     Real v_max;
     Real max_bsq;
+    Real fail_tol;
     bool fail_conserved_floor;
     bool fail_primitive_floor;
     bool adjust_conserved;
