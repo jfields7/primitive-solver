@@ -11,6 +11,8 @@
 //  law:
 //  \f$P_\textrm{therm} = nk_B T\f$
 
+#include <cassert>
+
 #include <ps_types.hpp>
 #include <eos_policy_interface.hpp>
 #include <unit_system.hpp>
@@ -24,9 +26,9 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     
     /// Parameters for the EOS
     Real *density_pieces;
-    Real *a_pieces;
     Real *gamma_pieces;
     Real *pressure_pieces;
+    Real *eps_pieces;
     Real gamma_thermal;
     bool initialized;
 
@@ -100,12 +102,11 @@ class PiecewisePolytrope : public EOSPolicyInterface {
     //  
     //  \param[in] densities The dividing densities
     //  \param[in] gammas    The adiabatic index for each polytrope
-    //  \param[in] rho_min   The minimum density for the EOS
     //  \param[in] P0        The pressure at the first polytrope division
     //  \param[in] m         The baryon mass
     //  \param[in] n         The number of pieces in the EOS
     bool InitializeFromData(Real *densities, Real *gammas, 
-                            Real rho_min, Real P0, Real m, int n);
+                            Real P0, Real m, int n);
 
     /// Check if the EOS has been initialized properly.
     inline bool IsInitialized() const {
@@ -124,7 +125,8 @@ class PiecewisePolytrope : public EOSPolicyInterface {
 
     /// Set the adiabatic constant for the thermal part.
     inline void SetThermalGamma(Real g) {
-      gamma_thermal = (g <= 1.0) ? 1.00001 : ((g >= 2.0) ? 2.00001 : g);
+      assert(g > 1.0);
+      gamma_thermal = g;
     }
 
     /// Get the adiabatic constant for the thermal part.
