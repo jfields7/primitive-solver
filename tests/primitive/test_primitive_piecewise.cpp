@@ -35,7 +35,7 @@ void InitializeVariables(EOS<PiecewisePolytrope, DoNothing>& eos, Real prim[NPRI
   Real rho_min = 0.5;
   Real P0 = 10.0;
 
-  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, P0, mb_nuc, N);
+  eos.InitializeFromData(density_pieces, gamma_pieces, P0, mb_nuc, N);
 
   Real mb = eos.GetBaryonMass();
   prim[IDN] = rho_min/2.0;

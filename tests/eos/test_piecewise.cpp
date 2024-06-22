@@ -23,22 +23,20 @@ void Initialize(EOS<PiecewisePolytrope, DoNothing>& eos) {
   Real gamma_pieces[N] = {2.0, 1.7, 1.4};
   Real mb_nuc = 1.0;
   //Real rho_nuc = 1.0;
-  Real density_pieces[N] = {1.0, 3.0, 10.0};
-  Real rho_min = 0.1;
-  Real kappa0 = 10.0;
+  Real density_pieces[N] = {0.0, 1.0, 3.0};
+  Real P0 = 10.0*pow(density_pieces[0], gamma_pieces[0]);
 
-  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
+  eos.InitializeFromData(density_pieces, gamma_pieces, P0, mb_nuc, N);
 }
 
 void Reinitialize(EOS<PiecewisePolytrope, DoNothing>& eos) {
   const int N = 4;
   Real gamma_pieces[N] = {1.3333, 1.7, 1.9, 2.1};
   Real mb_nuc = 2.0;
-  Real density_pieces[N] = {0.78, 1.4, 3.6, 6.4};
-  Real rho_min = 1e-10;
-  Real kappa0 = 3.0;
+  Real density_pieces[N] = {0.0, 0.78, 1.4, 3.6};
+  Real P0 = 3.0*pow(density_pieces[0], gamma_pieces[0]);
 
-  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, kappa0, mb_nuc, N);
+  eos.InitializeFromData(density_pieces, gamma_pieces, P0, mb_nuc, N);
 }
 
 bool TestReinitialization() {
@@ -109,7 +107,7 @@ bool TestConstruction() {
     std::cout << "  Incorrect minimum density.\n";
     return false;
   }
-  if (eos.GetMaximumDensity() != 10.0) {
+  if (eos.GetMaximumDensity() != std::numeric_limits<Real>::max()) {
     std::cout << "  Incorrect maximum density.\n";
     return false;
   }
@@ -223,35 +221,6 @@ bool TestContinuity(EOS<PiecewisePolytrope, DoNothing>* peos, Real n, Real T, Re
   return true;
 }
 
-bool TestLowDensity() {
-  EOS<PiecewisePolytrope, DoNothing> eos;
-  const int N = 3;
-  Real gamma_pieces[N] = {1.8, 2.3, 1.9};
-  Real density_pieces[N] = {1.0, 1.5, 3.0};
-  Real mb_nuc = 1.0;
-  //Real rho_nuc = 1.0;
-  Real rho_min = 0.5;
-  Real P0 = 10.0;
-
-  eos.InitializeFromData(density_pieces, gamma_pieces, rho_min, P0, mb_nuc, N);
-
-  if (!eos.IsInitialized()) {
-    std::cout << "  There was an error initializing the EOS.\n";
-    return false;
-  }
-
-  Real min_gamma = eos.GetGamma(rho_min/2.0);
-  for (int i = 0; i < N; i++) {
-    if (min_gamma == gamma_pieces[i]) {
-      std::cout << "  Wrong piece retrieved for low densities.\n";
-      std::cout << "  Returning the i = " << i << " piece.\n";
-      return false;
-    }
-  }
-
-  return true;
-}
-
 int main(int argc, char* argv[]) {
   UnitTests tester("Piecewise Polytropic EOS");
   // Validate that the EOS gets constructed as expected.
@@ -278,9 +247,6 @@ int main(int argc, char* argv[]) {
   // 3rd polytrope tests
   n = 6.0;
   RunTestSuite(tester, &eos, n, T, Y, 2, tol);
-
-  // Low density test
-  tester.RunTest(&TestLowDensity, "Low Density Test");
 
   // Test the transition densities.
   n = 0.1;
