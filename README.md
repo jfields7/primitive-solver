@@ -1,6 +1,9 @@
 # PrimitiveSolver
-PrimitiveSolver is a library that provides a simple interface for constructing and using general equations of state (EOSes) in GRMHD simulations. It adapts the root-finding methods from the [NumTools](https://github.com/jfields7/num-tools) library but no longer requires it as an explicit dependency. The code itself is based on Wolfgang Kastaun's [RePrimAnd](https://github.com/wokast/RePrimAnd) library, particularly its algorithm for recovering the primitive variables of the GRMHD equations (see <https://arxiv.org/abs/2005.01821>). It is intended to interact with [GR-Athena++](https://arxiv.org/abs/2101.08289), but it has no strict dependencies on the code.
+PrimitiveSolver is a library that provides a simple interface for constructing and using general equations of state (EOSes) in GRMHD simulations, including the primitive inversion routine described in [Kastaun et al. (2021)](https://arxiv.org/abs/2005.01821). The code does borrow heavily from ideas in [RePrimAnd](https://github.com/wokast/RePrimAnd), but the design philosophy is very different, preferring abstractions which are resolved at compile time rather than runtime.
 
+If you choose to use PrimitiveSolver in your publications, we only ask that you cite [Kastaun et al. (2021)](https://arxiv.org/abs/2005.01821) for the inversion routine and our own work, [Cook et al. (2023)](https://arxiv.org/abs/2311.04989), where we introduce PrimitiveSolver.
+
+# Compiling PrimitiveSolver
 To compile PrimitiveSolver, run `make`.
 
 To install PrimitiveSolver, run `make install`. It may require sudo privileges. The default install location is in `/usr/local/`. To change this, update `INSTALL_DIR` in the Makefile. Header files will be installed in `include/PrimitiveSolver`, and the library `libPrimitiveSolver.a` will be installed in `lib`.
