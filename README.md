@@ -12,6 +12,8 @@ To uninstall PrimitiveSolver, run `make uninstall`, which also may require sudo 
 
 To run unit tests, run `make test`.
 
+An additional utility, `point-debugger`, is included with PrimitiveSolver, and it can be compiled with `make build_debugger`. It is useful for testing single points. More information can be found in `point-debugger/README`.
+
 # How to use PrimitiveSolver
 ## Setting up an Equation of State
 PrimitiveSolver utilizes a policy-based design. An equation of state consists of two parts: an `EOSPolicy` and an `ErrorPolicy`. The former provides methods for calculating various thermodynamic quantities, and the latter provides methods for handling various errors that might occur during a simulation, such as what to do if the density falls below an artificial atmosphere or the primitive recovery routine fails. These are wrapped up in a single template class, EOS:
