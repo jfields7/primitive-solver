@@ -509,8 +509,8 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     }
 
     //! \brief Limit Y to a specified range
-    inline void ApplySpeciesLimits(Real *Y) {
-      SpeciesLimits(Y, min_Y, max_Y, n_species);
+    inline bool ApplySpeciesLimits(Real *Y) {
+      return SpeciesLimits(Y, min_Y, max_Y, n_species);
     }
 
     //! \brief Limit the pressure to a specified range at a given density and composition
