@@ -104,7 +104,7 @@ bool ResetFloor::SpeciesLimits(Real* Y, Real* Y_min, Real* Y_max, int n_species)
       Y[i] = Y_max[i];
     }
   }
-  return false;
+  return adjusted;
 }
 
 /// Perform failure response.

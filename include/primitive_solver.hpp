@@ -370,7 +370,7 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
   // DYe.
   if (floored || Y_adjusted) {
     for (int s = 0; s < n_species; s++) {
-      cons[IYD + s] = cons[IYD]*Y[s];
+      cons[IYD + s] = D*Y[s];
     }
   }
 
