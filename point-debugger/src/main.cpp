@@ -138,6 +138,8 @@ bool RunWithEOSAndError(ParamReader& params) {
     eos.SetCodeUnitSystem(&Primitive::GeometricSolar);
   } else if (units.compare("Nuclear") == 0) {
     eos.SetCodeUnitSystem(&Primitive::Nuclear);
+  } else if (units.compare("MKS") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::MKS);
   } else if (units.compare("NULL") == 0) {
     eos.SetCodeUnitSystem(&Primitive::Nuclear);
   } else {
@@ -146,7 +148,8 @@ bool RunWithEOSAndError(ParamReader& params) {
               << "    CGS\n"
               << "    GeometricKilometer\n"
               << "    GeometricSolar\n"
-              << "    Nuclear\n";
+              << "    Nuclear\n"
+              << "    MKS\n";
     return false;
   }
   Real dfloor = params.readAsDouble("Error", "dfloor");
@@ -325,24 +328,25 @@ void LoadEOSOptions(Primitive::EOS<Primitive::PiecewisePolytrope,ErrorPolicy>& e
     ParamReader& params) {
   std::cout << "Loading parameters for PiecewisePolytrope...\n";
   int n_pieces = params.readAsInt("EOS", "npieces");
-  Real *densities = new Real[n_pieces];
-  Real *gammas = new Real[n_pieces];
+  Real *densities = new Real[n_pieces+1];
+  Real *gammas = new Real[n_pieces+1];
   for (int i = 0; i < n_pieces; i++) {
     std::stringstream ss;
-    ss << "density" << (i+1);
+    ss << "pwp_density_pieces_" << (i+1);
     densities[i] = params.readAsDouble("EOS", ss.str());
   }
   for (int i = 0; i < n_pieces; i++) {
     std::stringstream ss;
-    ss << "gamma" << (i+1);
+    ss << "pwp_gamma_pieces_" << (i+1);
     gammas[i] = params.readAsDouble("EOS", ss.str());
   }
-  Real P0 = params.readAsDouble("EOS", "P0");
-  Real mb = params.readAsDouble("EOS", "mb");
-  Real rho_min = params.readAsDouble("EOS", "rho_min");
-  Real gamma_thermal = params.readAsDouble("EOS", "gamma_thermal");
+  Real poly_rmd = Primitive::MKS.MassDensityConversion(*(eos.GetEOSUnitSystem()))*
+                  params.readAsDouble("EOS", "pwp_poly_rmd");
 
-  eos.InitializeFromData(densities, gammas, rho_min, P0, mb, n_pieces);
+  Real P0 = densities[1]*std::pow(densities[1]/poly_rmd, gammas[0] - 1.0);
+
+  Real gamma_thermal = params.readAsDouble("EOS", "gamma_thermal");
+  eos.InitializeFromData(densities, gammas, P0, 1.0, n_pieces);
   eos.SetThermalGamma(gamma_thermal);
 
   delete densities;

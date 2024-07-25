@@ -35,43 +35,47 @@ struct UnitSystem {
   //  conversions from the original system to the
   //  specified system.
   //  \{
-  inline constexpr Real LengthConversion(UnitSystem& b) const {
+  inline constexpr Real LengthConversion(const UnitSystem& b) const {
     return b.length/length;
   }
 
-  inline constexpr Real TimeConversion(UnitSystem& b) const {
+  inline constexpr Real TimeConversion(const UnitSystem& b) const {
     return b.time/time;
   }
 
-  inline constexpr Real VelocityConversion(UnitSystem& b) const {
+  inline constexpr Real VelocityConversion(const UnitSystem& b) const {
     return b.length/length * time/b.time;
   }
 
-  inline constexpr Real DensityConversion(UnitSystem& b) const {
+  inline constexpr Real DensityConversion(const UnitSystem& b) const {
     return b.density/density;
   }
 
-  inline constexpr Real MassConversion(UnitSystem& b) const {
+  inline constexpr Real MassConversion(const UnitSystem& b) const {
     return b.mass/mass;
   }
 
-  inline constexpr Real EnergyConversion(UnitSystem& b) const {
+  inline constexpr Real MassDensityConversion(const UnitSystem& b) const {
+    return (b.density/density)*(b.mass/mass);
+  }
+
+  inline constexpr Real EnergyConversion(const UnitSystem& b) const {
     return b.energy/energy;
   }
 
-  inline constexpr Real EntropyConversion(UnitSystem& b) const {
+  inline constexpr Real EntropyConversion(const UnitSystem& b) const {
     return b.kb/kb;
   }
 
-  inline constexpr Real PressureConversion(UnitSystem& b) const {
+  inline constexpr Real PressureConversion(const UnitSystem& b) const {
     return b.pressure/pressure;
   }
 
-  inline constexpr Real TemperatureConversion(UnitSystem& b) const {
+  inline constexpr Real TemperatureConversion(const UnitSystem& b) const {
     return b.temperature/temperature;
   }
 
-  inline constexpr Real ChemicalPotentialConversion(UnitSystem& b) const {
+  inline constexpr Real ChemicalPotentialConversion(const UnitSystem& b) const {
     return b.chemicalPotential/chemicalPotential;
   }
   //! \}
@@ -152,6 +156,23 @@ static UnitSystem Nuclear{
   1e-39/CGS.MeV, // pressure, MeV/fm^3
   CGS.kb/CGS.MeV, // temperature, MeV
   CGS.kb/CGS.MeV, // chemical potential, MeV
+};
+
+//! MKS unit system
+static UnitSystem MKS{
+  CGS.c/1e2,        // c
+  CGS.G/1e3,        // G
+  CGS.kb/1e7,       // kb
+  CGS.Msun/1e3,     // Msun
+  CGS.MeV/1e7,      // MeV
+
+  1e-2,             // 1 cm in m
+  1.0,              // 1 s in s
+  1e6,              // 1 cm^-3 in m^-3
+  1e-3,             // 1 g in kg
+  1e-7,             // 1 erg in J
+  0.1,              // 1 dyne/cm in Pa
+  1.0,
 };
 
 } // namespace
