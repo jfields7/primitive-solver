@@ -386,20 +386,20 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     //  \brief Set the density floor used by the EOS ErrorPolicy.
     //         Also adjusts the pressure and tau floor to be consistent.
     inline void SetDensityFloor(Real floor) {
-      n_atm = (floor >= 0.0) ? floor : 0.0;
+      n_atm = (floor >= min_n) ? floor : min_n;
     }
 
     //! \fn void SetTemperatureFloor(Real floor)
     //  \brief Set the temperature floor (in code units) used by the EOS ErrorPolicy.
     inline void SetTemperatureFloor(Real floor) {
-      T_atm = (floor >= 0.0) ? floor : 0.0;
+      T_atm = (floor >= min_T) ? floor : min_T;
     }
 
     //! \fn void SetSpeciesAtmospher(Real atmo, int i)
     //  \brief Set the atmosphere abundance used by the EOS ErrorPolicy for species i.
     inline void SetSpeciesAtmosphere(Real atmo, int i) {
       assert((i < n_species) && "Not enough species");
-      Y_atm[i] = std::min(1.0, std::max(0.0, atmo));
+      Y_atm[i] = std::min(max_Y[i], std::max(min_Y[i], atmo));
     }
 
     //! \fn void SetThreshold(Real threshold)
