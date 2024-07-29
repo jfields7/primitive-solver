@@ -20,7 +20,7 @@
 namespace Primitive {
 
 class PiecewisePolytrope : public EOSPolicyInterface {
-  private:
+  protected:
     /// Number of polytropes in the EOS
     int n_pieces;
     
