@@ -10,10 +10,11 @@
 
 #include "ps_types.hpp"
 #include "unit_system.hpp"
+#include "coldeos_policy_interface.hpp"
 
 namespace Primitive {
 
-class Polytrope {
+class Polytrope: protected ColdEOSPolicyInterface {
   protected:
     /// Constructor
     Polytrope();
@@ -38,21 +39,6 @@ class Polytrope {
 
     /// Calculate the specific enthalpy from the number density
     Real Enthalpy(Real n);
-
-    /// Number of particle species
-    int n_species;
-    /// Baryon mass
-    Real mb;
-    /// maximum number density
-    Real max_n;
-    /// minimum number density
-    Real min_n;
-    /// temperature of the slice
-    Real T;
-    /// Code unit system
-    UnitSystem* code_units;
-    /// ColdEOS unit system
-    UnitSystem* eos_units;
 
   public:
     /// Set the adiabatic index for the polytrope

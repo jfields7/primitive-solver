@@ -8,7 +8,7 @@
 #include <limits>
 
 #include "../include/unit_system.hpp"
-#include "../include/cold_idealgas.hpp"
+#include "../include/cold_polytrope.hpp"
 
 using namespace Primitive;
 using namespace std;

@@ -9,9 +9,10 @@
 #include "ps_types.hpp"
 #include "piecewise_polytrope.hpp"
 
+
 namespace Primitive {
 
-  class ColdPiecewisePolytrope: public PiecewisePolytrope {
+class ColdPiecewisePolytrope: public PiecewisePolytrope {
 
   protected:
 

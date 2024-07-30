@@ -7,7 +7,7 @@
 
 #include "../../include/coldeos.hpp"
 #include "../../include/ps_types.hpp"
-#include "../../include/cold_idealgas.hpp"
+#include "../../include/cold_polytrope.hpp"
 
 #include "../include/testing.hpp"
 

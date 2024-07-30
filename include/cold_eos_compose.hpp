@@ -16,13 +16,14 @@
 
 #include "ps_types.hpp"
 #include "unit_system.hpp"
+#include "coldeos_policy_interface.hpp"
 
 
 #define NSCALARS 1
 
 namespace Primitive {
 
-class ColdEOSCompOSE {
+class ColdEOSCompOSE: protected ColdEOSPolicyInterface {
   public:
     enum TableVariables {
       ECLOGN  = 0,  //! log (number density / fm^-3)
@@ -58,21 +59,6 @@ class ColdEOSCompOSE {
 
     /// Calculate the specific enthalpy from the number density
     Real Enthalpy(Real n);
-
-    /// Number of particle species
-    int n_species;
-    /// Baryon mass
-    Real mb;
-    /// maximum number density
-    Real max_n;
-    /// minimum number density
-    Real min_n;
-    /// temperature of the slice
-    Real T;
-    /// Code unit system
-    UnitSystem* code_units;
-    /// ColdEOS unit system
-    UnitSystem* eos_units;
 
   public:
     /// Reads the cold slice table from file.
