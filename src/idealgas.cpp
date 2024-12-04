@@ -76,6 +76,10 @@ Real IdealGas::ElectronLeptonChemicalPotential(Real n, Real T, Real *Y) {
   throw std::logic_error("IdealGas::ElectronLeptonChemicalPotential not currently implemented.");
 }
 
+int IdealGas::BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess) {
+  throw std::logic_error("IdealGas::BetaEquilibriumTrapped not currently implemented.");
+}
+
 Real IdealGas::MinimumEnergy(Real n, Real *Y) {
   return n*mb;
 }

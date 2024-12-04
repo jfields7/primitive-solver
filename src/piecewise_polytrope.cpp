@@ -141,6 +141,10 @@ Real PiecewisePolytrope::ElectronLeptonChemicalPotential(Real n, Real T, Real *Y
   throw std::logic_error("IdealGas::ElectronLeptonChemicalPotential not currently implemented.");
 }
 
+int PiecewisePolytrope::BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess) {
+  throw std::logic_error("PiecewisePolytrope::BetaEquilibriumTrapped not currently implemented.");
+}
+
 Real PiecewisePolytrope::MinimumPressure(Real n, Real *Y) {
   int p = FindPiece(n);
   return GetColdPressure(n, p);

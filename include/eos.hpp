@@ -73,6 +73,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::BaryonChemicalPotential;
     using EOSPolicy::ChargeChemicalPotential;
     using EOSPolicy::ElectronLeptonChemicalPotential;
+    using EOSPolicy::BetaEquilibriumTrapped;
     using EOSPolicy::MinimumEnthalpy;
     using EOSPolicy::MinimumPressure;
     using EOSPolicy::MaximumPressure;
@@ -292,6 +293,16 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     inline Real GetElectronLeptonChemicalPotential(Real n, Real T, Real *Y) {
       return ElectronLeptonChemicalPotential(n, T*code_units->TemperatureConversion(*eos_units), Y) *
              eos_units->ChemicalPotentialConversion(*code_units);
+    }
+
+    inline bool GetBetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess) {
+      int ierr = BetaEquilibriumTrapped(n, e*code_units->PressureConversion(*eos_units), Yl, 
+                                        T_eq, Y_eq, 
+                                        T_guess*code_units->TemperatureConversion(*eos_units), Y_guess);
+
+      T_eq = T_eq*eos_units->TemperatureConversion(*code_units);
+      
+      return ierr==0;
     }
 
     //! \fn int Getn_species() const

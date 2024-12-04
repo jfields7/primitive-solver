@@ -72,6 +72,9 @@ class EOSCompOSE : public EOSPolicyInterface {
     /// Calculate the electron-lepton chemical potential
     Real ElectronLeptonChemicalPotential(Real n, Real T, Real *Y);
 
+    /// Calculate hot (neutrino trapped) beta equilibrium T_eq and Y_eq given n, e, and Yl
+    int BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess);
+
     /// Get the minimum enthalpy per baryon.
     Real MinimumEnthalpy();
 
@@ -129,6 +132,14 @@ class EOSCompOSE : public EOSPolicyInterface {
     /// Low level evaluation function, not intended for outside use
     Real eval_at_lnty(int vi, Real ln, Real lT, Real Yq) const;
 
+    /// Functions for neutrino equilibrium
+    int trapped_equilibrium_2DNR(Real n, Real e, Real Yle, Real x0[2], Real x1[2]);
+    void func_eq_weak(Real n, Real e, Real Yle, Real x1[2], Real y[2]);
+    Real error_func_eq_weak(Real Yle, Real e, Real y[2]);
+    int jacobi_eq_weak(Real n, Real e, Real Yle, Real x1[2], Real J[2][2]);
+    int eta_e_gradient(Real n, Real T, Real *Y, Real eta, Real &detadt, Real &detadye, Real &dedt, Real &dedye);
+    void inv_jacobi(Real det, Real J[2][2], Real invJ[2][2]);
+
     /// Evaluate interpolation weight for density
     void weight_idx_ln(Real *w0, Real *w1, int *in, Real log_n) const;
     /// Evaluate interpolation weight for composition
@@ -151,6 +162,30 @@ class EOSCompOSE : public EOSPolicyInterface {
     Real * m_table;
 
     bool m_initialized;
+
+  private:
+  // Constants for neutrino calculations
+#define WR_SQR(x) ((x)*(x))
+#define WR_CUBE(x) ((x)*(x)*(x))
+#define WR_QUAD(x) ((x)*(x)*(x)*(x))
+
+    const Real hc_mevfm = 1.23984172e3;           // hc    [MeV fm] (not reduced)
+    const Real pi       = 3.14159265358979323846; // pi    [-]
+    const Real pi2      = WR_SQR(pi);             // pi**2 [-]
+
+    const Real pref1 = 4.0/3.0*pi/WR_CUBE(hc_mevfm); // 4/3 *pi/(hc)**3 [1/MeV^3/fm^3]
+    const Real pref2 = 4.0*pi/WR_CUBE(hc_mevfm);     // 4*pi/(hc)**3    [1/MeV^3 fm^3]
+
+    const Real cnst1 = 7.0*WR_QUAD(pi)/20.0;  // 7*pi**4/20  [-]
+    const Real cnst2 = 7.0*WR_QUAD(pi)/5.0;   // 7*pi**4/5   [-]
+    const Real cnst3 = 7.0*WR_QUAD(pi)/15.0;  // 7*pi**4/15  [-]
+    const Real cnst4 = 14.0*WR_QUAD(pi)/15.0; // 14*pi**4/15 [-]
+    const Real cnst5 = 7.0*WR_QUAD(pi)/60.0;  // 7*pi**4/60  [-]
+    const Real cnst6 = 7.0*WR_QUAD(pi)/30.0;  // 7*pi**4/30  [-]
+
+#undef WR_SQR
+#undef WR_CUBE
+#undef WR_QUAD
 };
 
 } // namespace Primitive

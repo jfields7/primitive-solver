@@ -83,6 +83,15 @@ bool TestChemicalPotentials(EOS<EOSCompOSE, DoNothing>* peos,
   Real mub = peos->GetBaryonChemicalPotential(n, T, Y);
   Real muq = peos->GetChargeChemicalPotential(n, T, Y);
   Real mul = peos->GetElectronLeptonChemicalPotential(n, T, Y);
+
+  Real e = peos->GetEnergy(n,T,Y);
+  Real Yl[MAX_SPECIES] = {0.0};
+  Yl[0] = Y[0];
+
+  Real T_eq;
+  Real Y_eq[MAX_SPECIES];
+
+  bool eq_success = peos->GetBetaEquilibriumTrapped(n, e, Yl, T_eq, Y_eq, T, Y);
   
   bool success = true;
 
@@ -106,6 +115,11 @@ bool TestChemicalPotentials(EOS<EOSCompOSE, DoNothing>* peos,
     PrintError(mul_want, mul);
     success = false;
   }
+
+  // std::cout << "  Equilibrium success:" << eq_success << std::endl;
+  // std::cout << "  e:" << e << ", Yle" << Yl[0] << std::endl;
+  // std::cout << "  T: " << T << " -> " << T_eq << std::endl;
+  // std::cout << "  Ye:" << Y[0] << " -> " << Y_eq[0] << std::endl;
 
   return success;
 }

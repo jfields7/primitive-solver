@@ -61,6 +61,9 @@ class IdealGas : public EOSPolicyInterface {
     [[ noreturn ]]
     Real ElectronLeptonChemicalPotential(Real n, Real T, Real *Y);
 
+    [[ noreturn ]]
+    int BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess);
+
     /// Calculate the minimum pressure at a given density and composition
     inline Real MinimumPressure(Real n, Real *Y) {
       return 0.0;
