@@ -64,6 +64,9 @@ class IdealGas : public EOSPolicyInterface {
     [[ noreturn ]]
     int BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess);
 
+    [[ noreturn ]]
+    void TrappedNeutrinos(Real n, Real T, Real *Y, Real n_nu[3], Real e_nu[3]);
+
     /// Calculate the minimum pressure at a given density and composition
     inline Real MinimumPressure(Real n, Real *Y) {
       return 0.0;

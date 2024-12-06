@@ -158,9 +158,9 @@ int EOSCompOSE::BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Rea
 
 int EOSCompOSE::trapped_equilibrium_2DNR(Real n, Real e, Real Yle, Real x0[2], Real x1[2]) {
   
-  const Real eps_lim  = 1.e-7; // tolerance in 2D NR
-  const int n_max     = 100;   // Newton-Raphson max number of iterations
-  const int n_cut_max = 8;     // Bisection max number of iterations
+  const Real eps_lim  = 1.e-14; // tolerance in 2D NR (required for 1e-12 err in T)
+  const int n_max     = 100;    // Newton-Raphson max number of iterations
+  const int n_cut_max = 8;      // Bisection max number of iterations
   int ierr = 0;
 
   // initialize the solution
@@ -399,6 +399,32 @@ void EOSCompOSE::inv_jacobi(Real det, Real J[2][2], Real invJ[2][2]) {
   invJ[1][1] =  J[0][0]*inv_det;
   invJ[0][1] = -J[0][1]*inv_det;
   invJ[1][0] = -J[1][0]*inv_det;
+}
+
+
+void EOSCompOSE::TrappedNeutrinos(Real n, Real T, Real *Y, Real n_nu[3], Real e_nu[3]) {
+  Real mu_le = ElectronLeptonChemicalPotential(n, T, Y);
+  Real eta_e = mu_le/T;
+  Real eta_e2 = eta_e*eta_e;
+
+  Real eta_m = 0.0;
+  Real eta_m2 = 0.0;
+
+  Real eta_t = 0.0;
+  Real eta_t2 = 0.0;
+
+  Real T3 = T*T*T;
+  Real T4 = T3*T;
+
+  n_nu[0] = pref1 * T3 * (eta_e * (pi2 + eta_e2)); // n_nu_e   - n_anu_e   [fm^-3]
+  n_nu[1] = pref1 * T3 * (eta_m * (pi2 + eta_m2)); // n_nu_mu  - n_anu_mu  [fm^-3]
+  n_nu[2] = pref1 * T3 * (eta_t * (pi2 + eta_t2)); // n_nu_tau - n_anu_tau [fm^-3]
+
+  e_nu[0] = pref2*T4*(cnst5+0.5*eta_e2*(pi2+0.5*eta_e2)); // e_nu_e   + e_anu_e   [MeV fm^-3]
+  e_nu[1] = pref2*T4*(cnst5+0.5*eta_m2*(pi2+0.5*eta_m2)); // e_nu_mu  + e_anu_mu  [MeV fm^-3]
+  e_nu[2] = pref2*T4*(cnst5+0.5*eta_t2*(pi2+0.5*eta_t2)); // e_nu_tau + e_anu_tau [MeV fm^-3]
+
+  return;
 }
 
 Real EOSCompOSE::MinimumEnthalpy() {

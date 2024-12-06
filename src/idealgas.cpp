@@ -80,6 +80,10 @@ int IdealGas::BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real 
   throw std::logic_error("IdealGas::BetaEquilibriumTrapped not currently implemented.");
 }
 
+void IdealGas::TrappedNeutrinos(Real n, Real T, Real *Y, Real n_nu[3], Real e_nu[3]) {
+  throw std::logic_error("IdealGas::TrappedNeutrinos not currently implemented.");
+}
+
 Real IdealGas::MinimumEnergy(Real n, Real *Y) {
   return n*mb;
 }

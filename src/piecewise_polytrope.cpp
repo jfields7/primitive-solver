@@ -130,19 +130,23 @@ Real PiecewisePolytrope::SpecificInternalEnergy(Real n, Real T, Real *Y) {
 }
 
 Real PiecewisePolytrope::BaryonChemicalPotential(Real n, Real T, Real *Y) {
-  throw std::logic_error("IdealGas::BaryonChemicalPotential not currently implemented.");
+  throw std::logic_error("PiecewisePolytrope::BaryonChemicalPotential not currently implemented.");
 }
 
 Real PiecewisePolytrope::ChargeChemicalPotential(Real n, Real T, Real *Y) {
-  throw std::logic_error("IdealGas::ChargeChemicalPotential not currently implemented.");
+  throw std::logic_error("PiecewisePolytrope::ChargeChemicalPotential not currently implemented.");
 }
 
 Real PiecewisePolytrope::ElectronLeptonChemicalPotential(Real n, Real T, Real *Y) {
-  throw std::logic_error("IdealGas::ElectronLeptonChemicalPotential not currently implemented.");
+  throw std::logic_error("PiecewisePolytrope::ElectronLeptonChemicalPotential not currently implemented.");
 }
 
 int PiecewisePolytrope::BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess) {
   throw std::logic_error("PiecewisePolytrope::BetaEquilibriumTrapped not currently implemented.");
+}
+
+void PiecewisePolytrope::TrappedNeutrinos(Real n, Real T, Real *Y, Real n_nu[3], Real e_nu[3]) {
+  throw std::logic_error("PiecewisePolytrope::TrappedNeutrinos not currently implemented.");
 }
 
 Real PiecewisePolytrope::MinimumPressure(Real n, Real *Y) {

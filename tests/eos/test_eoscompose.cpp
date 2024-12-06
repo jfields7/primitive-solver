@@ -83,15 +83,6 @@ bool TestChemicalPotentials(EOS<EOSCompOSE, DoNothing>* peos,
   Real mub = peos->GetBaryonChemicalPotential(n, T, Y);
   Real muq = peos->GetChargeChemicalPotential(n, T, Y);
   Real mul = peos->GetElectronLeptonChemicalPotential(n, T, Y);
-
-  Real e = peos->GetEnergy(n,T,Y);
-  Real Yl[MAX_SPECIES] = {0.0};
-  Yl[0] = Y[0];
-
-  Real T_eq;
-  Real Y_eq[MAX_SPECIES];
-
-  bool eq_success = peos->GetBetaEquilibriumTrapped(n, e, Yl, T_eq, Y_eq, T, Y);
   
   bool success = true;
 
@@ -116,10 +107,88 @@ bool TestChemicalPotentials(EOS<EOSCompOSE, DoNothing>* peos,
     success = false;
   }
 
-  // std::cout << "  Equilibrium success:" << eq_success << std::endl;
-  // std::cout << "  e:" << e << ", Yle" << Yl[0] << std::endl;
-  // std::cout << "  T: " << T << " -> " << T_eq << std::endl;
-  // std::cout << "  Ye:" << Y[0] << " -> " << Y_eq[0] << std::endl;
+  return success;
+}
+
+bool TestNeutrinoEquilibrium(EOS<EOSCompOSE, DoNothing>* peos,
+    Real n, Real T, Real* Y, Real tol) {
+
+  Real mul = peos->GetElectronLeptonChemicalPotential(n, T, Y);
+  
+  bool success = true;
+
+  Real e = 0.0; 
+  Real Yl[MAX_SPECIES] = {0.0};
+
+  Real eF  = peos->GetEnergy(n,T,Y);
+  Real eta = mul/T;
+
+  Real pi = 3.14159265358979323846;
+  Real hc = 1.23984172e3; // [MeV fm]
+
+  Real eta2 = eta*eta;
+  Real hc3  = hc*hc*hc;
+  Real T3   = T*T*T;
+  Real T4   = T3*T;
+  Real pi2  = pi*pi;
+  Real pi4  = pi2*pi2;
+
+  Real eR = (4*pi/hc3) * T4 * ((7*pi4/20) + 0.5*eta2*(pi2 + 0.5*eta2));
+  Real nR = (4*pi/(3*hc3)) * T3 * (eta * (pi2 + eta2));
+
+  e = eF + eR;
+  Yl[0] = Y[0] + nR/n;
+
+  Real T_eq;
+  Real Y_eq[MAX_SPECIES];
+
+  Real T_guess = std::min(1.5*T,peos->GetMaximumTemperature());
+  Real Y_guess[MAX_SPECIES] = {0.0};
+  Y_guess[0] = Yl[0];
+
+  bool eq_success = peos->GetBetaEquilibriumTrapped(n, e, Yl, T_eq, Y_eq, T_guess, Y_guess);
+
+  if (!eq_success) {
+    std::cout << "  Neutrino equilibrium solve not successful" << std::endl;
+  }
+
+  Real err = GetError(T, T_eq);
+  if (err > tol) {
+    std::cout << "  Temperature found does not match expected" << std::endl;
+    PrintError(T, T_eq);
+    success = false;
+  }
+
+  err = GetError(Y[0], Y_eq[0]);
+  if (err > tol) {
+    std::cout << "  Electron fraction found does not match expected" << std::endl;
+    PrintError(Y[0], Y_eq[0]);
+    success = false;
+  }
+
+  Real n_nu_eq[3] = {0.0};
+  Real e_nu_eq[3] = {0.0};
+  peos->GetTrappedNeutrinos(n, T_eq, Y_eq, n_nu_eq, e_nu_eq);
+
+  Real e_eq = peos->GetEnergy(n,T_eq,Y_eq);
+  for (int i=0; i<3; ++i){
+    e_eq += e_nu_eq[i];
+  }
+  Real Yle_eq = Y_eq[0] + n_nu_eq[0]/n;
+
+  err = GetError(Yl[0], Yle_eq);
+  if (err > tol) {
+    std::cout << "  Electron lepton number not conserved in equilibrium" << std::endl;
+    PrintError(Yl[0], Yle_eq);
+    success = false;
+  }
+
+  err = GetError(e, e_eq);
+  if (err > tol) {
+    std::cout << "  Energy not conserved in equilibrium" << std::endl;
+    PrintError(e, e_eq);
+    success = false;
+  }
 
   return success;
 }
@@ -173,6 +242,8 @@ int main(int argc, char ** argv) {
     &eos, p_want, np, Tp, Yp, tol);
   tester.RunTest(&TestChemicalPotentials, "Evaluate Chemical Potentials",
     &eos, mub_want, muq_want, mul_want, np, Tp, Yp, tol);
+  tester.RunTest(&TestNeutrinoEquilibrium, "Test Neutrino Equilibrium",
+    &eos, np, Tp, Yp, tol);
 
   RunTestSuite(tester, &eos, np, Tp, Yp, tol);
 

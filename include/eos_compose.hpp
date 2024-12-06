@@ -75,6 +75,9 @@ class EOSCompOSE : public EOSPolicyInterface {
     /// Calculate hot (neutrino trapped) beta equilibrium T_eq and Y_eq given n, e, and Yl
     int BetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess);
 
+    /// Calculate trapped neutrino number and energy densities
+    void TrappedNeutrinos(Real n, Real T, Real *Y, Real n_nu[3], Real e_nu[3]);
+
     /// Get the minimum enthalpy per baryon.
     Real MinimumEnthalpy();
 

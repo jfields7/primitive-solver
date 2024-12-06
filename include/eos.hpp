@@ -74,6 +74,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
     using EOSPolicy::ChargeChemicalPotential;
     using EOSPolicy::ElectronLeptonChemicalPotential;
     using EOSPolicy::BetaEquilibriumTrapped;
+    using EOSPolicy::TrappedNeutrinos;
     using EOSPolicy::MinimumEnthalpy;
     using EOSPolicy::MinimumPressure;
     using EOSPolicy::MaximumPressure;
@@ -295,6 +296,7 @@ class EOS : public EOSPolicy, public ErrorPolicy {
              eos_units->ChemicalPotentialConversion(*code_units);
     }
 
+    // \brief Get the equilibrium temperature and species fractions from the energy and total lepton fractions
     inline bool GetBetaEquilibriumTrapped(Real n, Real e, Real *Yl, Real &T_eq, Real *Y_eq, Real T_guess, Real *Y_guess) {
       int ierr = BetaEquilibriumTrapped(n, e*code_units->PressureConversion(*eos_units), Yl, 
                                         T_eq, Y_eq, 
@@ -304,6 +306,21 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       
       return ierr==0;
     }
+
+    inline void GetTrappedNeutrinos(Real n, Real T, Real *Y, Real n_nu[3], Real e_nu[3]) {
+      TrappedNeutrinos(n, T*code_units->TemperatureConversion(*eos_units), Y, n_nu, e_nu);
+
+      Real n_units = eos_units->DensityConversion(*code_units);
+      Real e_units = eos_units->PressureConversion(*code_units);
+
+      for (int i=0; i<3; ++i) {
+        n_nu[i] = n_nu[i]*n_units;
+        e_nu[i] = e_nu[i]*e_units;
+      }
+
+      return;
+    }
+
 
     //! \fn int Getn_species() const
     //  \brief Get the number of particle species in this EOS.
