@@ -321,6 +321,15 @@ class EOS : public EOSPolicy, public ErrorPolicy {
       return;
     }
 
+    inline void GetLeptonFractions(Real n, Real *Y, Real n_nu[6], Real *Yl) {
+      Real n_units = code_units->DensityConversion(*eos_units);
+
+      for (int i=0; i<3; ++i) {
+        Yl[i] = Y[i] + (n_nu[2*i] - n_nu[2*i+1])/n;
+      }
+
+      return;
+    }
 
     //! \fn int Getn_species() const
     //  \brief Get the number of particle species in this EOS.
