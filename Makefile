@@ -22,6 +22,7 @@ VPATH := $(SRC_DIRS)
 TEST_DIR := tests/
 BENCHMARK_DIR := benchmark/
 POINT_DIR := point-debugger/
+FUZZER_DIR := fuzzer/
 INSTALL_DIR := /usr/local
 
 LIBRARY_NAME := libPrimitiveSolver.a
@@ -101,3 +102,7 @@ benchmark_stress : $(LIBRARY)
 .PHONY: build_debugger
 build_debugger : $(LIBRARY)
 	$(MAKE) -C $(POINT_DIR)
+
+.PHONY: build_fuzzer
+build_fuzzer: $(LIBRARY)
+	$(MAKE) -C $(FUZZER_DIR)
