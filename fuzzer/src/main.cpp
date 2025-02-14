@@ -210,7 +210,8 @@ bool RunWithEOSAndError(ParamReader& params) {
   Real prim_hi[NPRIM] = {0.0};
   Real bu_lo[NMAG] = {0.0};
   Real bu_hi[NMAG] = {0.0};
-  Real g3d[NSPMETRIC];
+  Real g3d[NSPMETRIC] = {0.0};
+  Real g3u[NSPMETRIC] = {0.0};
 
   prim_lo[IDN] = params.readAsDouble("State", "rho_lo");
   prim_lo[IVX] = params.readAsDouble("State", "vx_lo");
@@ -242,24 +243,10 @@ bool RunWithEOSAndError(ParamReader& params) {
   bu_hi[IB2] = params.readAsDouble("State", "By_hi");
   bu_hi[IB3] = params.readAsDouble("State", "Bz_hi");
 
-  g3d[S11] = params.readAsDouble("State", "gxx");
-  g3d[S12] = params.readAsDouble("State", "gxy");
-  g3d[S13] = params.readAsDouble("State", "gxz");
-  g3d[S22] = params.readAsDouble("State", "gyy");
-  g3d[S23] = params.readAsDouble("State", "gyz");
-  g3d[S33] = params.readAsDouble("State", "gzz");
+  g3d[S11] = g3u[S11] = 1.0;
+  g3d[S22] = g3u[S22] = 1.0;
+  g3d[S33] = g3u[S33] = 1.0;
 
-  Real detg = Primitive::GetDeterminant(g3d);
-
-  Real g3u[NSPMETRIC];
-  // Construct the inverse.
-  Real idetg = 1.0/detg;
-  g3u[S11] = (g3d[S22]*g3d[S33] - g3d[S23]*g3d[S23])*idetg;
-  g3u[S12] = (g3d[S13]*g3d[S23] - g3d[S12]*g3d[S33])*idetg;
-  g3u[S13] = (g3d[S12]*g3d[S23] - g3d[S13]*g3d[S22])*idetg;
-  g3u[S22] = (g3d[S11]*g3d[S33] - g3d[S13]*g3d[S13])*idetg;
-  g3u[S23] = (g3d[S12]*g3d[S13] - g3d[S11]*g3d[S23])*idetg;
-  g3u[S33] = (g3d[S11]*g3d[S22] - g3d[S12]*g3d[S12])*idetg;
 
   // Set up the log
   int failures = 0;
