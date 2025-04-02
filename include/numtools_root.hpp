@@ -62,13 +62,13 @@ class Root {
       Real xold, dist;
       x = lb;
       // If one of the bounds is already within tolerance of the root, we can skip all of this.
-      if (std::fabs(flb) <= tol) {
+      if (std::fabs(flb)/lb <= tol) {
         x = lb;
         result.flast = flb;
         result.err = std::fabs(flb);
         return result;
       }
-      else if (std::fabs(fub) <= tol) {
+      else if (std::fabs(fub)/ub <= tol) {
         x = ub;
         result.flast = fub;
         result.err = std::fabs(fub);
@@ -80,7 +80,8 @@ class Root {
         return result;
       }
       Real eps = 0.0;
-      unsigned int iter_exp = std::log2(std::fabs(ub - lb)/(2.*tol));
+      //unsigned int iter_exp = std::log2(std::fabs(ub - lb)/(2.*tol));
+      unsigned int iter_exp = 10000;
       do {
         xold = x;
         dist = ub - lb;
@@ -115,7 +116,9 @@ class Root {
         // whittle down both sides at once and get better average convergence.
         if (ftest*flb >= 0) {
           if (side == 1) {
-            fub /= 2.0;
+            Real m = 1. - ftest/flb;
+            fub = (m > 0) ? fub*m : 0.5*fub;
+            //fub /= 2.0;
           }
           flb = ftest;
           lb = x;
@@ -123,7 +126,9 @@ class Root {
         }
         else {
           if (side == -1) {
-            flb /= 2.0;
+            Real m = 1. - ftest/fub;
+            flb = (m > 0) ? flb*m : 0.5*flb;
+            //flb /= 2.0;
           }
           fub = ftest;
           ub = x;
