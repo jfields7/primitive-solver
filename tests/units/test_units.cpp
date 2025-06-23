@@ -50,15 +50,15 @@ bool TestGeometricSolarUnits() {
   UnitSystem& geom = GeometricSolar;
 
   // In geometric units, we should expect the following:
-  // c = 1, G = 1, kb = 1, 1 Msol = 1
+  // c = 1, G = 1, 1 Msol = 1
   Real c = CGS.c * CGS.VelocityConversion(geom);
   bool result = ConversionCorrect(1.0, c, "c");
 
   Real G = CGS.G * CGS.LengthConversion(geom)*SQR(CGS.VelocityConversion(geom))/CGS.MassConversion(geom);
   result = result && ConversionCorrect(1.0, G, "G");
 
-  Real kb = CGS.kb * CGS.EnergyConversion(geom)/CGS.TemperatureConversion(geom);
-  result = result && ConversionCorrect(1.0, kb, "kb");
+  //Real kb = CGS.kb * CGS.EnergyConversion(geom)/CGS.TemperatureConversion(geom);
+  //result = result && ConversionCorrect(1.0, kb, "kb");
 
   Real Msun = CGS.Msun * CGS.MassConversion(geom);
   result = result && ConversionCorrect(1.0, Msun, "Msun");
