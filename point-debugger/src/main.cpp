@@ -339,14 +339,13 @@ void LoadEOSOptions(Primitive::EOS<Primitive::PiecewisePolytrope,ErrorPolicy>& e
   }
   Real P0 = params.readAsDouble("EOS", "P0");
   Real mb = params.readAsDouble("EOS", "mb");
-  Real rho_min = params.readAsDouble("EOS", "rho_min");
   Real gamma_thermal = params.readAsDouble("EOS", "gamma_thermal");
 
-  eos.InitializeFromData(densities, gammas, rho_min, P0, mb, n_pieces);
+  eos.InitializeFromData(densities, gammas, P0, mb, n_pieces);
   eos.SetThermalGamma(gamma_thermal);
 
-  delete densities;
-  delete gammas;
+  delete[] densities;
+  delete[] gammas;
 }
 
 template<class ErrorPolicy>
