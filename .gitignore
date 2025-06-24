@@ -4,10 +4,12 @@ tests/obj
 tests/bin
 benchmark/bin
 benchmark/obj
-debugger.nb
-debugger.ipynb
 .vscode
+**/bin
+**/obj
 
+*.o
 *.obj
 *.swp
 *.png
+*.pdf
