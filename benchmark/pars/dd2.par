@@ -1,0 +1,38 @@
+[Info]
+name = dd2.dat
+name_Wbeta = dd2_Wb.dat
+tol = 5e-9
+max_iters = 100
+ibeta = 1e-3
+W = 2
+Ye = 0.1
+T = 5.0
+n = 5.97040553586779e-5
+
+[EOS]
+eos = compose
+table = ../table/DD2.h5
+
+[Density]
+min = 5.970405662956463e-12
+max = 0.5970405662956463
+size = 100
+log = 1
+
+[Temperature]
+min = 1.04712855e-1
+max = 86.17385692256676
+size = 100
+log = 1
+
+[Lorentz]
+min = 1e-3
+max = 1e3
+size = 100
+log = 1
+
+[IBeta]
+min = 1e-10
+max = 1e10
+size = 100
+log = 1

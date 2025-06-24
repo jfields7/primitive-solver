@@ -1,24 +1,28 @@
 //! \file benchmark.cpp
-//! \brief Implementation file for Benchmark class
+//! \brief Implementation file for BenchmarkMagW class
 
 #include <benchmark.hpp>
+#include <benchmark_magW.hpp>
 #include <stdexcept>
 #include <cmath>
 #include <cstdio>
 
-Benchmark::Benchmark(DataRange& range_n, DataRange& range_T,
-                     Real t_ibeta, Real t_W, Real t_Ye,
+BenchmarkMagW::BenchmarkMagW(DataRange& range_ibeta, DataRange& range_W,
+                     Real t_n, Real t_T, Real t_Ye,
                      std::string benchmark_name, bool save=true) {
   // Initialize the data ranges
-  n = InitializeFromDataRange(range_n);
-  T = InitializeFromDataRange(range_T);
+  ibeta = InitializeFromDataRange(range_ibeta);
+  W = InitializeFromDataRange(range_W);
+  for (unsigned int i = 0; i < range_W.size; i++) {
+    W[i] += 1.0;
+  }
 
   // Initialize the sizes of the input fields
-  nn = range_n.size;
-  nT = range_T.size;
+  nbeta = range_ibeta.size;
+  nW = range_W.size;
 
-  ibeta = t_ibeta;
-  W = t_W;
+  n = t_n;
+  T = t_T;
   Ye = t_Ye;
 
   name = benchmark_name;
@@ -26,7 +30,7 @@ Benchmark::Benchmark(DataRange& range_n, DataRange& range_T,
   // Initialize the output fields.
   unsigned int size;
   if (save) {
-    size = nn*nT;
+    size = nbeta*nW;
   } else {
     size = 1;
   }
@@ -35,17 +39,17 @@ Benchmark::Benchmark(DataRange& range_n, DataRange& range_T,
   success    = new bool[size];
 }
 
-Benchmark::~Benchmark() {
+BenchmarkMagW::~BenchmarkMagW() {
   // Clear all the memory we just allocated
   delete[] iterations;
   delete[] error;
   delete[] success;
 
-  delete[] n;
-  delete[] T;
+  delete[] ibeta;
+  delete[] W;
 }
 
-Real* Benchmark::InitializeFromDataRange(DataRange& range) {
+Real* BenchmarkMagW::InitializeFromDataRange(DataRange& range) {
   if (range.size == 0) {
     throw std::domain_error("Size must be greater than zero.");
   }
@@ -71,23 +75,23 @@ Real* Benchmark::InitializeFromDataRange(DataRange& range) {
   return data;
 }
 
-void Benchmark::SaveBenchmark() {
+void BenchmarkMagW::SaveBenchmark() {
   // Open the file
   std::FILE* file = std::fopen(name.c_str(), "w");
 
   // The columns for the .dat file are as follows:
   // # 1 n : 2 T : 3 iterations : 4 error : 5 success
-  std::fprintf(file, "# 1 n : 2 T : 3 iterations : 4 error : 5 success\n");
+  std::fprintf(file, "# 1 W : 2 ibeta : 3 iterations : 4 error : 5 success\n");
 
   // Write out each column
-  for (unsigned int it = 0; it < nT; it++) {
-    for (unsigned int in = 0; in < nn; in++) {
-      unsigned int idx = in + nn*it;
+  for (unsigned int im = 0; im < nbeta; im++) {
+    for (unsigned int iW = 0; iW < nW; iW++) {
+      unsigned int idx = iW + nW*im;
 
       unsigned int succ = success[idx] ? 1 : 0;
 
       std::fprintf(file, "%20.15g  %20.15g  %u  %20.15g  %u\n",
-                   n[in], T[it], iterations[idx], error[idx], succ);
+                   W[iW], ibeta[im], iterations[idx], error[idx], succ);
     }
   }
 

@@ -159,7 +159,7 @@ bool RunWithEOSAndError(ParamReader& params) {
   }
   eos.SetDensityFloor(dfloor/eos.GetBaryonMass());
   Real tfloor = params.readAsDouble("Error", "tfloor");
-  if (tfloor <= 0.) {
+  if (tfloor < 0.) {
     tfloor = 1e-10;
   }
   eos.SetTemperatureFloor(tfloor);
@@ -213,7 +213,8 @@ bool RunWithEOSAndError(ParamReader& params) {
   Real g3d[NSPMETRIC] = {0.0};
   Real g3u[NSPMETRIC] = {0.0};
 
-  prim_lo[IDN] = params.readAsDouble("State", "rho_lo");
+
+  prim_lo[IDN] = params.readAsDouble("State", "rho_lo")/eos.GetBaryonMass();
   prim_lo[IVX] = params.readAsDouble("State", "vx_lo");
   prim_lo[IVY] = params.readAsDouble("State", "vy_lo");
   prim_lo[IVZ] = params.readAsDouble("State", "vz_lo");
@@ -228,7 +229,7 @@ bool RunWithEOSAndError(ParamReader& params) {
   bu_lo[IB2] = params.readAsDouble("State", "By_lo");
   bu_lo[IB3] = params.readAsDouble("State", "Bz_lo");
 
-  prim_hi[IDN] = params.readAsDouble("State", "rho_hi");
+  prim_hi[IDN] = params.readAsDouble("State", "rho_hi")/eos.GetBaryonMass();
   prim_hi[IVX] = params.readAsDouble("State", "vx_hi");
   prim_hi[IVY] = params.readAsDouble("State", "vy_hi");
   prim_hi[IVZ] = params.readAsDouble("State", "vz_hi");
@@ -252,6 +253,7 @@ bool RunWithEOSAndError(ParamReader& params) {
   int failures = 0;
   Real prim_err_all[NPRIM] = {0.0};
   Real prim_err_succ[NPRIM] = {0.0};
+  std::cout.precision(17);
 
   // Perform trials of randomly selected states.
   int ntrials = params.readAsInt("State", "trials");
@@ -289,7 +291,7 @@ bool RunWithEOSAndError(ParamReader& params) {
                 << "  prim floor applied: " << result.prim_floor << "\n"
                 << "  cons adjusted: " << result.cons_adjusted << "\n";
       std::cout << "Input primitives: \n"
-                << "  rho = " << prim[IDN] << "\n"
+                << "  rho = " << prim[IDN]*eos.GetBaryonMass() << "\n"
                 << "  vx  = " << prim[IVX] << "\n"
                 << "  vy  = " << prim[IVY] << "\n"
                 << "  vz  = " << prim[IVZ] << "\n"
@@ -298,6 +300,9 @@ bool RunWithEOSAndError(ParamReader& params) {
       for (int s = 0; s < eos.GetNSpecies(); s++) {
         std::cout << "  Y" << (s+1) << "  = " << prim[IYF + s] << "\n";
       }
+      std::cout << "  Bx  = " << bu[IB1] << "\n"
+                << "  By  = " << bu[IB2] << "\n"
+                << "  Bz  = " << bu[IB3] << "\n";
       std::cout << "Calculated conserved states: \n"
                 << "  D   = " << cons_old[IDN] << "\n"
                 << "  Sx  = " << cons_old[IM1] << "\n"

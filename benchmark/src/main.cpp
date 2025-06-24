@@ -1,14 +1,19 @@
 //! \main.cpp
-//  \brief Run the benchmarks and save the output data.
+//! \brief Run the benchmarks and save the output data.
+#include <cmath>
 
 #include <benchmark.hpp>
+#include <benchmark_magW.hpp>
 #include <command_parser.hpp>
 #include <paramreader.hpp>
 
 #include <primitive_solver.hpp>
 #include <eos.hpp>
 #include <idealgas.hpp>
+#include <piecewise_polytrope.hpp>
+#include <eos_compose.hpp>
 #include <do_nothing.hpp>
+#include <reset_floor.hpp>
 
 using namespace Primitive;
 
@@ -18,14 +23,16 @@ void ReadDataRange(ParamReader& params, DataRange& range, std::string section) {
   range.max = (Real) params.readAsDouble(section, "max");
   if (params.hasParameter(section, "log")) {
     range.log = (bool) params.readAsInt(section, "log");
-  }
-  else {
+    if (range.log) {
+      range.min = std::log10(range.min);
+      range.max = std::log10(range.max);
+    }
+  } else {
     range.log = false;
   }
 }
 
 int main(int argc, char *argv[]) {
-  // Parse command line arguments.
   CommandParser parser;
   parser.AddString("input", true, "", true);
   parser.AddBoolean("save");
@@ -35,11 +42,10 @@ int main(int argc, char *argv[]) {
 
   // If there's an error, print out what it is.
   if (error.code != CommandParser::ErrorCode::SUCCESS) {
-    std::cout << "Encountered the following error while reading parameters:\n";
-    std::cout << "  Argument position: " << error.position << "\n";
-    std::cout << "  Argument name: " << error.arg << "\n";
-    std::cout << "  Error: " << CommandParser::GetErrorCodeName(error.code) << "\n";
-    return 0;
+    std::cout << "Encountered the following error while reading parameters:\n"
+              << "  Argument position: " << error.position << "\n"
+              << "  Argument name: " << error.arg << "\n"
+              << "  Error: " << CommandParser::GetErrorCodeName(error.code) << "\n";
   }
 
   // Read in the parameter file.
@@ -52,35 +58,57 @@ int main(int argc, char *argv[]) {
     std::cout << "There was an error reading the file " << filename << ".\n";
   }
 
+  // Collect general information about the run
+  std::string name = params.readAsString("Info", "name");
+  std::string name_Wbeta = params.readAsString("Info", "name_Wbeta");
+  Real tol = params.readAsDouble("Info", "tol");
+  int max_iters = params.readAsInt("Info", "max_iters");
+  Real ibeta = params.readAsDouble("Info", "ibeta");
+  Real W = params.readAsDouble("Info", "W");
+  Real Ye = params.readAsDouble("Info", "Ye");
+  Real n = params.readAsDouble("Info", "n");
+  Real T = params.readAsDouble("Info", "T");
+
   // Populate the data ranges using the parameter file.
   std::cout << "Populating data ranges...\n";
-  DataRange n_data, T_data, ux_data, uy_data, uz_data, Bx_data, By_data, Bz_data;
-  ReadDataRange(params, n_data, "Density");
-  ReadDataRange(params, T_data, "Temperature");
-  ReadDataRange(params, ux_data, "VelX");
-  ReadDataRange(params, uy_data, "VelY");
-  ReadDataRange(params, uz_data, "VelZ");
-  ReadDataRange(params, Bx_data, "MagX");
-  ReadDataRange(params, By_data, "MagY");
-  ReadDataRange(params, Bz_data, "MagZ");
-
-  // Set up the primitive solver.
-  EOS<IdealGas, DoNothing> eos;
-  PrimitiveSolver<IdealGas, DoNothing> ps{&eos};
+  DataRange n_range, T_range, W_range, ibeta_range;
+  ReadDataRange(params, n_range, "Density");
+  ReadDataRange(params, T_range, "Temperature");
+  ReadDataRange(params, W_range, "Lorentz");
+  ReadDataRange(params, ibeta_range, "IBeta");
 
   // Now we can construct and run the benchmark.
   bool save = parser.GetBoolean("save");
-  Benchmark benchmark{n_data, T_data, ux_data, uy_data, uz_data, 
-                      Bx_data, By_data, Bz_data, std::string("Basic"), save};
-  std::cout << "Running benchmark...\n";
-  if (!save) {
-    benchmark.RunBenchmark(&ps, false);
+  Benchmark benchmark{n_range, T_range, ibeta, W, Ye, name, save};
+  BenchmarkMagW benchmark_magW{ibeta_range, W_range, n, T, Ye, name_Wbeta, save};
+
+  // EOS information; set up the primitive solver and run the benchmark at the same time.
+  std::string eos = params.readAsString("EOS", "eos");
+  if (eos == "ideal") {
+    EOS<IdealGas, DoNothing> eos;
+    PrimitiveSolver<IdealGas, DoNothing> ps{&eos};
+    ps.tol = tol;
+    ps.GetRootSolver().iterations = max_iters;
+
+    benchmark.RunBenchmark(&ps, save);
+    benchmark_magW.RunBenchmark(&ps, save);
+  } else if (eos == "compose") {
+    EOS<EOSCompOSE, ResetFloor> eos;
+    eos.ReadTableFromFile(params.readAsString("EOS", "table"));
+    eos.SetDensityFloor(eos.GetMinimumDensity());
+    eos.SetTemperatureFloor(eos.GetMinimumTemperature());
+
+    PrimitiveSolver<EOSCompOSE, ResetFloor> ps{&eos};
+    ps.tol = tol;
+    ps.GetRootSolver().iterations = max_iters;
+
+    benchmark.RunBenchmark(&ps, save);
+    benchmark_magW.RunBenchmark(&ps, save);
   }
-  else {
-    benchmark.RunBenchmark(&ps, true);
-    std::cout << "Saving benchmark...\n";
+
+  if (save) {
     benchmark.SaveBenchmark();
-    std::cout << "Benchmark saved!\n";
+    benchmark_magW.SaveBenchmark();
   }
 
   return 0;

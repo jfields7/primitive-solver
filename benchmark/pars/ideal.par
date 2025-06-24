@@ -1,0 +1,37 @@
+[Info]
+name = ideal.dat
+name_Wbeta = ideal_Wb.dat
+tol = 5e-9
+max_iters = 100
+ibeta = 1e-3
+W = 2
+Ye = 0.1
+n = 0.00917167180808297
+T = 0.005321609207026881
+
+[EOS]
+eos = ideal
+
+[Density]
+min = 1.619100425158887e-15
+max = 0.0016191004251588869
+size = 100
+log = 1
+
+[Temperature]
+min = 9.171671808082966e-9
+max = 0.09171671808082968
+size = 100
+log = 1
+
+[Lorentz]
+min = 1e-3
+max = 1e3
+size = 100
+log = 1
+
+[IBeta]
+min = 1e-10
+max = 1e10
+size = 100
+log = 1
