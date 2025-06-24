@@ -1,5 +1,5 @@
-#ifndef BENCHMARK_HPP_
-#define BENCHMARK_HPP_
+#ifndef BENCHMARK_MAGW_HPP_
+#define BENCHMARK_MAGW_HPP_
 
 #include <iostream>
 #include <random>
@@ -10,27 +10,22 @@
 #include <eos.hpp>
 #include <geom_math.hpp>
 
-struct DataRange {
-  unsigned int size;
-  Real min;
-  Real max;
-  bool log;
-};
+struct DataRange;
 
-class Benchmark {
+class BenchmarkMagW {
  private:
   // Size of data sets
-  unsigned int nn;
-  unsigned int nT;
+  unsigned int nbeta;
+  unsigned int nW;
 
   // Data storage
-  Real *n; // Density
-  Real *T; // Temperature
+  Real n; // Density
+  Real T; // Temperature
   int *iterations; // Iterations per run
   Real *error; // Averaged error in result
   bool *success; // Success for each test
-  Real ibeta; // Inverse plasma beta (b^2/2p)
-  Real W; // Lorentz factor
+  Real *ibeta; // Inverse plasma beta (b^2/2p)
+  Real *W; // Lorentz factor
   Real Ye; // Electron fraction
 
   // Name of the benchmark for data output.
@@ -43,11 +38,11 @@ class Benchmark {
     return std::fabs((actual - expected)/expected);
   }
  public:
-  Benchmark(DataRange& range_n, DataRange& range_T,
-            Real t_ibeta, Real t_W, Real t_Ye,
+  BenchmarkMagW(DataRange& range_ibeta, DataRange& range_W,
+            Real t_n, Real t_T, Real t_Ye,
             std::string benchmark_name, bool save);
 
-  ~Benchmark();
+  ~BenchmarkMagW();
 
   // Run the benchmark for a given primitive solver.
   template<typename EOSPolicy, typename ErrorPolicy, class Boolean>
@@ -62,13 +57,10 @@ class Benchmark {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-1.0, 1.0);
 
-    // The velocity normalization based on our Lorentz factor.
-    Real Wv = std::sqrt(W*W - 1.0);
-
     // Traverse the grid values
-    for (unsigned int it = 0; it < nT; it++) {
-      for (unsigned int in = 0; in < nn; in++) {
-        unsigned int idx = in + nn*it;
+    for (unsigned int im = 0; im < nbeta; im++) {
+      for (unsigned int iW = 0; iW < nW; iW++) {
+        unsigned int idx = iW + nW*im;
 
         // Extract the primitive variables for this particular solution.
         Real prim[NPRIM];
@@ -76,11 +68,13 @@ class Benchmark {
         Real bu[NMAG];
         Real cons[NCONS];
 
-        prim[IDN] = primold[IDN] = n[in];
-        prim[ITM] = primold[ITM] = T[it];
+        prim[IDN] = primold[IDN] = n;
+        prim[ITM] = primold[ITM] = T;
         prim[IYF] = primold[IYF] = Ye;
         prim[IPR] = primold[IPR] = ps->GetEOS()->GetPressure(prim[IDN], prim[ITM],
                                                              &prim[IYF]);
+        // The velocity normalization based on our Lorentz factor.
+        Real Wv = std::sqrt(W[iW]*W[iW] - 1.0);
         // Compute a random direction, which we then normalize.
         Real dir[3] = {dis(gen), dis(gen), dis(gen)};
         Real norm = std::sqrt(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2]);
@@ -95,7 +89,7 @@ class Benchmark {
 
         // Align the magnetic field with the velocity and rescale based on what beta
         // is. Since v || B, it follows that B^2 = b^2, so this is simple.
-        Real b = std::sqrt(2.0*prim[IPR]*ibeta);
+        Real b = std::sqrt(2.0*prim[IPR]*ibeta[im]);
         bu[IB1] = dir[0]*b;
         bu[IB2] = dir[1]*b;
         bu[IB3] = dir[2]*b;
@@ -105,9 +99,9 @@ class Benchmark {
 
         if (save) {
           Real nerr = GetError(primold[IDN], prim[IDN]);
-          Real vxerr = GetError(primold[IVX]/W, prim[IVX]/W);
-          Real vyerr = GetError(primold[IVY]/W, prim[IVY]/W);
-          Real vzerr = GetError(primold[IVZ]/W, prim[IVZ]/W);
+          Real vxerr = GetError(primold[IVX]/W[iW], prim[IVX]/W[iW]);
+          Real vyerr = GetError(primold[IVY]/W[iW], prim[IVY]/W[iW]);
+          Real vzerr = GetError(primold[IVZ]/W[iW], prim[IVZ]/W[iW]);
           Real epserr = GetError(
             ps->GetEOS()->GetSpecificInternalEnergy(primold[IDN],primold[ITM],&prim[IYF]),
             ps->GetEOS()->GetSpecificInternalEnergy(prim[IDN],primold[ITM],&prim[IYF]));

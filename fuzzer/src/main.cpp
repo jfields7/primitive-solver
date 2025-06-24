@@ -4,6 +4,7 @@
 #include <sstream>
 #include <type_traits>
 #include <cmath>
+#include <random>
 
 // PrimitiveSolver headers
 #include <primitive_solver.hpp>
@@ -158,7 +159,7 @@ bool RunWithEOSAndError(ParamReader& params) {
   }
   eos.SetDensityFloor(dfloor/eos.GetBaryonMass());
   Real tfloor = params.readAsDouble("Error", "tfloor");
-  if (tfloor <= 0.) {
+  if (tfloor < 0.) {
     tfloor = 1e-10;
   }
   eos.SetTemperatureFloor(tfloor);
@@ -204,88 +205,128 @@ bool RunWithEOSAndError(ParamReader& params) {
   }
   ps.tol = tol;
 
-  // Load conserved variables
-  Real cons[NCONS] = {0.0};
-  Real cons_old[NCONS] = {0.0};
-  Real bu[NMAG] = {0.0};
+  // Load allowed ranges
+  Real prim_lo[NPRIM] = {0.0};
+  Real prim_hi[NPRIM] = {0.0};
+  Real bu_lo[NMAG] = {0.0};
+  Real bu_hi[NMAG] = {0.0};
   Real g3d[NSPMETRIC] = {0.0};
+  Real g3u[NSPMETRIC] = {0.0};
 
-  cons[IDN] = cons_old[IDN] = params.readAsDouble("State", "D");
-  cons[IM1] = cons_old[IM1] = params.readAsDouble("State", "Sx");
-  cons[IM2] = cons_old[IM2] = params.readAsDouble("State", "Sy");
-  cons[IM3] = cons_old[IM3] = params.readAsDouble("State", "Sz");
-  cons[IEN] = cons_old[IEN] = params.readAsDouble("State", "tau");
+
+  prim_lo[IDN] = params.readAsDouble("State", "rho_lo")/eos.GetBaryonMass();
+  prim_lo[IVX] = params.readAsDouble("State", "vx_lo");
+  prim_lo[IVY] = params.readAsDouble("State", "vy_lo");
+  prim_lo[IVZ] = params.readAsDouble("State", "vz_lo");
+  prim_lo[ITM] = params.readAsDouble("State", "T_lo");
   for (int i = 0; i < eos.GetNSpecies(); i++) {
     std::stringstream ss;
-    ss << "Dy" << (i+1);
-    cons[IYD+i] = cons_old[IYD+i] = params.readAsDouble("State", ss.str());
+    ss << "Dy" << (i+1) << "_lo";
+    prim_lo[IYF+i] = params.readAsDouble("State", ss.str());
   }
 
-  bu[IB1] = params.readAsDouble("State", "Bx");
-  bu[IB2] = params.readAsDouble("State", "By");
-  bu[IB3] = params.readAsDouble("State", "Bz");
+  bu_lo[IB1] = params.readAsDouble("State", "Bx_lo");
+  bu_lo[IB2] = params.readAsDouble("State", "By_lo");
+  bu_lo[IB3] = params.readAsDouble("State", "Bz_lo");
 
-  g3d[S11] = params.readAsDouble("State", "gxx");
-  g3d[S12] = params.readAsDouble("State", "gxy");
-  g3d[S13] = params.readAsDouble("State", "gxz");
-  g3d[S22] = params.readAsDouble("State", "gyy");
-  g3d[S23] = params.readAsDouble("State", "gyz");
-  g3d[S33] = params.readAsDouble("State", "gzz");
+  prim_hi[IDN] = params.readAsDouble("State", "rho_hi")/eos.GetBaryonMass();
+  prim_hi[IVX] = params.readAsDouble("State", "vx_hi");
+  prim_hi[IVY] = params.readAsDouble("State", "vy_hi");
+  prim_hi[IVZ] = params.readAsDouble("State", "vz_hi");
+  prim_hi[ITM] = params.readAsDouble("State", "T_hi");
+  for (int i = 0; i < eos.GetNSpecies(); i++) {
+    std::stringstream ss;
+    ss << "Dy" << (i+1) << "_hi";
+    prim_hi[IYF+i] = params.readAsDouble("State", ss.str());
+  }
 
-  Real detg = Primitive::GetDeterminant(g3d);
+  bu_hi[IB1] = params.readAsDouble("State", "Bx_hi");
+  bu_hi[IB2] = params.readAsDouble("State", "By_hi");
+  bu_hi[IB3] = params.readAsDouble("State", "Bz_hi");
 
-  Real g3u[NSPMETRIC];
-  // Construct the inverse.
-  Real idetg = 1.0/detg;
-  g3u[S11] = (g3d[S22]*g3d[S33] - g3d[S23]*g3d[S23])*idetg;
-  g3u[S12] = (g3d[S13]*g3d[S23] - g3d[S12]*g3d[S33])*idetg;
-  g3u[S13] = (g3d[S12]*g3d[S23] - g3d[S13]*g3d[S22])*idetg;
-  g3u[S22] = (g3d[S11]*g3d[S33] - g3d[S13]*g3d[S13])*idetg;
-  g3u[S23] = (g3d[S12]*g3d[S13] - g3d[S11]*g3d[S23])*idetg;
-  g3u[S33] = (g3d[S11]*g3d[S22] - g3d[S12]*g3d[S12])*idetg;
+  g3d[S11] = g3u[S11] = 1.0;
+  g3d[S22] = g3u[S22] = 1.0;
+  g3d[S33] = g3u[S33] = 1.0;
 
-  Real prim[NPRIM];
-  Primitive::SolverResult result = ps.ConToPrim(prim, cons, bu, g3d, g3u);
 
-  // Print out the results of the solve.
-  std::cout << "PrimitiveSolver results: \n"
-            << "  error code: " << CodeToString(result.error) << "\n"
-            << "  iterations: " << result.iterations << "\n"
-            << "  cons floor applied: " << result.cons_floor << "\n"
-            << "  prim floor applied: " << result.prim_floor << "\n"
-            << "  cons adjusted: " << result.cons_adjusted << "\n\n";
-  std::cout << "Input conserved: \n"
-            << "  D   = " << cons_old[IDN] << "\n"
-            << "  Sx  = " << cons_old[IM1] << "\n"
-            << "  Sy  = " << cons_old[IM2] << "\n"
-            << "  Sz  = " << cons_old[IM3] << "\n"
-            << "  tau = " << cons_old[IEN] << "\n"
-            << "  Bx  = " << bu[IB1] << "\n"
-            << "  By  = " << bu[IB2] << "\n"
-            << "  Bz  = " << bu[IB3] << "\n\n";
-  std::cout << "Input metric: \n"
-            << "  gxx = " << g3d[S11] << "\n"
-            << "  gxy = " << g3d[S12] << "\n"
-            << "  gxz = " << g3d[S13] << "\n"
-            << "  gyy = " << g3d[S22] << "\n"
-            << "  gyz = " << g3d[S23] << "\n"
-            << "  gzz = " << g3d[S33] << "\n\n";
-  if (result.error == Primitive::Error::SUCCESS) {
-    std::cout << "Calculated primitives: \n"
-              << "  n  = " << prim[IDN] << "\n"
-              << "  vx = " << prim[IVX] << "\n"
-              << "  vy = " << prim[IVY] << "\n"
-              << "  vz = " << prim[IVZ] << "\n"
-              << "  T  = " << prim[ITM] << "\n"
-              << "  P  = " << prim[IPR] << "\n";
-    for (int i = 0; i < eos.GetNSpecies(); i++) {
-      std::cout << "  Y" << (i+1) << " = " << prim[IYF + i] << "\n";
+  // Set up the log
+  int failures = 0;
+  Real prim_err_all[NPRIM] = {0.0};
+  Real prim_err_succ[NPRIM] = {0.0};
+  std::cout.precision(17);
+
+  // Perform trials of randomly selected states.
+  int ntrials = params.readAsInt("State", "trials");
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0.0, 1.0);
+  for (int n = 0; n < ntrials; n++) {
+    // Generate the random state.
+    Real prim[NPRIM], bu[NMAG];
+    for (int i = 0; i < NPRIM; i++) {
+      prim[i] = dis(gen)*(prim_hi[i] - prim_lo[i]) + prim_lo[i];
     }
-    std::cout << "\n";
+    for (int i = 0; i < NMAG; i++) {
+      bu[i] = dis(gen)*(bu_hi[i] - bu_lo[i]) + bu_lo[i];
+    }
+    prim[IPR] = eos.GetPressure(prim[IDN], prim[ITM], &prim[IYF]);
+
+    // Generate the appropriate conserved state.
+    Real cons[NCONS], cons_old[NCONS];
+    ps.PrimToCon(prim, cons, bu, g3d);
+    for (int i = 0; i < NCONS; i++) {
+      cons_old[i] = cons[i];
+    }
+
+    // Attempt the C2P.
+    Real prim_new[NPRIM];
+    Primitive::SolverResult result = ps.ConToPrim(prim_new, cons, bu, g3d, g3u);
+
+    // Report failures.
+    if (result.error != Primitive::Error::SUCCESS) {
+      std::cout << "A state failed: \n"
+                << "  error code: " << CodeToString(result.error) << "\n"
+                << "  iterations: " << result.iterations << "\n"
+                << "  cons floor applied: " << result.cons_floor << "\n"
+                << "  prim floor applied: " << result.prim_floor << "\n"
+                << "  cons adjusted: " << result.cons_adjusted << "\n";
+      std::cout << "Input primitives: \n"
+                << "  rho = " << prim[IDN]*eos.GetBaryonMass() << "\n"
+                << "  vx  = " << prim[IVX] << "\n"
+                << "  vy  = " << prim[IVY] << "\n"
+                << "  vz  = " << prim[IVZ] << "\n"
+                << "  P   = " << prim[IPR] << "\n"
+                << "  T   = " << prim[ITM] << "\n";
+      for (int s = 0; s < eos.GetNSpecies(); s++) {
+        std::cout << "  Y" << (s+1) << "  = " << prim[IYF + s] << "\n";
+      }
+      std::cout << "  Bx  = " << bu[IB1] << "\n"
+                << "  By  = " << bu[IB2] << "\n"
+                << "  Bz  = " << bu[IB3] << "\n";
+      std::cout << "Calculated conserved states: \n"
+                << "  D   = " << cons_old[IDN] << "\n"
+                << "  Sx  = " << cons_old[IM1] << "\n"
+                << "  Sy  = " << cons_old[IM2] << "\n"
+                << "  Sz  = " << cons_old[IM3] << "\n"
+                << "  tau = " << cons_old[IEN] << "\n";
+      for (int s = 0; s < eos.GetNSpecies(); s++) {
+        std::cout << "  DY" << (s+1) << " = " << cons_old[IYD + s] << "\n";
+      }
+      std::cout << "\n";
+      failures++;
+    }
   }
+
+  // Report
+  std::cout << "Fuzzer Report:\n"
+            << "---------------------\n"
+            << "  Trials: " << ntrials << "\n"
+            << "  Failures: " << failures << "\n"
+            << "  Success Rate: " << (1.0-(Real)(failures)/(Real)(ntrials))*100.0
+            << "%\n";
 
   // For a sanity check, convert the primitive variables back to conserved variables.
-  Real cons_new[NCONS];
+  /*Real cons_new[NCONS];
   ps.PrimToCon(prim, cons_new, bu, g3d);
   Real err[NCONS];
   int nhyd = NHYDRO - MAX_SPECIES + eos.GetNSpecies();
@@ -307,7 +348,7 @@ bool RunWithEOSAndError(ParamReader& params) {
   for (int i = 0; i < eos.GetNSpecies(); i++) {
     std::cout << "  Dy" << i << ": " << err[IYD+i] << "\n";
   }
-  std::cout << "\n";
+  std::cout << "\n";*/
 
   return true;
 }

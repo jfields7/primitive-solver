@@ -1,0 +1,56 @@
+[EOS]
+eos_policy = PiecewisePolytrope
+code_units = GeometricSolar
+
+npieces = 4
+pwp_poly_rmd = 5.340089573220712e23
+pwp_density_pieces_0 = 0.000000000000000e0
+pwp_density_pieces_1 = 1.462177174456715e17
+pwp_density_pieces_2 = 5.011872336272714e17
+pwp_density_pieces_3 = 9.999999999999999e17
+pwp_gamma_pieces_0 = 1.356920000000000e0
+pwp_gamma_pieces_1 = 3.005000000000000e0
+pwp_gamma_pieces_2 = 2.988000000000000e0
+pwp_gamma_pieces_3 = 2.851000000000000e0
+gamma_thermal = 1.7
+
+[Error]
+error_policy = ResetFloor
+fail_tol = 1e-5
+dfloor = 1.28e-21
+tfloor = 0.0
+dthreshold = 1.0
+vmax = 0.998752340823665
+bsqmax = 1e6
+y1floor = 0.5
+
+[PrimitiveSolver]
+iterations = 100
+tol = 2.49e-13
+
+[State]
+trials = 100000
+
+rho_lo = 0.0
+rho_hi = 1.0e-2
+
+vx_lo = 0.0
+vx_hi = 2.5
+
+vy_lo = 0.0
+vy_hi = 2.5
+
+vz_lo = 0.0
+vz_hi = 2.5
+
+T_lo  = 0.0
+T_hi  = 1.0
+
+Bx_lo = 0.0
+Bx_hi = 1.0
+
+By_lo = 0.0
+By_hi = 1.0
+
+Bz_lo = 0.0
+Bz_hi = 1.0

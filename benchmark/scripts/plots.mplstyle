@@ -1,0 +1,20 @@
+## Style file for scientific plots
+
+## Figure
+figure.figsize: 4, 2.47
+figure.autolayout: True
+
+## Font
+font.family: serif
+mathtext.fontset: dejavuserif
+#font.serif: Computer Modern Roman
+
+## Axes
+axes.prop_cycle: cycler('color', ['r', 'g', 'b','k']) + cycler('linestyle', ['-', '--', ':', '-.'])
+lines.linewidth: 0.5
+
+## Ticks
+xtick.direction: in
+ytick.direction: in
+xtick.minor.visible: True
+ytick.minor.visible: True

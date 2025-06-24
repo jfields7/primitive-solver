@@ -21,7 +21,7 @@ PiecewisePolytrope::PiecewisePolytrope() {
     min_Y[i] = 0.0;
     max_Y[i] = 1.0;
   }
-  eos_units = &Nuclear;
+  eos_units = &GeometricSolar;
 }
 
 /// Destructor

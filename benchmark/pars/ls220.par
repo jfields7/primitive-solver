@@ -1,0 +1,38 @@
+[Info]
+name = ls220.dat
+name_Wbeta = ls220_wb.dat
+tol = 5e-9
+max_iters = 100
+ibeta = 1e-3
+W = 2
+Ye = 0.1
+T = 5.0
+n = 5.9704051349478925e-05
+
+[EOS]
+eos = compose
+table = ../table/LS220.h5
+
+[Density]
+min = 6.31e-13
+max = 0.5970405134947893
+size = 100
+log = 1
+
+[Temperature]
+min = 1.04712855e-1
+max = 86.17385692256676
+size = 100
+log = 1
+
+[Lorentz]
+min = 1e-3
+max = 1e3
+size = 100
+log = 1
+
+[IBeta]
+min = 1e-10
+max = 1e10
+size = 100
+log = 1

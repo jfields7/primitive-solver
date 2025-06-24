@@ -1,0 +1,43 @@
+[EOS]
+eos_policy = IdealGas
+code_units = Nuclear
+gamma = 2.0
+
+[Error]
+error_policy = ResetFloor
+dfloor = 1.28e-21
+tfloor = 1.58255e-19
+dthreshold = 0.1
+bsqmax = 1e6
+#vmax = 0.998752340823665
+
+[PrimitiveSolver]
+iterations = 50
+tol = 2.49e-13
+
+[State]
+trials = 100
+
+rho_lo = 0.0
+rho_hi = 1.0
+
+vx_lo = 0.0
+vx_hi = 2.5
+
+vy_lo = 0.0
+vy_hi = 2.5
+
+vz_lo = 0.0
+vz_hi = 2.5
+
+T_lo  = 0.0
+T_hi  = 1.0
+
+Bx_lo = 0.0
+Bx_hi = 1.0
+
+By_lo = 0.0
+By_hi = 1.0
+
+Bz_lo = 0.0
+Bz_hi = 1.0

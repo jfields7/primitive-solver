@@ -125,7 +125,8 @@ class PrimitiveSolver {
         peos->ApplyTemperatureLimits(That);
         //ehat = peos->GetEnergy(nhat, That, Y);
         Real Phat = peos->GetPressure(nhat, That, Y);
-        Real hhat = peos->GetEnthalpy(nhat, That, Y);
+        Real hhat = (ehat + Phat)/(nhat*mb);
+        //Real hhat = peos->GetEnthalpy(nhat, That, Y);
 
         // Now we can get two different estimates for nu = h/W.
         Real nu_a = hhat*iWhat;
@@ -290,7 +291,7 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mu
       // W is not physical, so rho must be larger than rho_max.
       return Error::RHO_TOO_BIG;
     }
-    else {
+    /*else {
       MuFromW(f, df, mul, bsq, rsq, rbsq, W);
       if (f < 0) {
         Real mu;
@@ -298,16 +299,13 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mu
         Real muhc = muh;
         // We can tighten up the bounds for mul.
         // The derivative is zero at mu = 0, so we perturb it slightly.
-        /*if (mu <= root.tol) {
-          mu += root.tol;
-        }*/
         bool result = root.NewtonSafe(MuFromW, mulc, muhc, mu, 1e-10, bsq, rsq, rbsq, W);
         if (!result) {
           return Error::BRACKETING_FAILED;
         }
         mul = (mu > mul) ? mu : mul;
       }
-    }
+    }*/
   }
   if (D < W_max*rho_min) {
     Real W = D/rho_min;
@@ -317,7 +315,7 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mu
       // W is not physical, so rho must be smaller than rho_min.
       return Error::RHO_TOO_SMALL;
     }
-    else {
+    /*else {
       MuFromW(f, df, muh, bsq, rsq, rbsq, W);
       if (f > 0) {
         Real mu = muh;
@@ -330,7 +328,7 @@ inline Error PrimitiveSolver<EOSPolicy, ErrorPolicy>::CheckDensityValid(Real& mu
         }
         muh = (mu < muh) ? mu : muh;
       }
-    }
+    }*/
   }
   return Error::SUCCESS;
 }
@@ -423,10 +421,20 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
     q = tau/D;
     rsqr = Contract(r_d, r_u);
   }
+
+
+
+  /*if (rsqr > (1 + q)*(1 + q)) {
+    HandleFailure(prim, cons, b, g3d);
+    solver_result.error = Error::NO_SOLUTION;
+    return solver_result;
+  }*/
   
   // Bracket the root.
   Real min_h = peos->GetMinimumEnthalpy();
   Real mul = 0.0;
+  // Alternate lower bound from Cai et al. 2025
+  //Real mul = 1.0/(q + 1. - bsqr);
   Real muh = 1.0/min_h;
   // Check if a tighter upper bound exists.
   if (rsqr > min_h*min_h) {
@@ -450,6 +458,20 @@ inline SolverResult PrimitiveSolver<EOSPolicy, ErrorPolicy>::ConToPrim(Real prim
       muh = mu*(1. + 1e-10);
     }
   }
+  // Alternate upper root from Cai et al. 2025
+  /*Real a0 = -0.5*(bsqr*D*D*D + tau*tau);
+  Real alp1 = bsqr*D - tau - D;
+  Real delta = 27.0*a0 + 4.0*alp1*alp1*alp1;
+  Real xsi;
+  if (delta > 0) {
+    Real theta = std::acos(1. + 13.5*a0/(alp1*alp1*alp1));
+    xsi = -(alp1/3)*(1. - 2.*std::cos((theta - M_PI)/3.0));
+  } else {
+    Real X1 = alp1*alp1*alp1 + 13.5*a0;
+    Real X2 = 1.5*std::sqrt(3.0*a0*delta);
+    xsi = -(alp1 + std::cbrt(X1 + X2) + std::cbrt(X1 - X2));
+  }
+  Real muh = D/xsi;*/
 
   // Check the corner case where the density is outside the permitted
   // bounds according to the ErrorPolicy.
