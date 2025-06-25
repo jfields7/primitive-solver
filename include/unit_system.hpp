@@ -102,6 +102,22 @@ static UnitSystem CGS{
   1.0, // temperature, K
   1.0, // chemical potential, erg
 };
+static UnitSystem CGSMeV{
+  2.99792458e10, // c, cm/s
+  6.67408e-8, // G, cm^3 g^-1 s^-2
+  1.38064852e-16, // kb, erg K^-1
+  1.98848e33, // Msun, g
+  1.0, // MeV
+
+  1.0, // length, cm
+  1.0, // time, s
+  1.0, // density, g cm^-3
+  1.0, // mass, g
+  1.0, // energy, erg
+  1.0, // pressure, erg/cm^3
+  CGS.kb/CGS.MeV, // temperature, MeV
+  1.0/CGS.MeV, // chemical potential, MeV
+};
 //! Geometric units with length in kilometers
 static UnitSystem GeometricKilometer{
   1.0, // c
@@ -117,7 +133,7 @@ static UnitSystem GeometricKilometer{
   CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e-5, // energy, km
   CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e10, // pressure, km^-2
   CGS.kb*CGS.G/(CGS.c*CGS.c*CGS.c*CGS.c)*1e-5, // temperature, km
-  CGS.kb/CGS.MeV, // chemical potential, MeV
+  1.0/CGS.MeV, // chemical potential, MeV
 };
 //! Geometric units with length in solar masses
 static UnitSystem GeometricSolar{
@@ -134,7 +150,7 @@ static UnitSystem GeometricSolar{
   1.0 / (CGS.Msun * CGS.c*CGS.c), // energy, Msun
   PS_CUBE( CGS.G/(CGS.c*CGS.c) ) * PS_SQR( CGS.Msun/(CGS.c) ), // pressure, Msun^-2
   CGS.kb/CGS.MeV, // temperature, MeV
-  CGS.kb/CGS.MeV, // chemical potential, MeV
+  1.0/CGS.MeV, // chemical potential, MeV
 };
 //! Nuclear units
 static UnitSystem Nuclear{
@@ -151,7 +167,7 @@ static UnitSystem Nuclear{
   1.0/CGS.MeV, // energy, MeV
   1e-39/CGS.MeV, // pressure, MeV/fm^3
   CGS.kb/CGS.MeV, // temperature, MeV
-  CGS.kb/CGS.MeV, // chemical potential, MeV
+  1.0/CGS.MeV, // chemical potential, MeV
 };
 
 } // namespace

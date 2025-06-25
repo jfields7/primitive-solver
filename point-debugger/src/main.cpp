@@ -1,5 +1,6 @@
 // C++ headers
 #include <iostream>
+#include <cstring>
 #include <string>
 #include <sstream>
 #include <type_traits>
@@ -95,6 +96,68 @@ bool TestPoint(ParamReader& params) {
   return false;
 }
 
+bool WeakEquilibrium(ParamReader& params) {
+  Primitive::EOS<Primitive::EOSCompOSE, Primitive::DoNothing> eos;
+  LoadEOSOptions(eos, params);
+
+  std::string units = params.readAsString("EOS", "code_units");
+  if (units.compare("CGS") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::CGS);
+  } else if (units.compare("CGSMeV") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::CGSMeV);
+  } else if (units.compare("GeometricKilometer") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::GeometricKilometer);
+  } else if (units.compare("GeometricSolar") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::GeometricSolar);
+  } else if (units.compare("Nuclear") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::Nuclear);
+  } else if (units.compare("NULL") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::Nuclear);
+  } else {
+    std::cout << "Error: Unknown unit system: " << units << "\n";
+    std::cout << "  Permitted options are:\n"
+              << "    CGS\n"
+              << "    CGSMeV\n"
+              << "    GeometricKilometer\n"
+              << "    GeometricSolar\n"
+              << "    Nuclear\n";
+    return false;
+  }
+
+  Real rho_b = params.readAsDouble("State", "rho");
+  Real T = params.readAsDouble("State", "T");
+  Real Y_l = params.readAsDouble("State", "Y_l");
+  Real Y_e = params.readAsDouble("State", "Y_e");
+
+  Real mb = eos.GetBaryonMass();
+  Real nb = rho_b/mb;
+
+  Real n_nu[3], e_nu[3];
+  eos.GetTrappedNeutrinos(nb, T, &Y_e, n_nu, e_nu);
+  Real e = eos.GetEnergy(nb, T, &Y_e) + e_nu[0] + e_nu[1] + e_nu[2];
+
+  Real T_eq;
+  Real Y_eq;
+  bool status = eos.GetBetaEquilibriumTrapped(nb, e, &Y_l, T_eq, &Y_eq, T, &Y_l);
+  if(!status) {
+    std::cout << "Could not find trapped beta equilibrium!" << std::endl;
+    return false;
+  }
+
+  std::cout << "Equilibrium values" << std::endl
+            << "  T                    = " << T_eq << std::endl
+            << "  Y_e                  = " << Y_eq << std::endl
+            << "  n_nu_e - n_nu_a      = " << n_nu[0] << std::endl
+            << "  n_nu_mu - n_nu_amu   = " << n_nu[1] << std::endl
+            << "  n_nu_tau - n_nu_atau = " << n_nu[2] << std::endl
+            << "  e_nu_e + e_nu_a      = " << e_nu[0] << std::endl
+            << "  e_nu_mu + e_nu_amu   = " << e_nu[1] << std::endl
+            << "  e_nu_tau + e_nu_atau = " << e_nu[2] << std::endl
+            << std::flush;
+  
+  return true;
+}
+
 template<class EOSPolicy>
 bool RunWithEOS(ParamReader& params) {
   // Find the requested error policy, check that it's valid, and load the correct
@@ -132,6 +195,8 @@ bool RunWithEOSAndError(ParamReader& params) {
   std::string units = params.readAsString("EOS", "code_units");
   if (units.compare("CGS") == 0) {
     eos.SetCodeUnitSystem(&Primitive::CGS);
+  } else if (units.compare("CGSMeV") == 0) {
+    eos.SetCodeUnitSystem(&Primitive::CGSMeV);
   } else if (units.compare("GeometricKilometer") == 0) {
     eos.SetCodeUnitSystem(&Primitive::GeometricKilometer);
   } else if (units.compare("GeometricSolar") == 0) {
@@ -144,6 +209,7 @@ bool RunWithEOSAndError(ParamReader& params) {
     std::cout << "Error: Unknown unit system: " << units << "\n";
     std::cout << "  Permitted options are:\n"
               << "    CGS\n"
+              << "    CGSMeV\n"
               << "    GeometricKilometer\n"
               << "    GeometricSolar\n"
               << "    Nuclear\n";
@@ -369,33 +435,35 @@ void LoadErrorOptions(Primitive::EOS<EOSPolicy,Primitive::ResetFloor>& eos,
 }
 
 int main(int argc, char* argv[]) {
-  // Parse command line arguments.
-  CommandParser parser;
-  parser.AddString("input", true, "", true);
-  
-  CommandParser::Error error = parser.ParseArguments(argc, argv);
-
-  // If there's an error, print out what it is.
-  if (error.code != CommandParser::ErrorCode::SUCCESS) {
-    std::cout << "Encountered the following error while reading parameters:\n";
-    std::cout << "  Argument position: " << error.position << "\n";
-    std::cout << "  Argument name: " << error.arg << "\n";
-    std::cout << "  Error: " << CommandParser::GetErrorCodeName(error.code) << "\n";
-    return -1;
+  // Basic commands
+  if (argc != 3 ||
+      (strcmp(argv[1], "c2p") != 0 && strcmp(argv[1], "betaeq") != 0)) {
+    std::cout << "Usage point-debugger [command] input.inp\n"
+              << "  Available commands are:\n"
+              << "     * help   : shows this help\n"
+              << "     * c2p    : con2prim mode\n"
+              << "     * betaeq : beta equilibrium mode\n";
+    return 0;
   }
 
   // Read in the parameter file.
   std::cout << "Reading parameters...\n";
   ParamReader params;
   ParamReader::ParamResult result;
-  std::string filename = parser.GetString("input");
+  std::string filename{argv[2]};
   result = params.readFile(filename);
   if (result != ParamReader::SUCCESS) {
     std::cout << "There was an error reading the file " << filename << ".\n";
     return -1;
   }
 
-  bool success = TestPoint(params);
+  bool success;
+  if (strcmp(argv[1], "betaeq") == 0) {
+    success = WeakEquilibrium(params);
+  }
+  else {
+    success = TestPoint(params);
+  }
 
   if (!success) {
     return -1;

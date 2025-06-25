@@ -136,7 +136,7 @@ ParamReader::ParamResult ParamReader::parseParameter(std::string &str, std::stri
   // whitespace.
   for(size_t i = 0; i < value.length(); i++){
     if(!isalnum(value[i]) && (value[i]!='_') && (value[i] != '.') && (value[i] != '-') && (value[i] != ' ')
-       && (value[i] != ',')){
+       && (value[i] != ',') && (value[i] != '/')){
       if((i != 0 && value[i]!='{') || (i!=value.length()-1 && value[i]!='}')){
         return INVALID_VALUE;
       }
