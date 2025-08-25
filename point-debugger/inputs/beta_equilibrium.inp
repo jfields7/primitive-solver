@@ -1,10 +1,10 @@
 [EOS]
 eos_policy = EOSCompOSE
 code_units = CGSMeV
-table = /var/home/dradice/Data/EOS/SFHo/SFHo.h5
+table = /var/home/dradice/Data/EOS/DD2/DD2.h5
 
 [State]
-rho = 1e13
-T = 10
+rho = 1.0e13
+T = 50
 Y_e = 0.1
 Y_l = 0.1

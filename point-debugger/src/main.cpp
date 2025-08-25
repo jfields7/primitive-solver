@@ -134,7 +134,7 @@ bool WeakEquilibrium(ParamReader& params) {
 
   Real n_nu[3], e_nu[3];
   eos.GetTrappedNeutrinos(nb, T, &Y_e, n_nu, e_nu);
-  Real e = eos.GetEnergy(nb, T, &Y_e) + e_nu[0] + e_nu[1] + e_nu[2];
+  Real e = eos.GetEnergy(nb, T, &Y_e); // + e_nu[0] + e_nu[1] + e_nu[2];
 
   Real T_eq;
   Real Y_eq;
