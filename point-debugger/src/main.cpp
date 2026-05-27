@@ -126,15 +126,20 @@ bool WeakEquilibrium(ParamReader& params) {
 
   Real rho_b = params.readAsDouble("State", "rho");
   Real T = params.readAsDouble("State", "T");
-  Real Y_l = params.readAsDouble("State", "Y_l");
   Real Y_e = params.readAsDouble("State", "Y_e");
+  Real Y_nue = params.readAsDouble("State", "Y_nue");
+  Real Y_nua = params.readAsDouble("State", "Y_nua");
+  Real Y_nux = params.readAsDouble("State", "Y_nux");
+  (void)Y_nux;
+  Real e_nue = params.readAsDouble("State", "e_nue");
+  Real e_nua = params.readAsDouble("State", "e_nua");
+  Real e_nux = params.readAsDouble("State", "e_nux");
 
   Real mb = eos.GetBaryonMass();
   Real nb = rho_b/mb;
 
-  Real n_nu[3], e_nu[3];
-  eos.GetTrappedNeutrinos(nb, T, &Y_e, n_nu, e_nu);
-  Real e = eos.GetEnergy(nb, T, &Y_e); // + e_nu[0] + e_nu[1] + e_nu[2];
+  Real Y_l = Y_e + Y_nue - Y_nua;
+  Real e = eos.GetEnergy(nb, T, &Y_e) + e_nue + e_nua + e_nux;
 
   Real T_eq;
   Real Y_eq;
@@ -143,6 +148,8 @@ bool WeakEquilibrium(ParamReader& params) {
     std::cout << "Could not find trapped beta equilibrium!" << std::endl;
     return false;
   }
+  Real n_nu[3], e_nu[3];
+  eos.GetTrappedNeutrinos(nb, T_eq, &Y_eq, n_nu, e_nu);
 
   std::cout << "Equilibrium values" << std::endl
             << "  T                    = " << T_eq << std::endl
