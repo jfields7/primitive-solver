@@ -198,6 +198,9 @@ bool PiecewisePolytrope::InitializeFromData(Real *densities,
   gamma_pieces[0] = gammas[0];
   pressure_pieces[0] = P0;
 
+  // Initial specific internal energy offset is 0
+  eps_pieces[0] = 0.0;
+
   for (int i = 1; i < n; i++) {
     density_pieces[i] = densities[i]/mb;
     gamma_pieces[i] = gammas[i];
